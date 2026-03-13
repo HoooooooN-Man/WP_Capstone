@@ -1,0 +1,20 @@
+# Front
+Front/node_modules/
+Front/dist/
+
+# Back
+Back/.venv/
+Back/__pycache__/
+Back/*.pyc
+Back/db.sqlite3
+
+# Learning
+Learning/.venv/
+Learning/__pycache__/
+Learning/*.pyc
+Learning/.ipynb_checkpoints/
+
+# General
+.vscode/
+.idea/
+.DS_Store
