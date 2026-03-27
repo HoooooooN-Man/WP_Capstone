@@ -1,0 +1,23 @@
+# Front
+Front/node_modules/
+Front/dist/
+
+# Back
+Back/.venv/
+Back/__pycache__/
+Back/.env
+Back/*.pyc
+Back/server/stock_analysis.duckdb
+*.duckdb
+.env
+
+# Learning
+Learning/.venv/
+Learning/__pycache__/
+Learning/*.pyc
+Learning/.ipynb_checkpoints/
+
+# General
+.vscode/
+.idea/
+.DS_Store
