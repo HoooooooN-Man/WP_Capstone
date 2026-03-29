@@ -4,9 +4,12 @@ Front/dist/
 
 # Back
 Back/.venv/
+Back/**/__pycache__/
 Back/__pycache__/
 Back/.env
+Back/**/.env
 Back/*.pyc
+**/*.pyc
 Back/server/stock_analysis.duckdb
 *.duckdb
 .env
