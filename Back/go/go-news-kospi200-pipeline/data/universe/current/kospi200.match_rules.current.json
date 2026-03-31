@@ -1,0 +1,62 @@
+{
+  "index_name": "KOSPI200",
+  "as_of_date": "2026-03-30",
+  "source": {
+    "rules_version": "v3-kia-naver-source-tuned",
+    "based_on": "2026-03-30 rerun batches with Kia/NAVER false positive inspection"
+  },
+  "min_alias_length": 2,
+  "prefer_exact_company_name": true,
+  "prefer_ticker_match": true,
+  "disallow_substring_match_for_ambiguous_roots": true,
+  "allow_exact_company_name_override": true,
+  "ambiguous_root_tokens": [
+    "SK",
+    "LG",
+    "CJ",
+    "GS",
+    "HD",
+    "DB",
+    "KG",
+    "LS",
+    "LX",
+    "OCI",
+    "S-Oil",
+    "삼성",
+    "현대",
+    "한화",
+    "두산",
+    "롯데",
+    "효성",
+    "포스코"
+  ],
+  "weak_ascii_aliases": [
+    "DL",
+    "LS",
+    "CJ",
+    "LG",
+    "GS",
+    "KT",
+    "HMM",
+    "GKL",
+    "KCC",
+    "SK",
+    "SKC",
+    "F&F"
+  ],
+  "ascii_exact_token_match": true,
+  "strip_html_from_snippet": true,
+  "strip_urls_from_snippet": true,
+  "max_article_age_days": 30,
+  "macro_queries": [
+    "금리",
+    "환율",
+    "코스피",
+    "반도체"
+  ],
+  "notes": "기아는 exact token 매칭으로 제한해 기아대책 오탐을 줄이고, snippet 끝 source_name 텍스트(Naver Blog 등)를 제거해 플랫폼명 오염을 방지한다. Kia 영문 alias는 Kia Corporation/Kia Motors 중심.",
+  "exact_token_aliases": [
+    "기아"
+  ],
+  "remove_source_name_from_snippet": true
+}

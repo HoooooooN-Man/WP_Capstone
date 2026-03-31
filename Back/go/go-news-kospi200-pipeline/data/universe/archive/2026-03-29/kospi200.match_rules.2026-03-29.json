@@ -1,0 +1,34 @@
+{
+  "index_name": "KOSPI200",
+  "as_of_date": "2026-03-27",
+  "source": {
+    "rules_version": "v1-auto-generated-from-snapshot",
+    "based_on": "KRX Data Marketplace / pykrx-derived daily snapshot"
+  },
+  "min_alias_length": 2,
+  "prefer_exact_company_name": true,
+  "prefer_ticker_match": true,
+  "disallow_substring_match_for_ambiguous_roots": true,
+  "allow_exact_company_name_override": true,
+  "ambiguous_root_tokens": [
+    "SK",
+    "LG",
+    "CJ",
+    "GS",
+    "HD",
+    "DB",
+    "KG",
+    "LS",
+    "LX",
+    "OCI",
+    "S-Oil",
+    "삼성",
+    "현대",
+    "한화",
+    "두산",
+    "롯데",
+    "효성",
+    "포스코"
+  ],
+  "notes": "코드에 아직 완전 반영되지 않았을 수 있음. matcher 고도화 시 우선 적용 권장."
+}

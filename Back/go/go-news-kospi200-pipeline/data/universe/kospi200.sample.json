@@ -1,0 +1,34 @@
+{
+  "companies": [
+    {
+      "ticker": "005930",
+      "company_name_ko": "삼성전자",
+      "company_name_en": "Samsung Electronics",
+      "aliases": ["삼성전자", "Samsung Electronics", "005930", "삼성전자우"]
+    },
+    {
+      "ticker": "000660",
+      "company_name_ko": "SK하이닉스",
+      "company_name_en": "SK hynix",
+      "aliases": ["SK하이닉스", "SK hynix", "000660", "하이닉스", "HBM"]
+    },
+    {
+      "ticker": "005380",
+      "company_name_ko": "현대차",
+      "company_name_en": "Hyundai Motor",
+      "aliases": ["현대차", "Hyundai Motor", "005380"]
+    },
+    {
+      "ticker": "035420",
+      "company_name_ko": "NAVER",
+      "company_name_en": "NAVER",
+      "aliases": ["NAVER", "네이버", "035420"]
+    },
+    {
+      "ticker": "207940",
+      "company_name_ko": "삼성바이오로직스",
+      "company_name_en": "Samsung Biologics",
+      "aliases": ["삼성바이오로직스", "Samsung Biologics", "207940"]
+    }
+  ]
+}

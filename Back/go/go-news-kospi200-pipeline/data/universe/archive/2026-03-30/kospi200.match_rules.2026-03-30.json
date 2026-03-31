@@ -1,0 +1,58 @@
+{
+  "index_name": "KOSPI200",
+  "as_of_date": "2026-03-30",
+  "source": {
+    "rules_version": "v2-batch-tuned",
+    "based_on": "2026-03-30 Google News batch inspection"
+  },
+  "min_alias_length": 2,
+  "prefer_exact_company_name": true,
+  "prefer_ticker_match": true,
+  "disallow_substring_match_for_ambiguous_roots": true,
+  "allow_exact_company_name_override": true,
+  "ambiguous_root_tokens": [
+    "SK",
+    "LG",
+    "CJ",
+    "GS",
+    "HD",
+    "DB",
+    "KG",
+    "LS",
+    "LX",
+    "OCI",
+    "S-Oil",
+    "삼성",
+    "현대",
+    "한화",
+    "두산",
+    "롯데",
+    "효성",
+    "포스코"
+  ],
+  "weak_ascii_aliases": [
+    "DL",
+    "LS",
+    "CJ",
+    "LG",
+    "GS",
+    "KT",
+    "HMM",
+    "GKL",
+    "KCC",
+    "SK",
+    "SKC",
+    "F&F"
+  ],
+  "ascii_exact_token_match": true,
+  "strip_html_from_snippet": true,
+  "strip_urls_from_snippet": true,
+  "max_article_age_days": 30,
+  "macro_queries": [
+    "금리",
+    "환율",
+    "코스피",
+    "반도체"
+  ],
+  "notes": "batch 검수 반영본. snippet HTML/URL 제거, 영문 짧은 토큰은 exact token 또는 skip 처리, 최근 30일 필터 및 macro query 분리용 규칙 포함."
+}

@@ -1,0 +1,39 @@
+{
+  "digest_only_sources": [
+    "네이트",
+    "v.daum.net",
+    "다음",
+    "톱스타뉴스",
+    "topstarnews.net",
+    "주달"
+  ],
+  "ml_blocked_sources": [
+    "네이트",
+    "v.daum.net",
+    "다음",
+    "톱스타뉴스",
+    "topstarnews.net",
+    "주달"
+  ],
+  "ml_blocked_title_patterns": [
+    "투자분석",
+    "장중",
+    "주가,",
+    "오늘의 증시일정",
+    "[오늘의 증시일정]",
+    "증시일정"
+  ],
+  "ml_blocked_query_patterns": [],
+  "low_quality_sources": [
+    "톱스타뉴스",
+    "topstarnews.net",
+    "주달",
+    "네이트"
+  ],
+  "aggregator_sources": [
+    "네이트",
+    "v.daum.net",
+    "다음"
+  ],
+  "normalize_source_contains_match": true
+}

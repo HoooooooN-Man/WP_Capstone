@@ -9,10 +9,15 @@ Back/__pycache__/
 Back/.env
 Back/**/.env
 Back/*.pyc
-**/*.pyc
-Back/server/stock_analysis.duckdb
-*.duckdb
-.env
+Back/Redis/.env
+Back/go/go-news-kospi200-pipeline/configs/.env
+Back/go/kospi200_auto_collect_dailly/.env
+Back/go/go-news-kospi200-pipeline/reports/
+Back/go/go-news-kospi200-pipeline/bin/
+Back/go/go-news-kospi200-pipeline/spool/
+Back/go/go-news-kospi200-pipeline/logs/
+*.exe
+*.out
 
 # Learning
 Learning/.venv/

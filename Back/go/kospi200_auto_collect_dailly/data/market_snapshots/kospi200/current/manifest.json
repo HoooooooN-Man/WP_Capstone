@@ -1,0 +1,15 @@
+{
+  "dataset": "kospi200_daily_snapshot",
+  "index_code": "1028",
+  "index_name": "KOSPI 200",
+  "as_of": "20260327",
+  "as_of_iso": "2026-03-27",
+  "row_count": 200,
+  "latest_csv": "data/market_snapshots/kospi200/current/kospi200_latest.csv",
+  "latest_json": "data/market_snapshots/kospi200/current/kospi200_latest.json",
+  "daily_csv": "data/market_snapshots/kospi200/daily/20260327/kospi200_20260327.csv",
+  "daily_json": "data/market_snapshots/kospi200/daily/20260327/kospi200_20260327.json",
+  "monthly_csv": "data/market_snapshots/kospi200/monthly/2026/kospi200_202603.csv",
+  "monthly_json": "data/market_snapshots/kospi200/monthly/2026/kospi200_202603.json",
+  "updated_at": "2026-03-29 23:36:01"
+}
