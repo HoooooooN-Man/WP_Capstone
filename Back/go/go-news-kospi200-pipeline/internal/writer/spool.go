@@ -19,16 +19,51 @@ func NewSpoolWriter(baseDir string) *SpoolWriter {
 }
 
 func (w *SpoolWriter) WriteBatch(_ context.Context, batch model.BatchEnvelope) error {
-	if err := os.MkdirAll(w.baseDir, 0o755); err != nil {
+	pendingDir := filepath.Join(w.baseDir, "pending")
+	doneDir := filepath.Join(w.baseDir, "done")
+	failedDir := filepath.Join(w.baseDir, "failed")
+
+	if err := os.MkdirAll(pendingDir, 0o755); err != nil {
 		return err
 	}
-	path := filepath.Join(w.baseDir, fmt.Sprintf("%s.json", batch.BatchID))
-	f, err := os.Create(path)
+	if err := os.MkdirAll(doneDir, 0o755); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(failedDir, 0o755); err != nil {
+		return err
+	}
+
+	tmpPath := filepath.Join(pendingDir, fmt.Sprintf("%s.tmp", batch.BatchID))
+	finalPath := filepath.Join(pendingDir, fmt.Sprintf("%s.json", batch.BatchID))
+
+	f, err := os.Create(tmpPath)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
-	return enc.Encode(batch)
+	if err := enc.Encode(batch); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
+		return err
+	}
+
+	if err := f.Sync(); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
+		return err
+	}
+
+	if err := f.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+
+	if err := os.Rename(tmpPath, finalPath); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+
+	return nil
 }
