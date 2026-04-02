@@ -32,3 +32,5 @@ Learning/.ipynb_checkpoints/
 .vscode/
 .idea/
 .DS_Store
+.duckdb
+Back\db\db\stock_analysis.duckdb
