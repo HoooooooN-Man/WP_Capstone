@@ -39,7 +39,7 @@ def get_db():
     finally:
         db.close()
 
-DB_PATH = "server/stock_analysis.duckdb"
+DB_PATH = ".stock_analysis.duckdb"
 
 def get_duckdb():
     conn = duckdb.connect(DB_PATH, read_only=False)

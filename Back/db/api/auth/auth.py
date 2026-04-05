@@ -4,8 +4,8 @@ from passlib.context import CryptContext
 import redis
 import random
 
-from ..database import get_db
-from ..models import User
+from db.database import get_db
+from db.models import User
 from .schemas import UserCreate, UserLogin, EmailVerification, PasswordResetRequest, PasswordResetEmailRequest
 from .smtp import send_verification_email
 
