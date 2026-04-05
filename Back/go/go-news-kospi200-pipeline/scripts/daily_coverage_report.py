@@ -47,7 +47,7 @@ def load_universe(universe_path: Path) -> Dict[str, dict]:
 def iter_batch_files(spool_dir: Path) -> List[Path]:
     if not spool_dir.exists():
         return []
-    return sorted(spool_dir.glob('batch-*.json'))
+    return sorted(spool_dir.rglob('batch-*.json'))
 
 
 def safe_iso_to_dt(value: str):
