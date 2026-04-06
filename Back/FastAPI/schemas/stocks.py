@@ -117,3 +117,23 @@ class BacktestSummaryResponse(BaseModel):
 class BacktestMonthlyResponse(BaseModel):
     """월별 수익률 원시 데이터."""
     data: list[Any]
+
+
+# ── 종목 검색 ──────────────────────────────────────────────────────────────────
+
+class StockSearchResult(BaseModel):
+    """검색 결과 단건."""
+    ticker:        str
+    name:          Optional[str]  = None
+    sector:        Optional[str]  = None
+    mid_sector:    Optional[str]  = None
+    score:         Optional[float] = None   # 최신 날짜 ML 점수
+    tier:          Optional[str]  = None
+    model_version: Optional[str]  = None
+    latest_date:   Optional[str]  = None
+
+
+class StockSearchList(BaseModel):
+    query: str
+    total: int
+    items: list[StockSearchResult]

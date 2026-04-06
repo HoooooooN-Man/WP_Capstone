@@ -17,7 +17,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import APP_TITLE, APP_VERSION, API_PREFIX, DUCKDB_PATH
-from .routers import stocks, portfolio
+from .routers import stocks, portfolio, chart, finance, screener, compare
+from .services.data import init_duckdb
 
 
 # ── 앱 수명 이벤트 ─────────────────────────────────────────────────────────────
@@ -31,7 +32,10 @@ async def lifespan(app: FastAPI):
             "  → Back/MachineLearning/precompute_scores.py --model-version v7 을 먼저 실행하세요.\n"
         )
     else:
-        print(f"[OK] DuckDB 연결: {DUCKDB_PATH}")
+        import asyncio
+        # 스레드에서 실행하여 이벤트 루프 블로킹 방지
+        await asyncio.get_event_loop().run_in_executor(None, init_duckdb)
+        print(f"[OK] DuckDB 연결 + 워밍업 완료: {DUCKDB_PATH}")
     yield
 
 
@@ -61,6 +65,10 @@ app.add_middleware(
 # 라우터 등록 (API 버전 prefix)
 app.include_router(stocks.router,    prefix=API_PREFIX)
 app.include_router(portfolio.router, prefix=API_PREFIX)
+app.include_router(chart.router,     prefix=API_PREFIX)
+app.include_router(finance.router,   prefix=API_PREFIX)
+app.include_router(screener.router,  prefix=API_PREFIX)
+app.include_router(compare.router,   prefix=API_PREFIX)
 
 
 # ── 헬스체크 ───────────────────────────────────────────────────────────────────
