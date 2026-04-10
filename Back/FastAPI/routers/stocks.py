@@ -20,6 +20,8 @@ from ..schemas.stocks import (
     SectorSummaryItem,
     VersionsResponse,
     DatesResponse,
+    StockSearchResult,
+    StockSearchList,
 )
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
@@ -154,3 +156,24 @@ def get_sector_summary(
         total=len(items),
         items=items,
     )
+
+
+# ── 종목 검색 ──────────────────────────────────────────────────────────────────
+
+@router.get("/search", response_model=StockSearchList, summary="종목 검색 (티커·회사명)")
+def search_stocks(
+    q:             str           = Query(..., min_length=1, description="검색 키워드 (티커 또는 회사명)"),
+    model_version: str           = Query("latest", description="모델 버전"),
+    limit:         int           = Query(20, ge=1, le=100, description="최대 결과 수"),
+):
+    """
+    티커 코드 또는 회사명 키워드로 종목을 검색합니다.
+    가장 최신 날짜 기준의 ML 점수·티어를 함께 반환합니다.
+    """
+    try:
+        rows = svc.search_stocks(q=q, model_version=model_version, limit=limit)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    items = [StockSearchResult(**r) for r in rows]
+    return StockSearchList(query=q, total=len(items), items=items)

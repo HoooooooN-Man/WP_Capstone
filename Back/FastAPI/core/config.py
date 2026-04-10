@@ -33,6 +33,10 @@ REDIS_PORT:     int = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_DB:       int = int(os.getenv("REDIS_DB", "1"))       # db=0 은 인증 서버가 사용
 REDIS_CACHE_TTL: int = int(os.getenv("REDIS_CACHE_TTL", "60"))  # 초
 
+# ── 원천 데이터 CSV ──────────────────────────────────────────────────────────
+STOCK_DATA_CSV:       Path = CAPSTONE_ROOT / "data" / "stock_data_clean.csv"
+FINANCE_CSV:          Path = CAPSTONE_ROOT / "preprocessing" / "financial_indicators_clean.csv"
+
 # ── 백테스트 결과 파일 ────────────────────────────────────────────────────────
 WF_MONTHLY_RETURNS_CSV: Path = MODELS_DIR / "v8_walk_forward" / "results" / "wf_portfolio_monthly_returns.csv"
 WF_PERFORMANCE_TXT:     Path = MODELS_DIR / "v8_walk_forward" / "results" / "wf_performance_summary.txt"
