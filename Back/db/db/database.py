@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_PATH = BASE_DIR / ".env"
 
 load_dotenv(dotenv_path=ENV_PATH)

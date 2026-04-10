@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import Header, APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 import redis
 import random
+import os
 
 from db.database import get_db
 from db.models import User
@@ -14,16 +15,33 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 # 비밀번호 암호화 설정
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Redis 연결 (decode_responses=True로 설정하면 문자열로 바로 읽힘)
-rd = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+# --- Redis Configuration ---
+REDIS_HOST = os.getenv("REDIS_HOST", "100.67.30.5")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6380))
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "change_this_queue_password_456!")
+REDIS_DECODE_RESPONSES = os.getenv("REDIS_DECODE_RESPONSES", "True") == "True"
+
+# 연결 옵션 적용
+rd = redis.Redis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    password=REDIS_PASSWORD,
+    decode_responses=REDIS_DECODE_RESPONSES,
+    socket_timeout=float(os.getenv("REDIS_SOCKET_TIMEOUT", 60)),
+    socket_connect_timeout=float(os.getenv("REDIS_CONNECT_TIMEOUT", 10)),
+    retry_on_timeout=os.getenv("REDIS_RETRY_ON_TIMEOUT", "True") == "True",
+    db=0
+)
 
 # --- 헬퍼 함수 ---
 def get_password_hash(password):
+    print(f"DEBUG: hashing target content -> {password}")
+    print(f"DEBUG: hashing target type -> {type(password)}")
+    print(f"DEBUG: hashing target length -> {len(str(password))}")
     return pwd_context.hash(password)
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
-
-from fastapi import Header, Depends, HTTPException
 
 # 공통으로 사용할 세션 체크 함수
 def get_current_user(session_token: str = Header(None)):
