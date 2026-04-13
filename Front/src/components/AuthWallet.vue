@@ -1,16 +1,12 @@
 <template>
   <div class="auth-wallet min-h-screen w-full flex items-center justify-center bg-[#050505] relative overflow-hidden font-sans">
     
-    <div class="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
-      
+    <div class="fixed top-0 left-0 w-[100vw] h-[100vh] bg-[#050505] z-[-1] pointer-events-none overflow-hidden">
       <div class="absolute w-[150vw] h-[150vw] bg-[#4a3520] rounded-full blur-[120px] -top-[50vw] -left-[40vw] opacity-20"></div>
-      
       <div class="absolute w-[120vw] h-[120vw] bg-[#1a1f1a] rounded-full blur-[100px] -bottom-[40vw] -right-[30vw] opacity-15"></div>
-      
-      <div class="absolute w-full h-full bg-gradient-to-tr from-[#1a1a1a]/10 via-transparent to-[#3d2b1f]/10"></div>
+      <div class="absolute inset-0 bg-gradient-to-tr from-[#1a1a1a]/10 via-transparent to-[#3d2b1f]/10"></div>
+      <div class="absolute inset-0 opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
     </div>
-
-    <div class="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] z-0"></div>
 
     <div 
       class="wallet-body relative z-10 w-full max-w-[580px] aspect-[1.7/1] bg-[#4a2e1e] rounded-r-[2.5rem] rounded-l-none shadow-[30px_80px_150px_-20px_rgba(0,0,0,0.95)] border-t border-white/5 transition-all duration-700 flex flex-col justify-between items-center overflow-visible ring-1 ring-white/5 py-12"
@@ -46,53 +42,47 @@
         </div>
       </div>
 
-      <div @click="submitLogin" class="absolute -right-6 top-1/2 -translate-y-1/2 w-24 h-24 flex items-center justify-center z-20 cursor-pointer group">
-        <div class="absolute left-0 w-20 h-16 bg-[#4a2e1e] border border-white/5 rounded-r-2xl shadow-lg shadow-black/50 overflow-hidden ring-1 ring-white/5"></div>
+      <div @click="submitLogin" class="absolute -right-4 top-1/2 -translate-y-1/2 w-20 h-24 flex items-center justify-start pl-2 z-20 cursor-pointer group">
+        <div class="absolute right-0 w-16 h-16 bg-[#4a2e1e] border-y border-l border-white/10 rounded-l-2xl rounded-r-none shadow-[-10px_10px_20px_rgba(0,0,0,0.6)] overflow-hidden">
+          <div class="absolute inset-0 opacity-40 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]"></div>
+        </div>
+        
         <div class="relative w-16 h-16 rounded-full bg-gradient-to-br from-gray-200 to-gray-500 border-4 border-[#4a2e1e] shadow-xl flex items-center justify-center active:scale-90 transition-transform">
           <LucideLock class="w-8 h-8 text-black drop-shadow-sm" />
         </div>
       </div>
-    </div>
+      </div>
 
-    <div v-if="isHolding" class="absolute bottom-0 left-0 w-full h-32 flex justify-center items-end gap-3 px-10 z-[50] animate-menu-up">
+    <div v-if="isHolding" class="fixed bottom-0 left-0 w-full h-32 flex justify-center items-end gap-3 px-10 z-[50] animate-menu-up">
       <div v-for="i in 4" :key="i" class="w-36 h-48 bg-gradient-to-br from-blue-700 to-indigo-900 rounded-2xl shadow-2xl border border-white/10 transform hover:-translate-y-12 transition-all cursor-pointer"></div>
     </div>
   </div>
 </template>
 
-
-
 <script setup>
 import { ref } from 'vue';
+// 자물쇠 아이콘으로 다시 임포트 변경
 import { LucideLock } from 'lucide-vue-next';
 
 const emit = defineEmits(['login']);
 
 const email = ref('');
 const password = ref('');
-const isHolding = ref(false); // [애니메이션 트리거]
+const isHolding = ref(false);
 
 const submitLogin = () => {
-  // 입력값 확인 (필요시 주석 해제하여 사용하세요)
-  // if (!email.value || !password.value) return;
-
-  // 1. 자물쇠를 누르면 지갑 하강 애니메이션 시작
   isHolding.value = true;
-
-  // 2. [딜레이] 지갑이 내려가고 펴지는 시각적 연출 후 데이터 전송
   setTimeout(() => {
     emit('login', {
       name: '주진우',
       style: '보수형',
       totalAsset: '12,500,000원',
     });
-  }, 1000); // walletDrop 애니메이션 시간(1s)에 맞춤
+  }, 1000); 
 };
 </script>
 
 <style scoped>
-/* [지갑 하강 애니메이션] 
-   바뀌어버린 다크한 배경에 맞춰 그림자가 더 깊게 깔리도록 수정했습니다. */
 @keyframes walletDrop {
   0% { 
     transform: perspective(1200px) translateY(0) rotateX(0deg); 
@@ -108,8 +98,6 @@ const submitLogin = () => {
   animation: walletDrop 1s forwards cubic-bezier(0.45, 0, 0.55, 1);
 }
 
-/* [하단 카드 메뉴 등장] 
-   새로운 앰버/카키 배경 조명 사이에서 카드가 슥 올라오는 느낌을 강조했습니다. */
 @keyframes menuUp {
   0% { transform: translateY(100%); opacity: 0; }
   100% { transform: translateY(35px); opacity: 1; }
@@ -119,7 +107,6 @@ const submitLogin = () => {
   animation: menuUp 0.8s 0.4s forwards cubic-bezier(0.17, 0.67, 0.3, 1);
 }
 
-/* 추가: 입력창 포커스 시 배경 조명색과 맞춘 글로우 효과 */
 input:focus {
   border-color: rgba(217, 185, 169, 0.5);
   box-shadow: 0 0 15px rgba(62, 43, 28, 0.3);
