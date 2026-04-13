@@ -8,8 +8,7 @@
       <div class="absolute inset-0 opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
     </div>
 
-    <div class="relative z-10 w-full h-full min-h-screen flex items-center justify-center">
-      
+    <div class="relative z-10 w-full h-full min-h-screen">
       <transition name="fade" mode="out-in">
         
         <AuthWallet 
@@ -30,6 +29,9 @@
 
 <script setup>
 import { ref } from 'vue';
+
+// [오류 해결!] 예전에 있던 LoginView, SignUpView import는 전부 지웠습니다.
+// 오직 우리가 방금 만든 두 파일만 불러옵니다.
 import AuthWallet from './components/AuthWallet.vue'; 
 import CardWallet from './components/CardWallet.vue'; 
 
@@ -37,26 +39,21 @@ import CardWallet from './components/CardWallet.vue';
 const isLoggedIn = ref(false);
 const userInfo = ref({ name: '', style: '', totalAsset: '' });
 
-// AuthWallet에서 로그인 이벤트를 받았을 때 실행되는 함수
+// AuthWallet에서 로그인 이벤트를 받았을 때 실행
 const handleLogin = (payload) => {
-  // 1. 전달받은 유저 정보 저장
   userInfo.value = payload;
-
-  // 2. 상태를 true로 변경하여 CardWallet 화면으로 전환
   isLoggedIn.value = true;
 };
 </script>
 
 <style>
-/* [가장 중요] Vue 프레임워크의 기본 여백 및 크기 제한을 완전히 박살냅니다. 
-  이 코드가 있어야 양옆 레터박스나 스크롤바가 생기지 않습니다.
-*/
+/* Vue 기본 여백 및 제약 해제 */
 html, body {
   margin: 0 !important;
   padding: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
-  overflow: hidden !important; /* 스크롤바 방지 */
+  overflow: hidden !important; 
   background-color: #050505;
 }
 
@@ -68,9 +65,7 @@ html, body {
   padding: 0 !important;
 }
 
-/* [화면 전환 애니메이션 효과]
-  로그인 창이 부드럽게 사라지고 메인 화면이 부드럽게 나타납니다.
-*/
+/* 화면 전환 애니메이션 */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.8s ease-in-out;
