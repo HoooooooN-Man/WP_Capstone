@@ -102,7 +102,7 @@ const submitLogin = () => {
   // 4. 2.7초 뒤, CardWallet으로 전환하라는 신호를 보냅니다.
   setTimeout(() => {
     emit('login', {
-      name: '주진우',
+      name: 'User',
       style: '보수형',
       totalAsset: '12,500,000원',
     });

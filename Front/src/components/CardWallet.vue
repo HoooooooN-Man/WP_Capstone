@@ -1,10 +1,13 @@
 <template>
   <div class="card-wallet w-full min-h-screen flex flex-col items-center justify-end relative font-sans text-white overflow-hidden pb-0">
     
-    <div class="absolute top-[10%] bottom-[140px] w-full max-w-[1100px] flex justify-center items-center z-0">
+    <div class="absolute top-[4%] bottom-[200px] left-[2%] right-[2%] flex justify-center items-center z-0">
       <transition name="fade-scale" mode="out-in">
         
         <ProfileView v-if="activeCard === 'profile'" :user="user" />
+        <FeedView v-else-if="activeCard === 'feed'" />
+        <CompanyView v-else-if="activeCard === 'company'" />
+        <PortfolioView v-else-if="activeCard === 'portfolio'" />
 
         <div v-else class="text-center animate-fade-in-delayed">
           <h2 class="text-4xl font-black italic tracking-tighter text-white uppercase opacity-30 drop-shadow-lg">
@@ -17,26 +20,16 @@
     </div>
 
     <div class="relative z-10 w-full max-w-[1100px] h-[140px] bg-[#2a170f] rounded-t-[2.5rem] shadow-[0_-20px_60px_rgba(0,0,0,0.9)] border-t border-x border-white/5 flex animate-slide-up-wallet">
-      
       <div class="absolute inset-0 opacity-50 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')] rounded-t-[2.5rem]"></div>
-      
       <div class="absolute left-1/2 top-0 bottom-0 w-16 -translate-x-1/2 bg-gradient-to-r from-black/60 via-transparent to-black/60 pointer-events-none z-50"></div>
       <div class="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-black/80 pointer-events-none z-50"></div>
       <div class="absolute left-1/2 top-0 bottom-0 w-[2px] ml-px -translate-x-1/2 bg-white/5 pointer-events-none z-50"></div>
 
       <div class="w-full h-full flex relative z-10">
-        
         <div class="flex-1 flex flex-col items-center pt-10 gap-10">
-          
           <div class="w-[75%] relative z-10">
-            <div 
-              @click="activeCard = 'profile'"
-              class="absolute bottom-[2px] left-2 right-2 h-[50px] bg-gradient-to-br from-[#fcfbf7] to-[#e6e2d3] rounded-t-[10px] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-3"
-              :class="activeCard === 'profile' ? '-translate-y-6' : 'hover:-translate-y-6'"
-            >
-              <div class="w-7 h-7 rounded bg-black/5 flex items-center justify-center">
-                <LucideUser class="w-4 h-4 text-black/60" />
-              </div>
+            <div @click="activeCard = 'profile'" class="absolute bottom-[2px] left-2 right-2 h-[50px] bg-gradient-to-br from-[#fcfbf7] to-[#e6e2d3] rounded-t-[10px] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-3" :class="activeCard === 'profile' ? '-translate-y-6' : 'hover:-translate-y-6'">
+              <div class="w-7 h-7 rounded bg-black/5 flex items-center justify-center"><LucideUser class="w-4 h-4 text-black/60" /></div>
               <div class="flex flex-col justify-center">
                 <span class="text-[13px] font-bold text-gray-800 leading-tight">{{ user.name || '주진우' }}</span>
                 <span class="text-[9px] text-gray-500 font-medium leading-tight">Personal ID</span>
@@ -44,49 +37,27 @@
             </div>
             <div class="w-full h-[3px] bg-[#120a07] border-b border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] rounded-full relative z-10 pointer-events-none"></div>
           </div>
-
           <div class="w-[75%] relative z-20">
-            <div 
-              @click="activeCard = 'feed'"
-              class="absolute bottom-[2px] left-2 right-2 h-[50px] bg-gradient-to-br from-[#2edc68] to-[#1cb550] rounded-t-[10px] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-2"
-              :class="activeCard === 'feed' ? '-translate-y-6' : 'hover:-translate-y-6'"
-            >
-              <LucideSparkles class="w-5 h-5 text-white/90" />
-              <span class="text-[15px] font-bold text-white tracking-wide">Latest Feed</span>
+            <div @click="activeCard = 'feed'" class="absolute bottom-[2px] left-2 right-2 h-[50px] bg-gradient-to-br from-[#2edc68] to-[#1cb550] rounded-t-[10px] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-2" :class="activeCard === 'feed' ? '-translate-y-6' : 'hover:-translate-y-6'">
+              <LucideSparkles class="w-5 h-5 text-white/90" /><span class="text-[15px] font-bold text-white tracking-wide">Latest Feed</span>
             </div>
             <div class="w-full h-[3px] bg-[#120a07] border-b border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] rounded-full relative z-10 pointer-events-none"></div>
           </div>
-          
         </div>
-
         <div class="flex-1 flex flex-col items-center pt-10 gap-10">
-          
           <div class="w-[75%] relative z-10">
-            <div 
-              @click="activeCard = 'company'"
-              class="absolute bottom-[2px] left-2 right-2 h-[50px] bg-gradient-to-br from-[#1f3756] to-[#14253a] rounded-t-[10px] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-2"
-              :class="activeCard === 'company' ? '-translate-y-6' : 'hover:-translate-y-6'"
-            >
-              <LucideBuilding2 class="w-5 h-5 text-blue-200" />
-              <span class="text-[15px] font-bold text-gray-100 tracking-wide">Company List</span>
+            <div @click="activeCard = 'company'" class="absolute bottom-[2px] left-2 right-2 h-[50px] bg-gradient-to-br from-[#1f3756] to-[#14253a] rounded-t-[10px] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-2" :class="activeCard === 'company' ? '-translate-y-6' : 'hover:-translate-y-6'">
+              <LucideBuilding2 class="w-5 h-5 text-blue-200" /><span class="text-[15px] font-bold text-gray-100 tracking-wide">Company List</span>
             </div>
             <div class="w-full h-[3px] bg-[#120a07] border-b border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] rounded-full relative z-10 pointer-events-none"></div>
           </div>
-
           <div class="w-[75%] relative z-20">
-            <div 
-              @click="activeCard = 'portfolio'; $emit('toggle-portfolio')"
-              class="absolute bottom-[2px] left-2 right-2 h-[50px] bg-gradient-to-br from-[#007ad9] to-[#0052a3] rounded-t-[10px] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-2"
-              :class="activeCard === 'portfolio' ? '-translate-y-6' : 'hover:-translate-y-6'"
-            >
-              <LucideFolder class="w-5 h-5 text-blue-100" />
-              <span class="text-[15px] font-bold text-white tracking-wide">Portfolio</span>
+            <div @click="activeCard = 'portfolio'; $emit('toggle-portfolio')" class="absolute bottom-[2px] left-2 right-2 h-[50px] bg-gradient-to-br from-[#007ad9] to-[#0052a3] rounded-t-[10px] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-2" :class="activeCard === 'portfolio' ? '-translate-y-6' : 'hover:-translate-y-6'">
+              <LucideFolder class="w-5 h-5 text-blue-100" /><span class="text-[15px] font-bold text-white tracking-wide">Portfolio</span>
             </div>
             <div class="w-full h-[3px] bg-[#120a07] border-b border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] rounded-full relative z-10 pointer-events-none"></div>
           </div>
-          
         </div>
-
       </div>
     </div>
   </div>
@@ -95,7 +66,10 @@
 <script setup>
 import { ref } from 'vue';
 import { LucideUser, LucideSparkles, LucideBuilding2, LucideFolder } from 'lucide-vue-next';
-import ProfileView from './ProfileView.vue'; // 신분증 컴포넌트 임포트
+import ProfileView from './ProfileView.vue'; 
+import FeedView from './FeedView.vue';
+import CompanyView from './CompanyView.vue'; 
+import PortfolioView from './PortfolioView.vue'; 
 
 const props = defineProps({
   user: { 
