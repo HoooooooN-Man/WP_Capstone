@@ -1,111 +1,146 @@
 <template>
-  <section class="card-wallet p-4 min-h-screen bg-slate-50">
-    <div class="max-w-4xl mx-auto">
-      <h2 class="text-2xl font-bold mb-4">AI 투자 전략 시뮬레이터</h2>
-      <p class="text-sm text-slate-500 mb-5">스와이프 오른쪽: 매도(Swap) / 왼쪽: 보유</p>
 
-      <Swiper
-        :modules="[EffectCards]"
-        effect="cards"
-        grab-cursor
-        :loop="false"
-        class="my-swiper h-[28rem] w-72 mx-auto"
-        @slideChange="onSlideChange"
-        @swiper="onSwiper"
-      >
-        <SwiperSlide v-for="card in cards" :key="card.id" class="rounded-2xl">
-          <InvestmentCard
-            :stock-name="card.name"
-            :price="card.price"
-            :score="card.score"
-            :isRisk="card.isRisk"
-          />
-        </SwiperSlide>
-      </Swiper>
+<div class="wallet-container min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-[#020617] text-white relative overflow-hidden font-sans">
 
-      <div class="mt-5 text-center">
-        <button @click="swapRight" class="px-4 py-2 bg-blue-600 text-white rounded-md shadow">우측 스와이프 매도</button>
-      </div>
+<div class="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
 
-      <div class="mt-6 grid grid-cols-2 gap-3 text-xs">
-        <div class="p-3 bg-white border rounded-lg shadow-sm">
-          <p class="font-semibold">풀에 남은 종목</p>
-          <p>{{ pool.length }}개</p>
-        </div>
-        <div class="p-3 bg-white border rounded-lg shadow-sm">
-          <p class="font-semibold">현재 지갑 보유</p>
-          <p>{{ cards.length }}개</p>
-        </div>
-      </div>
-    </div>
-  </section>
+<div class="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-[#4a2e1e]/10 rounded-full blur-[140px]"></div>
+
+<div class="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[140px]"></div>
+
+</div>
+
+
+
+<div class="flex flex-col items-center justify-center h-[70vh] animate-fade-in relative z-10">
+
+<h2 class="text-3xl font-black italic tracking-tighter text-white uppercase">
+
+{{ user.name }}'s Dashboard
+
+</h2>
+
+<div class="h-1 w-12 bg-[#d9b9a9] mt-3 opacity-50"></div>
+
+<p class="mt-4 text-[#c9a999] tracking-widest uppercase text-xs">Protector System Active</p>
+
+</div>
+
+
+
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-32 bg-[#4a2e1e] rounded-t-[3.5rem] shadow-[0_-30px_60px_rgba(0,0,0,0.8)] z-40 border-t border-white/10">
+
+<div class="absolute inset-0 opacity-60 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')] rounded-t-[3.5rem]"></div>
+
+<div class="absolute inset-4 border-2 border-dashed border-white/5 rounded-t-[2.5rem] pointer-events-none"></div>
+
+
+<div class="flex justify-center items-end gap-6 px-10 h-full pb-8">
+
+<div class="menu-card active w-32 h-44 bg-gradient-to-br from-slate-800 to-black rounded-xl border border-white/10 shadow-2xl cursor-pointer flex items-center justify-center">
+
+<span class="text-[10px] font-black tracking-widest text-[#d9b9a9]">USER ID</span>
+
+</div>
+
+<div @click="$emit('toggle-portfolio')" class="menu-card w-32 h-44 bg-gradient-to-br from-slate-900 to-[#1e293b] rounded-xl border border-white/10 shadow-2xl cursor-pointer flex items-center justify-center">
+
+<span class="text-[10px] font-black tracking-widest text-[#d9b9a9]">PORTFOLIO</span>
+
+</div>
+
+<div class="menu-card w-32 h-44 bg-gradient-to-br from-slate-900 to-[#1e293b] rounded-xl border border-white/10 shadow-2xl cursor-pointer flex items-center justify-center">
+
+<span class="text-[10px] font-black tracking-widest text-[#d9b9a9]">ANALYTICS</span>
+
+</div>
+
+<div class="menu-card w-32 h-44 bg-gradient-to-br from-slate-900 to-[#1e293b] rounded-xl border border-white/10 shadow-2xl cursor-pointer flex items-center justify-center">
+
+<span class="text-[10px] font-black tracking-widest text-[#d9b9a9]">SETTINGS</span>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 </template>
 
+
+
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Swiper, SwiperSlide } from 'swiper/vue';
-import { EffectCards } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/effect-cards';
 
-import InvestmentCard from './InvestmentCard.vue';
+const props = defineProps({
 
-const cards = ref(Array.from({ length: 20 }, (_, i) => ({
-  id: i + 1,
-  name: ['삼성전자', '카카오', 'LG에너지', 'NAVER', '현대차', '셀트리온', 'SK하이닉스', '삼성SDI', '카카오뱅크', '네이버', '롯데케미칼', '네이버', 'LG화학', '포스코', '현대모비스', '기아', '엔씨소프트', '카카오페이', 'SK텔레콤', 'LG전자'][i % 20],
-  price: Math.round(30000 + Math.random() * 200000),
-  score: Math.round(40 + Math.random() * 60),
-  isRisk: Math.random() > 0.7,
-}))); 
+isOpen: { type: Boolean, required: true },
 
-const pool = ref(Array.from({ length: 20 }, (_, i) => ({
-  id: 100 + i + 1,
-  name: ['KB금융', '현대제철', 'LG생활건강', 'CJ제일제당', '넷마블', '셀트리온헬스케어', '삼성바이오', '두산퓨얼셀', '대한항공', '아모레퍼시픽', '한미약품', '금호석유', '삼성에스디에스', 'SK이노베이션', '현대글로비스', '에코프로', '영원무역', 'CJ대한통운', '한온시스템', '카카오게임즈'][i % 20],
-  price: Math.round(20000 + Math.random() * 180000),
-  score: Math.round(35 + Math.random() * 65),
-  isRisk: Math.random() > 0.6,
-})));
+user: { type: Object as () => { name: string; profile: string; assets: string }, required: true },
 
-const activeSwiper = ref<any>(null);
-const lastIndex = ref(0);
+showPortfolio: { type: Boolean, required: true },
 
-const onSwiper = (swiper: any) => {
-  activeSwiper.value = swiper;
-  lastIndex.value = swiper.activeIndex;
-};
+});
 
-const onSlideChange = (swiper: any) => {
-  if (swiper.activeIndex > lastIndex.value) {
-    onSwap('right');
-  } else if (swiper.activeIndex < lastIndex.value) {
-    onSwap('left');
-  }
-  lastIndex.value = swiper.activeIndex;
-};
 
-const swapRight = () => {
-  onSwap('right');
-};
 
-const onSwap = (direction: 'left' | 'right') => {
-  if (direction !== 'right') return;
+defineEmits(['toggle-wallet', 'toggle-portfolio']);
 
-  if (!cards.value.length) return;
-
-  // 현재 카드 매도 처리
-  cards.value.shift();
-
-  // 풀에서 한 종목 추가
-  if (pool.value.length) {
-    const nextStock = pool.value.shift();
-    if (nextStock) {
-      cards.value.push(nextStock);
-    }
-  }
-};
 </script>
 
+
+
 <style scoped>
-.card-wallet { min-height: calc(100vh - 2rem); }
-.my-swiper .swiper-slide { display: flex; justify-content: center; align-items: center; }
+
+/* @apply 대신 순수 CSS 전환 효과만 남김 */
+
+.menu-card {
+
+transform: translateY(110px); /* 평소엔 지갑 깊숙이 꽂혀 있음 */
+
+transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+
+
+
+.menu-card:hover {
+
+transform: translateY(0px); /* 마우스 올리면 슥 올라옴 */
+
+border-color: rgba(217, 185, 169, 0.4);
+
+}
+
+
+
+.menu-card.active {
+
+transform: translateY(-20px); /* 활성화된 카드는 위로 툭 튀어나옴 */
+
+border-color: rgba(217, 185, 169, 0.6);
+
+box-shadow: 0 0 30px rgba(0,0,0,0.8), 0 0 20px rgba(217, 185, 169, 0.1);
+
+}
+
+
+
+@keyframes fadeIn {
+
+from { opacity: 0; transform: translateY(10px); }
+
+to { opacity: 1; transform: translateY(0); }
+
+}
+
+
+
+.animate-fade-in {
+
+animation: fadeIn 1s ease-out forwards;
+
+}
+
 </style>
