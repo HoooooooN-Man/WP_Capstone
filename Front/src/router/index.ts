@@ -3,7 +3,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 // 다른 사람이 작성한 HomeView 임포트 (경로 확인 필요)
-import HomeView from '../views/HomeView.vue'; 
+import HomeView from '@/page/main/HomeView.vue'; 
 
 const routes: Array<RouteRecordRaw> = [
   { 
@@ -51,7 +51,13 @@ const routes: Array<RouteRecordRaw> = [
   { 
     path: '/', 
     redirect: '/home' 
-  }
+  },
+
+  {
+    path: '/test',
+    name: 'test',
+    component: () => import('../page/main/test.vue'),
+  },
 ];
 
 const router = createRouter({

@@ -85,7 +85,7 @@ def process_stream():
                     response = requests.post(DB_SERVER_URL, json=batch_data, timeout=15)
                     
                     if response.status_code == 200:
-                        rd.xack("news:batch_ready", "writer-group", message_id)
+                        rd.xack("news:batch_ready", "finbert-ingest-group", message_id)
                         print(f"[OK] 배치 {message_id} 최종 완료 및 ACK 전송")
                     else:
                         print(f"[ERR] DB 서버 전송 실패 (Status: {response.status_code})")

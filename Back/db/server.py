@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from api.auth.auth import router as auth_router  # auth 폴더 안의 auth.py에서 router 가져오기
 from api.socket.internal_router import router as internal_router  # socket 폴더 안의 internal_router.py에서 router 가져오기 
+from api.news.newsranking import router as news_router  # news 폴더 안의 newsranking.py에서 router 가져오기
 import uvicorn
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +19,7 @@ app.add_middleware(
 # 라우터 등록
 app.include_router(auth_router)
 app.include_router(internal_router)
+app.include_router(news_router)
 
 @app.get("/")
 def root():
