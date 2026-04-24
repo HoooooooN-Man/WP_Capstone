@@ -1,0 +1,1612 @@
+{
+  "index_name": "KOSPI200",
+  "as_of_date": "2026-03-27",
+  "source": {
+    "constituents": "KRX Data Marketplace / pykrx-derived daily snapshot",
+    "manifest_as_of": "20260327",
+    "updated_at": "2026-03-29 23:36:01"
+  },
+  "company_count": 200,
+  "companies": [
+    {
+      "ticker": "000080",
+      "company_name_ko": "하이트진로",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000100",
+      "company_name_ko": "유한양행",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000120",
+      "company_name_ko": "CJ대한통운",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000150",
+      "company_name_ko": "두산",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000210",
+      "company_name_ko": "DL",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000240",
+      "company_name_ko": "한국앤컴퍼니",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000270",
+      "company_name_ko": "기아",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000660",
+      "company_name_ko": "SK하이닉스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000670",
+      "company_name_ko": "영풍",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000720",
+      "company_name_ko": "현대건설",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000810",
+      "company_name_ko": "삼성화재",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "000880",
+      "company_name_ko": "한화",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "001040",
+      "company_name_ko": "CJ",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "001430",
+      "company_name_ko": "세아베스틸지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "001440",
+      "company_name_ko": "대한전선",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "001450",
+      "company_name_ko": "현대해상",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "001680",
+      "company_name_ko": "대상",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "001800",
+      "company_name_ko": "오리온홀딩스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "002030",
+      "company_name_ko": "아세아",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "002380",
+      "company_name_ko": "KCC",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "002790",
+      "company_name_ko": "아모레퍼시픽홀딩스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "002840",
+      "company_name_ko": "미원상사",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "003030",
+      "company_name_ko": "세아제강지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "003090",
+      "company_name_ko": "대웅",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "003230",
+      "company_name_ko": "삼양식품",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "003240",
+      "company_name_ko": "태광산업",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "003490",
+      "company_name_ko": "대한항공",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "003550",
+      "company_name_ko": "LG",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "003670",
+      "company_name_ko": "포스코퓨처엠",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "004000",
+      "company_name_ko": "롯데정밀화학",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "004020",
+      "company_name_ko": "현대제철",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "004170",
+      "company_name_ko": "신세계",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "004370",
+      "company_name_ko": "농심",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "004490",
+      "company_name_ko": "세방전지",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "004990",
+      "company_name_ko": "롯데지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "005250",
+      "company_name_ko": "녹십자홀딩스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "005300",
+      "company_name_ko": "롯데칠성",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "005380",
+      "company_name_ko": "현대차",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "005420",
+      "company_name_ko": "코스모화학",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "005490",
+      "company_name_ko": "POSCO홀딩스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "005830",
+      "company_name_ko": "DB손해보험",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "005850",
+      "company_name_ko": "에스엘",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "005930",
+      "company_name_ko": "삼성전자",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "005940",
+      "company_name_ko": "NH투자증권",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "006040",
+      "company_name_ko": "동원산업",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "006260",
+      "company_name_ko": "LS",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "006280",
+      "company_name_ko": "녹십자",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "006360",
+      "company_name_ko": "GS건설",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "006400",
+      "company_name_ko": "삼성SDI",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "006650",
+      "company_name_ko": "대한유화",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "006800",
+      "company_name_ko": "미래에셋증권",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "007070",
+      "company_name_ko": "GS리테일",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "007310",
+      "company_name_ko": "오뚜기",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "007340",
+      "company_name_ko": "DN오토모티브",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "007660",
+      "company_name_ko": "이수페타시스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "008730",
+      "company_name_ko": "율촌화학",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "008770",
+      "company_name_ko": "호텔신라",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "008930",
+      "company_name_ko": "한미사이언스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "009150",
+      "company_name_ko": "삼성전기",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "009240",
+      "company_name_ko": "한샘",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "009420",
+      "company_name_ko": "한올바이오파마",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "009540",
+      "company_name_ko": "HD한국조선해양",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "009830",
+      "company_name_ko": "한화솔루션",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "009970",
+      "company_name_ko": "영원무역홀딩스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "010060",
+      "company_name_ko": "OCI홀딩스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "010120",
+      "company_name_ko": "LS ELECTRIC",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "010130",
+      "company_name_ko": "고려아연",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "010140",
+      "company_name_ko": "삼성중공업",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "010950",
+      "company_name_ko": "S-Oil",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "011070",
+      "company_name_ko": "LG이노텍",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "011170",
+      "company_name_ko": "롯데케미칼",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "011200",
+      "company_name_ko": "HMM",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "011210",
+      "company_name_ko": "현대위아",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "011780",
+      "company_name_ko": "금호석유화학",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "011790",
+      "company_name_ko": "SKC",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "012330",
+      "company_name_ko": "현대모비스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "012450",
+      "company_name_ko": "한화에어로스페이스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "0126Z0",
+      "company_name_ko": "삼성에피스홀딩스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "012750",
+      "company_name_ko": "에스원",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "014680",
+      "company_name_ko": "한솔케미칼",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "014820",
+      "company_name_ko": "동원시스템즈",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "015760",
+      "company_name_ko": "한국전력",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "016360",
+      "company_name_ko": "삼성증권",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "017670",
+      "company_name_ko": "SK텔레콤",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "017800",
+      "company_name_ko": "현대엘리베이터",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "017960",
+      "company_name_ko": "한국카본",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "018260",
+      "company_name_ko": "삼성에스디에스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "018880",
+      "company_name_ko": "한온시스템",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "021240",
+      "company_name_ko": "코웨이",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "022100",
+      "company_name_ko": "포스코DX",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "023530",
+      "company_name_ko": "롯데쇼핑",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "024110",
+      "company_name_ko": "기업은행",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "026960",
+      "company_name_ko": "동서",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "028050",
+      "company_name_ko": "삼성E&A",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "028260",
+      "company_name_ko": "삼성물산",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "028670",
+      "company_name_ko": "팬오션",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "029780",
+      "company_name_ko": "삼성카드",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "030000",
+      "company_name_ko": "제일기획",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "030200",
+      "company_name_ko": "KT",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "032640",
+      "company_name_ko": "LG유플러스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "032830",
+      "company_name_ko": "삼성생명",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "033780",
+      "company_name_ko": "KT&G",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "034020",
+      "company_name_ko": "두산에너빌리티",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "034220",
+      "company_name_ko": "LG디스플레이",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "034230",
+      "company_name_ko": "파라다이스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "034730",
+      "company_name_ko": "SK",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "035250",
+      "company_name_ko": "강원랜드",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "035420",
+      "company_name_ko": "NAVER",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "035720",
+      "company_name_ko": "카카오",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "036460",
+      "company_name_ko": "한국가스공사",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "036570",
+      "company_name_ko": "엔씨소프트",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "039490",
+      "company_name_ko": "키움증권",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "042660",
+      "company_name_ko": "한화오션",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "042700",
+      "company_name_ko": "한미반도체",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "047040",
+      "company_name_ko": "대우건설",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "047050",
+      "company_name_ko": "포스코인터내셔널",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "047810",
+      "company_name_ko": "한국항공우주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "051600",
+      "company_name_ko": "한전KPS",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "051900",
+      "company_name_ko": "LG생활건강",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "051910",
+      "company_name_ko": "LG화학",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "052690",
+      "company_name_ko": "한전기술",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "055550",
+      "company_name_ko": "신한지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "062040",
+      "company_name_ko": "산일전기",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "064350",
+      "company_name_ko": "현대로템",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "064400",
+      "company_name_ko": "LG씨엔에스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "066570",
+      "company_name_ko": "LG전자",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "066970",
+      "company_name_ko": "엘앤에프",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "068270",
+      "company_name_ko": "셀트리온",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "069260",
+      "company_name_ko": "TKG휴켐스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "069620",
+      "company_name_ko": "대웅제약",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "069960",
+      "company_name_ko": "현대백화점",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "071050",
+      "company_name_ko": "한국금융지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "071320",
+      "company_name_ko": "지역난방공사",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "071970",
+      "company_name_ko": "HD현대마린엔진",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "073240",
+      "company_name_ko": "금호타이어",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "078930",
+      "company_name_ko": "GS",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "079550",
+      "company_name_ko": "LIG넥스원",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "081660",
+      "company_name_ko": "미스토홀딩스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "082740",
+      "company_name_ko": "한화엔진",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "086280",
+      "company_name_ko": "현대글로비스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "086790",
+      "company_name_ko": "하나금융지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "088350",
+      "company_name_ko": "한화생명",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "090430",
+      "company_name_ko": "아모레퍼시픽",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "093370",
+      "company_name_ko": "후성",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "096770",
+      "company_name_ko": "SK이노베이션",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "097950",
+      "company_name_ko": "CJ제일제당",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "103140",
+      "company_name_ko": "풍산",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "105560",
+      "company_name_ko": "KB금융",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "111770",
+      "company_name_ko": "영원무역",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "112610",
+      "company_name_ko": "씨에스윈드",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "114090",
+      "company_name_ko": "GKL",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "120110",
+      "company_name_ko": "코오롱인더",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "128940",
+      "company_name_ko": "한미약품",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "137310",
+      "company_name_ko": "에스디바이오센서",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "138040",
+      "company_name_ko": "메리츠금융지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "138930",
+      "company_name_ko": "BNK금융지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "139130",
+      "company_name_ko": "iM금융지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "139480",
+      "company_name_ko": "이마트",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "161390",
+      "company_name_ko": "한국타이어앤테크놀로지",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "161890",
+      "company_name_ko": "한국콜마",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "175330",
+      "company_name_ko": "JB금융지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "180640",
+      "company_name_ko": "한진칼",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "185750",
+      "company_name_ko": "종근당",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "192080",
+      "company_name_ko": "더블유게임즈",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "192820",
+      "company_name_ko": "코스맥스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "204320",
+      "company_name_ko": "HL만도",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "207940",
+      "company_name_ko": "삼성바이오로직스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "241560",
+      "company_name_ko": "두산밥캣",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "251270",
+      "company_name_ko": "넷마블",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "259960",
+      "company_name_ko": "크래프톤",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "267250",
+      "company_name_ko": "HD현대",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "267260",
+      "company_name_ko": "HD현대일렉트릭",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "268280",
+      "company_name_ko": "미원에스씨",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "271560",
+      "company_name_ko": "오리온",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "272210",
+      "company_name_ko": "한화시스템",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "278470",
+      "company_name_ko": "에이피알",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "280360",
+      "company_name_ko": "롯데웰푸드",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "282330",
+      "company_name_ko": "BGF리테일",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "285130",
+      "company_name_ko": "SK케미칼",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "298020",
+      "company_name_ko": "효성티앤씨",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "298040",
+      "company_name_ko": "효성중공업",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "298050",
+      "company_name_ko": "HS효성첨단소재",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "300720",
+      "company_name_ko": "한일시멘트",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "302440",
+      "company_name_ko": "SK바이오사이언스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "307950",
+      "company_name_ko": "현대오토에버",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "316140",
+      "company_name_ko": "우리금융지주",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "323410",
+      "company_name_ko": "카카오뱅크",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "326030",
+      "company_name_ko": "SK바이오팜",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "329180",
+      "company_name_ko": "HD현대중공업",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "352820",
+      "company_name_ko": "하이브",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "361610",
+      "company_name_ko": "SK아이이테크놀로지",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "373220",
+      "company_name_ko": "LG에너지솔루션",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "375500",
+      "company_name_ko": "DL이앤씨",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "377300",
+      "company_name_ko": "카카오페이",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "383220",
+      "company_name_ko": "F&F",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "402340",
+      "company_name_ko": "SK스퀘어",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "443060",
+      "company_name_ko": "HD현대마린솔루션",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "450080",
+      "company_name_ko": "에코프로머티",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "454910",
+      "company_name_ko": "두산로보틱스",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    },
+    {
+      "ticker": "457190",
+      "company_name_ko": "이수스페셜티케미컬",
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "source": "krx_data_marketplace"
+    }
+  ]
+}

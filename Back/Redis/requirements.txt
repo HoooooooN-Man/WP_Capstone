@@ -1,0 +1,6 @@
+b==1.0.0
+python-dotenv==1.2.2
+redis==7.4.0
+Requests==2.33.1
+torch==2.11.0
+transformers==5.5.0

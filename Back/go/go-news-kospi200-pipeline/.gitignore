@@ -1,0 +1,4 @@
+.env
+spool/
+*.duckdb
+*.log

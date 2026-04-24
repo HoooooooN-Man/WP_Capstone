@@ -1,0 +1,85 @@
+{
+  "index_name": "KOSPI200",
+  "as_of_date": "2026-03-29",
+  "source": {
+    "constituents": "KRX Data Marketplace > 지수구성종목",
+    "notices": "KRX Data Marketplace > 주가지수 공지"
+  },
+  "retention_policy": {
+    "daily_archive_days": 30,
+    "monthly_snapshot": true
+  },
+  "notes": "운영 전 실제 KOSPI200 200종목으로 교체 필요. 현재는 템플릿+샘플 데이터.",
+  "companies": [
+    {
+      "ticker": "005930",
+      "company_name_ko": "삼성전자",
+      "company_name_en": "Samsung Electronics",
+      "aliases": [
+        "삼성전자",
+        "Samsung Electronics",
+        "005930"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성전자",
+        "Samsung Electronics",
+        "삼성전자 반도체",
+        "삼성전자 실적"
+      ],
+      "market": "KOSPI",
+      "sector": "IT",
+      "is_active": true,
+      "match_priority": 100,
+      "notes": "대표 종목, 기사량 많음"
+    },
+    {
+      "ticker": "000660",
+      "company_name_ko": "SK하이닉스",
+      "company_name_en": "SK hynix",
+      "aliases": [
+        "SK하이닉스",
+        "SK hynix",
+        "000660"
+      ],
+      "negative_aliases": [
+        "SK"
+      ],
+      "search_queries": [
+        "SK하이닉스",
+        "SK hynix",
+        "SK하이닉스 HBM",
+        "SK하이닉스 실적"
+      ],
+      "market": "KOSPI",
+      "sector": "IT",
+      "is_active": true,
+      "match_priority": 100,
+      "notes": "SK 단독 매칭 금지"
+    },
+    {
+      "ticker": "005380",
+      "company_name_ko": "현대차",
+      "company_name_en": "Hyundai Motor",
+      "aliases": [
+        "현대차",
+        "Hyundai Motor",
+        "005380"
+      ],
+      "negative_aliases": [
+        "현대"
+      ],
+      "search_queries": [
+        "현대차",
+        "Hyundai Motor",
+        "현대차 미국 판매",
+        "현대차 전기차"
+      ],
+      "market": "KOSPI",
+      "sector": "자동차",
+      "is_active": true,
+      "match_priority": 95,
+      "notes": "현대 단독 매칭 금지"
+    }
+  ]
+}

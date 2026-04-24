@@ -1,0 +1,38 @@
+services:
+  redis-auth:
+    image: redis:7.4
+    container_name: redis-auth
+    command:
+      [
+        "redis-server",
+        "/usr/local/etc/redis/redis.conf",
+        "--requirepass",
+        "${REDIS_AUTH_PASSWORD}"
+      ]
+    ports:
+      - "100.67.30.5:6379:6379"
+    volumes:
+      - ./auth/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - redis_auth_data:/data
+    restart: unless-stopped
+
+  redis-queue:
+    image: redis:7.4
+    container_name: redis-queue
+    command:
+      [
+        "redis-server",
+        "/usr/local/etc/redis/redis.conf",
+        "--requirepass",
+        "${REDIS_QUEUE_PASSWORD}"
+      ]
+    ports:
+      - "100.67.30.5:6380:6379"
+    volumes:
+      - ./queue/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - redis_queue_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_auth_data:
+  redis_queue_data:

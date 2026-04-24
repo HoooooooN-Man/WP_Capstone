@@ -1,0 +1,38 @@
+# Front
+Front/node_modules/
+Front/dist/
+
+# Back
+Back/.venv/
+Back/**/__pycache__/
+Back/__pycache__/
+Back/.env
+Back/**/.env
+Back/*.pyc
+Back/Redis/.env
+Back/go/go-news-kospi200-pipeline/configs/.env
+Back/go/kospi200_auto_collect_dailly/.env
+Back/go/go-news-kospi200-pipeline/reports/
+Back/go/go-news-kospi200-pipeline/bin/
+Back/go/go-news-kospi200-pipeline/spool/
+Back/go/go-news-kospi200-pipeline/logs/
+Back/go/go-news-kospi200-pipeline/spool/**/*.json
+Back/go/go-news-kospi200-pipeline/spool/**/*.tmp
+Back/go/go-news-kospi200-pipeline/.venv/
+*.exe
+*.out
+
+# Learning
+Learning/.venv/
+Learning/__pycache__/
+Learning/*.pyc
+Learning/.ipynb_checkpoints/
+
+# General
+.vscode/
+.idea/
+.DS_Store
+*.duckdb
+*.db
+*.venv
+__pycache__/**

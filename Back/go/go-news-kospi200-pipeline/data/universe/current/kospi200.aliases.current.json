@@ -1,0 +1,4088 @@
+{
+  "index_name": "KOSPI200",
+  "as_of_date": "2026-03-30",
+  "source": {
+    "constituents": "KRX Data Marketplace / pykrx-derived daily snapshot",
+    "manifest_as_of": "20260327",
+    "updated_at": "2026-03-29 23:36:01"
+  },
+  "retention_policy": {
+    "daily_archive_days": 30,
+    "monthly_snapshot": true
+  },
+  "notes": "batch 검수 반영본(v2). 짧은 영문 토큰 오탐 억제, 실무형 alias 추가, macro query 분리/30일 필터는 코드 패치와 함께 적용.",
+  "company_count": 200,
+  "companies": [
+    {
+      "ticker": "000080",
+      "company_name_ko": "하이트진로",
+      "company_name_en": "",
+      "aliases": [
+        "하이트진로",
+        "000080"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "하이트진로",
+        "하이트진로 실적",
+        "하이트진로 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "000100",
+      "company_name_ko": "유한양행",
+      "company_name_en": "",
+      "aliases": [
+        "유한양행",
+        "000100"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "유한양행",
+        "유한양행 실적",
+        "유한양행 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "000120",
+      "company_name_ko": "CJ대한통운",
+      "company_name_en": "",
+      "aliases": [
+        "CJ대한통운",
+        "000120"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "CJ대한통운",
+        "CJ대한통운 실적",
+        "CJ대한통운 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "000150",
+      "company_name_ko": "두산",
+      "company_name_en": "",
+      "aliases": [
+        "두산",
+        "000150"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "두산",
+        "두산 실적",
+        "두산 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "그룹명/계열사와 충돌 가능, exact full name 우선 규칙 권장"
+    },
+    {
+      "ticker": "000210",
+      "company_name_ko": "DL",
+      "company_name_en": "",
+      "aliases": [
+        "000210"
+      ],
+      "negative_aliases": [
+        "DL"
+      ],
+      "search_queries": [
+        "DL",
+        "DL 실적",
+        "DL 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "000240",
+      "company_name_ko": "한국앤컴퍼니",
+      "company_name_en": "",
+      "aliases": [
+        "한국앤컴퍼니",
+        "000240"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한국앤컴퍼니",
+        "한국앤컴퍼니 실적",
+        "한국앤컴퍼니 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "000270",
+      "company_name_ko": "기아",
+      "company_name_en": "Kia Corporation",
+      "aliases": [
+        "기아",
+        "기아차",
+        "Kia Corporation",
+        "Kia Motors",
+        "000270"
+      ],
+      "negative_aliases": [
+        "KIA 타이거즈",
+        "KIA타이거즈",
+        "개막 시리즈",
+        "기아 타이거즈",
+        "기아대책",
+        "긴급구호",
+        "마운드",
+        "미얀마 지진",
+        "불펜",
+        "선발",
+        "챔피언스 필드",
+        "챔피언스필드",
+        "타선",
+        "희망친구 기아대책"
+      ],
+      "search_queries": [
+        "기아",
+        "기아차",
+        "Kia",
+        "Kia Corporation",
+        "기아 실적",
+        "기아 주가",
+        "기아 EV"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 90,
+      "notes": "기아대책/야구(KIA 타이거즈) 오탐 방지, 영문 alias는 Kia Corporation/Kia Motors 중심으로 제한"
+    },
+    {
+      "ticker": "000660",
+      "company_name_ko": "SK하이닉스",
+      "company_name_en": "SK hynix",
+      "aliases": [
+        "SK하이닉스",
+        "SK hynix",
+        "000660"
+      ],
+      "negative_aliases": [
+        "SK"
+      ],
+      "search_queries": [
+        "SK하이닉스",
+        "SK hynix",
+        "SK하이닉스 실적",
+        "SK하이닉스 주가",
+        "SK하이닉스 HBM",
+        "하이닉스 HBM"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 100,
+      "notes": "실무형 별칭 보강"
+    },
+    {
+      "ticker": "000670",
+      "company_name_ko": "영풍",
+      "company_name_en": "",
+      "aliases": [
+        "영풍",
+        "000670"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "영풍",
+        "영풍 실적",
+        "영풍 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "000720",
+      "company_name_ko": "현대건설",
+      "company_name_en": "",
+      "aliases": [
+        "현대건설",
+        "000720"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "현대건설",
+        "현대건설 실적",
+        "현대건설 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "000810",
+      "company_name_ko": "삼성화재",
+      "company_name_en": "",
+      "aliases": [
+        "삼성화재",
+        "000810"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성화재",
+        "삼성화재 실적",
+        "삼성화재 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "000880",
+      "company_name_ko": "한화",
+      "company_name_en": "",
+      "aliases": [
+        "한화",
+        "000880"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한화",
+        "한화 실적",
+        "한화 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "그룹명/계열사와 충돌 가능, exact full name 우선 규칙 권장"
+    },
+    {
+      "ticker": "001040",
+      "company_name_ko": "CJ",
+      "company_name_en": "",
+      "aliases": [
+        "001040"
+      ],
+      "negative_aliases": [
+        "CJ"
+      ],
+      "search_queries": [
+        "CJ",
+        "CJ 실적",
+        "CJ 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 토큰으로 오탐 가능성이 높아 exact full name 우선 규칙 권장 짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "001430",
+      "company_name_ko": "세아베스틸지주",
+      "company_name_en": "",
+      "aliases": [
+        "세아베스틸지주",
+        "001430"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "세아베스틸지주",
+        "세아베스틸지주 실적",
+        "세아베스틸지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "001440",
+      "company_name_ko": "대한전선",
+      "company_name_en": "",
+      "aliases": [
+        "대한전선",
+        "001440"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "대한전선",
+        "대한전선 실적",
+        "대한전선 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "001450",
+      "company_name_ko": "현대해상",
+      "company_name_en": "",
+      "aliases": [
+        "현대해상",
+        "001450"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "현대해상",
+        "현대해상 실적",
+        "현대해상 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "001680",
+      "company_name_ko": "대상",
+      "company_name_en": "",
+      "aliases": [
+        "대상",
+        "001680"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "대상",
+        "대상 실적",
+        "대상 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "001800",
+      "company_name_ko": "오리온홀딩스",
+      "company_name_en": "",
+      "aliases": [
+        "오리온홀딩스",
+        "001800"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "오리온홀딩스",
+        "오리온홀딩스 실적",
+        "오리온홀딩스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "002030",
+      "company_name_ko": "아세아",
+      "company_name_en": "",
+      "aliases": [
+        "아세아",
+        "002030"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "아세아",
+        "아세아 실적",
+        "아세아 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "002380",
+      "company_name_ko": "KCC",
+      "company_name_en": "",
+      "aliases": [
+        "002380"
+      ],
+      "negative_aliases": [
+        "KCC"
+      ],
+      "search_queries": [
+        "KCC",
+        "KCC 실적",
+        "KCC 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "002790",
+      "company_name_ko": "아모레퍼시픽홀딩스",
+      "company_name_en": "",
+      "aliases": [
+        "아모레퍼시픽홀딩스",
+        "002790"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "아모레퍼시픽홀딩스",
+        "아모레퍼시픽홀딩스 실적",
+        "아모레퍼시픽홀딩스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "002840",
+      "company_name_ko": "미원상사",
+      "company_name_en": "",
+      "aliases": [
+        "미원상사",
+        "002840"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "미원상사",
+        "미원상사 실적",
+        "미원상사 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "003030",
+      "company_name_ko": "세아제강지주",
+      "company_name_en": "",
+      "aliases": [
+        "세아제강지주",
+        "003030"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "세아제강지주",
+        "세아제강지주 실적",
+        "세아제강지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "003090",
+      "company_name_ko": "대웅",
+      "company_name_en": "",
+      "aliases": [
+        "대웅",
+        "003090"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "대웅",
+        "대웅 실적",
+        "대웅 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "003230",
+      "company_name_ko": "삼양식품",
+      "company_name_en": "",
+      "aliases": [
+        "삼양식품",
+        "003230"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼양식품",
+        "삼양식품 실적",
+        "삼양식품 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "003240",
+      "company_name_ko": "태광산업",
+      "company_name_en": "",
+      "aliases": [
+        "태광산업",
+        "003240"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "태광산업",
+        "태광산업 실적",
+        "태광산업 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "003490",
+      "company_name_ko": "대한항공",
+      "company_name_en": "",
+      "aliases": [
+        "대한항공",
+        "003490"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "대한항공",
+        "대한항공 실적",
+        "대한항공 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "003550",
+      "company_name_ko": "LG",
+      "company_name_en": "",
+      "aliases": [
+        "003550"
+      ],
+      "negative_aliases": [
+        "LG"
+      ],
+      "search_queries": [
+        "LG",
+        "LG 실적",
+        "LG 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 토큰으로 오탐 가능성이 높아 exact full name 우선 규칙 권장 짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "003670",
+      "company_name_ko": "포스코퓨처엠",
+      "company_name_en": "",
+      "aliases": [
+        "포스코퓨처엠",
+        "003670"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "포스코퓨처엠",
+        "포스코퓨처엠 실적",
+        "포스코퓨처엠 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "004000",
+      "company_name_ko": "롯데정밀화학",
+      "company_name_en": "",
+      "aliases": [
+        "롯데정밀화학",
+        "004000"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "롯데정밀화학",
+        "롯데정밀화학 실적",
+        "롯데정밀화학 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "004020",
+      "company_name_ko": "현대제철",
+      "company_name_en": "",
+      "aliases": [
+        "현대제철",
+        "004020"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "현대제철",
+        "현대제철 실적",
+        "현대제철 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "004170",
+      "company_name_ko": "신세계",
+      "company_name_en": "",
+      "aliases": [
+        "신세계",
+        "004170"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "신세계",
+        "신세계 실적",
+        "신세계 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "004370",
+      "company_name_ko": "농심",
+      "company_name_en": "",
+      "aliases": [
+        "농심",
+        "004370"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "농심",
+        "농심 실적",
+        "농심 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "004490",
+      "company_name_ko": "세방전지",
+      "company_name_en": "",
+      "aliases": [
+        "세방전지",
+        "004490"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "세방전지",
+        "세방전지 실적",
+        "세방전지 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "004990",
+      "company_name_ko": "롯데지주",
+      "company_name_en": "",
+      "aliases": [
+        "롯데지주",
+        "004990"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "롯데지주",
+        "롯데지주 실적",
+        "롯데지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "005250",
+      "company_name_ko": "녹십자홀딩스",
+      "company_name_en": "",
+      "aliases": [
+        "녹십자홀딩스",
+        "005250"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "녹십자홀딩스",
+        "녹십자홀딩스 실적",
+        "녹십자홀딩스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "005300",
+      "company_name_ko": "롯데칠성",
+      "company_name_en": "",
+      "aliases": [
+        "롯데칠성",
+        "005300"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "롯데칠성",
+        "롯데칠성 실적",
+        "롯데칠성 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "005380",
+      "company_name_ko": "현대차",
+      "company_name_en": "Hyundai Motor",
+      "aliases": [
+        "현대차",
+        "현대자동차",
+        "005380"
+      ],
+      "negative_aliases": [
+        "현대"
+      ],
+      "search_queries": [
+        "현대차",
+        "현대자동차",
+        "현대차 실적",
+        "현대차 주가",
+        "현대차 전기차"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 100,
+      "notes": "실무형 별칭 보강"
+    },
+    {
+      "ticker": "005420",
+      "company_name_ko": "코스모화학",
+      "company_name_en": "",
+      "aliases": [
+        "코스모화학",
+        "005420"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "코스모화학",
+        "코스모화학 실적",
+        "코스모화학 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "005490",
+      "company_name_ko": "POSCO홀딩스",
+      "company_name_en": "",
+      "aliases": [
+        "POSCO홀딩스",
+        "005490"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "POSCO홀딩스",
+        "POSCO홀딩스 실적",
+        "POSCO홀딩스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "005830",
+      "company_name_ko": "DB손해보험",
+      "company_name_en": "",
+      "aliases": [
+        "DB손해보험",
+        "005830"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "DB손해보험",
+        "DB손해보험 실적",
+        "DB손해보험 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "005850",
+      "company_name_ko": "에스엘",
+      "company_name_en": "",
+      "aliases": [
+        "에스엘",
+        "005850"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "에스엘",
+        "에스엘 실적",
+        "에스엘 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "005930",
+      "company_name_ko": "삼성전자",
+      "company_name_en": "Samsung Electronics",
+      "aliases": [
+        "삼성전자",
+        "Samsung Electronics",
+        "005930"
+      ],
+      "negative_aliases": [
+        "삼성"
+      ],
+      "search_queries": [
+        "삼성전자",
+        "Samsung Electronics",
+        "삼성전자 실적",
+        "삼성전자 주가",
+        "삼성전자 반도체"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 100,
+      "notes": "실무형 별칭 보강"
+    },
+    {
+      "ticker": "005940",
+      "company_name_ko": "NH투자증권",
+      "company_name_en": "",
+      "aliases": [
+        "NH투자증권",
+        "005940"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "NH투자증권",
+        "NH투자증권 실적",
+        "NH투자증권 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "006040",
+      "company_name_ko": "동원산업",
+      "company_name_en": "",
+      "aliases": [
+        "동원산업",
+        "006040"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "동원산업",
+        "동원산업 실적",
+        "동원산업 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "006260",
+      "company_name_ko": "LS",
+      "company_name_en": "",
+      "aliases": [
+        "006260"
+      ],
+      "negative_aliases": [
+        "LS"
+      ],
+      "search_queries": [
+        "LS",
+        "LS 실적",
+        "LS 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "006280",
+      "company_name_ko": "녹십자",
+      "company_name_en": "",
+      "aliases": [
+        "녹십자",
+        "006280"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "녹십자",
+        "녹십자 실적",
+        "녹십자 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "006360",
+      "company_name_ko": "GS건설",
+      "company_name_en": "",
+      "aliases": [
+        "GS건설",
+        "006360"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "GS건설",
+        "GS건설 실적",
+        "GS건설 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "006400",
+      "company_name_ko": "삼성SDI",
+      "company_name_en": "",
+      "aliases": [
+        "삼성SDI",
+        "006400"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성SDI",
+        "삼성SDI 실적",
+        "삼성SDI 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "006650",
+      "company_name_ko": "대한유화",
+      "company_name_en": "",
+      "aliases": [
+        "대한유화",
+        "006650"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "대한유화",
+        "대한유화 실적",
+        "대한유화 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "006800",
+      "company_name_ko": "미래에셋증권",
+      "company_name_en": "",
+      "aliases": [
+        "미래에셋증권",
+        "006800"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "미래에셋증권",
+        "미래에셋증권 실적",
+        "미래에셋증권 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "007070",
+      "company_name_ko": "GS리테일",
+      "company_name_en": "",
+      "aliases": [
+        "GS리테일",
+        "007070"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "GS리테일",
+        "GS리테일 실적",
+        "GS리테일 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "007310",
+      "company_name_ko": "오뚜기",
+      "company_name_en": "",
+      "aliases": [
+        "오뚜기",
+        "007310"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "오뚜기",
+        "오뚜기 실적",
+        "오뚜기 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "007340",
+      "company_name_ko": "DN오토모티브",
+      "company_name_en": "",
+      "aliases": [
+        "DN오토모티브",
+        "007340"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "DN오토모티브",
+        "DN오토모티브 실적",
+        "DN오토모티브 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "007660",
+      "company_name_ko": "이수페타시스",
+      "company_name_en": "",
+      "aliases": [
+        "이수페타시스",
+        "007660"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "이수페타시스",
+        "이수페타시스 실적",
+        "이수페타시스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "008730",
+      "company_name_ko": "율촌화학",
+      "company_name_en": "",
+      "aliases": [
+        "율촌화학",
+        "008730"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "율촌화학",
+        "율촌화학 실적",
+        "율촌화학 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "008770",
+      "company_name_ko": "호텔신라",
+      "company_name_en": "",
+      "aliases": [
+        "호텔신라",
+        "008770"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "호텔신라",
+        "호텔신라 실적",
+        "호텔신라 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "008930",
+      "company_name_ko": "한미사이언스",
+      "company_name_en": "",
+      "aliases": [
+        "한미사이언스",
+        "008930"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한미사이언스",
+        "한미사이언스 실적",
+        "한미사이언스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "009150",
+      "company_name_ko": "삼성전기",
+      "company_name_en": "",
+      "aliases": [
+        "삼성전기",
+        "009150"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성전기",
+        "삼성전기 실적",
+        "삼성전기 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "009240",
+      "company_name_ko": "한샘",
+      "company_name_en": "",
+      "aliases": [
+        "한샘",
+        "009240"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한샘",
+        "한샘 실적",
+        "한샘 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "009420",
+      "company_name_ko": "한올바이오파마",
+      "company_name_en": "",
+      "aliases": [
+        "한올바이오파마",
+        "009420"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한올바이오파마",
+        "한올바이오파마 실적",
+        "한올바이오파마 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "009540",
+      "company_name_ko": "HD한국조선해양",
+      "company_name_en": "",
+      "aliases": [
+        "HD한국조선해양",
+        "009540"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "HD한국조선해양",
+        "HD한국조선해양 실적",
+        "HD한국조선해양 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "009830",
+      "company_name_ko": "한화솔루션",
+      "company_name_en": "",
+      "aliases": [
+        "한화솔루션",
+        "009830"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한화솔루션",
+        "한화솔루션 실적",
+        "한화솔루션 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "009970",
+      "company_name_ko": "영원무역홀딩스",
+      "company_name_en": "",
+      "aliases": [
+        "영원무역홀딩스",
+        "009970"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "영원무역홀딩스",
+        "영원무역홀딩스 실적",
+        "영원무역홀딩스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "010060",
+      "company_name_ko": "OCI홀딩스",
+      "company_name_en": "",
+      "aliases": [
+        "OCI홀딩스",
+        "010060"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "OCI홀딩스",
+        "OCI홀딩스 실적",
+        "OCI홀딩스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "010120",
+      "company_name_ko": "LS ELECTRIC",
+      "company_name_en": "",
+      "aliases": [
+        "LS ELECTRIC",
+        "010120"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "LS ELECTRIC",
+        "LS ELECTRIC 실적",
+        "LS ELECTRIC 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "010130",
+      "company_name_ko": "고려아연",
+      "company_name_en": "",
+      "aliases": [
+        "고려아연",
+        "010130"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "고려아연",
+        "고려아연 실적",
+        "고려아연 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "010140",
+      "company_name_ko": "삼성중공업",
+      "company_name_en": "",
+      "aliases": [
+        "삼성중공업",
+        "010140"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성중공업",
+        "삼성중공업 실적",
+        "삼성중공업 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "010950",
+      "company_name_ko": "S-Oil",
+      "company_name_en": "",
+      "aliases": [
+        "S-Oil",
+        "010950"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "S-Oil",
+        "S-Oil 실적",
+        "S-Oil 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "011070",
+      "company_name_ko": "LG이노텍",
+      "company_name_en": "",
+      "aliases": [
+        "LG이노텍",
+        "011070"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "LG이노텍",
+        "LG이노텍 실적",
+        "LG이노텍 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "011170",
+      "company_name_ko": "롯데케미칼",
+      "company_name_en": "",
+      "aliases": [
+        "롯데케미칼",
+        "011170"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "롯데케미칼",
+        "롯데케미칼 실적",
+        "롯데케미칼 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "011200",
+      "company_name_ko": "HMM",
+      "company_name_en": "",
+      "aliases": [
+        "011200"
+      ],
+      "negative_aliases": [
+        "HMM"
+      ],
+      "search_queries": [
+        "HMM",
+        "HMM 실적",
+        "HMM 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "011210",
+      "company_name_ko": "현대위아",
+      "company_name_en": "",
+      "aliases": [
+        "현대위아",
+        "011210"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "현대위아",
+        "현대위아 실적",
+        "현대위아 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "011780",
+      "company_name_ko": "금호석유화학",
+      "company_name_en": "",
+      "aliases": [
+        "금호석유화학",
+        "011780"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "금호석유화학",
+        "금호석유화학 실적",
+        "금호석유화학 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "011790",
+      "company_name_ko": "SKC",
+      "company_name_en": "",
+      "aliases": [
+        "011790"
+      ],
+      "negative_aliases": [
+        "SKC"
+      ],
+      "search_queries": [
+        "SKC",
+        "SKC 실적",
+        "SKC 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "012330",
+      "company_name_ko": "현대모비스",
+      "company_name_en": "",
+      "aliases": [
+        "현대모비스",
+        "012330"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "현대모비스",
+        "현대모비스 실적",
+        "현대모비스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "012450",
+      "company_name_ko": "한화에어로스페이스",
+      "company_name_en": "",
+      "aliases": [
+        "한화에어로스페이스",
+        "012450"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한화에어로스페이스",
+        "한화에어로스페이스 실적",
+        "한화에어로스페이스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "0126Z0",
+      "company_name_ko": "삼성에피스홀딩스",
+      "company_name_en": "",
+      "aliases": [
+        "삼성에피스홀딩스",
+        "0126Z0"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성에피스홀딩스",
+        "삼성에피스홀딩스 실적",
+        "삼성에피스홀딩스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "티커 형식 검증 필요"
+    },
+    {
+      "ticker": "012750",
+      "company_name_ko": "에스원",
+      "company_name_en": "",
+      "aliases": [
+        "에스원",
+        "012750"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "에스원",
+        "에스원 실적",
+        "에스원 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "014680",
+      "company_name_ko": "한솔케미칼",
+      "company_name_en": "",
+      "aliases": [
+        "한솔케미칼",
+        "014680"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한솔케미칼",
+        "한솔케미칼 실적",
+        "한솔케미칼 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "014820",
+      "company_name_ko": "동원시스템즈",
+      "company_name_en": "",
+      "aliases": [
+        "동원시스템즈",
+        "014820"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "동원시스템즈",
+        "동원시스템즈 실적",
+        "동원시스템즈 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "015760",
+      "company_name_ko": "한국전력",
+      "company_name_en": "",
+      "aliases": [
+        "한국전력",
+        "015760"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한국전력",
+        "한국전력 실적",
+        "한국전력 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "016360",
+      "company_name_ko": "삼성증권",
+      "company_name_en": "",
+      "aliases": [
+        "삼성증권",
+        "016360"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성증권",
+        "삼성증권 실적",
+        "삼성증권 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "017670",
+      "company_name_ko": "SK텔레콤",
+      "company_name_en": "",
+      "aliases": [
+        "SK텔레콤",
+        "017670"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "SK텔레콤",
+        "SK텔레콤 실적",
+        "SK텔레콤 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "017800",
+      "company_name_ko": "현대엘리베이터",
+      "company_name_en": "",
+      "aliases": [
+        "현대엘리베이터",
+        "017800"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "현대엘리베이터",
+        "현대엘리베이터 실적",
+        "현대엘리베이터 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "017960",
+      "company_name_ko": "한국카본",
+      "company_name_en": "",
+      "aliases": [
+        "한국카본",
+        "017960"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한국카본",
+        "한국카본 실적",
+        "한국카본 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "018260",
+      "company_name_ko": "삼성에스디에스",
+      "company_name_en": "",
+      "aliases": [
+        "삼성에스디에스",
+        "018260"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성에스디에스",
+        "삼성에스디에스 실적",
+        "삼성에스디에스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "018880",
+      "company_name_ko": "한온시스템",
+      "company_name_en": "",
+      "aliases": [
+        "한온시스템",
+        "018880"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한온시스템",
+        "한온시스템 실적",
+        "한온시스템 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "021240",
+      "company_name_ko": "코웨이",
+      "company_name_en": "",
+      "aliases": [
+        "코웨이",
+        "021240"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "코웨이",
+        "코웨이 실적",
+        "코웨이 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "022100",
+      "company_name_ko": "포스코DX",
+      "company_name_en": "",
+      "aliases": [
+        "포스코DX",
+        "022100"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "포스코DX",
+        "포스코DX 실적",
+        "포스코DX 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "023530",
+      "company_name_ko": "롯데쇼핑",
+      "company_name_en": "",
+      "aliases": [
+        "롯데쇼핑",
+        "023530"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "롯데쇼핑",
+        "롯데쇼핑 실적",
+        "롯데쇼핑 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "024110",
+      "company_name_ko": "기업은행",
+      "company_name_en": "",
+      "aliases": [
+        "기업은행",
+        "024110"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "기업은행",
+        "기업은행 실적",
+        "기업은행 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "026960",
+      "company_name_ko": "동서",
+      "company_name_en": "",
+      "aliases": [
+        "동서",
+        "026960"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "동서",
+        "동서 실적",
+        "동서 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "028050",
+      "company_name_ko": "삼성E&A",
+      "company_name_en": "",
+      "aliases": [
+        "삼성E&A",
+        "028050"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성E&A",
+        "삼성E&A 실적",
+        "삼성E&A 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "028260",
+      "company_name_ko": "삼성물산",
+      "company_name_en": "",
+      "aliases": [
+        "삼성물산",
+        "028260"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성물산",
+        "삼성물산 실적",
+        "삼성물산 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "028670",
+      "company_name_ko": "팬오션",
+      "company_name_en": "",
+      "aliases": [
+        "팬오션",
+        "028670"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "팬오션",
+        "팬오션 실적",
+        "팬오션 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "029780",
+      "company_name_ko": "삼성카드",
+      "company_name_en": "",
+      "aliases": [
+        "삼성카드",
+        "029780"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성카드",
+        "삼성카드 실적",
+        "삼성카드 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "030000",
+      "company_name_ko": "제일기획",
+      "company_name_en": "",
+      "aliases": [
+        "제일기획",
+        "030000"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "제일기획",
+        "제일기획 실적",
+        "제일기획 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "030200",
+      "company_name_ko": "KT",
+      "company_name_en": "",
+      "aliases": [
+        "030200"
+      ],
+      "negative_aliases": [
+        "KT"
+      ],
+      "search_queries": [
+        "KT",
+        "KT 실적",
+        "KT 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "032640",
+      "company_name_ko": "LG유플러스",
+      "company_name_en": "",
+      "aliases": [
+        "LG유플러스",
+        "032640"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "LG유플러스",
+        "LG유플러스 실적",
+        "LG유플러스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "032830",
+      "company_name_ko": "삼성생명",
+      "company_name_en": "",
+      "aliases": [
+        "삼성생명",
+        "032830"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "삼성생명",
+        "삼성생명 실적",
+        "삼성생명 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "033780",
+      "company_name_ko": "KT&G",
+      "company_name_en": "",
+      "aliases": [
+        "KT&G",
+        "033780"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "KT&G",
+        "KT&G 실적",
+        "KT&G 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "034020",
+      "company_name_ko": "두산에너빌리티",
+      "company_name_en": "",
+      "aliases": [
+        "두산에너빌리티",
+        "034020"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "두산에너빌리티",
+        "두산에너빌리티 실적",
+        "두산에너빌리티 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "034220",
+      "company_name_ko": "LG디스플레이",
+      "company_name_en": "",
+      "aliases": [
+        "LG디스플레이",
+        "034220"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "LG디스플레이",
+        "LG디스플레이 실적",
+        "LG디스플레이 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "034230",
+      "company_name_ko": "파라다이스",
+      "company_name_en": "",
+      "aliases": [
+        "파라다이스",
+        "034230"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "파라다이스",
+        "파라다이스 실적",
+        "파라다이스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "034730",
+      "company_name_ko": "SK",
+      "company_name_en": "",
+      "aliases": [
+        "034730"
+      ],
+      "negative_aliases": [
+        "SK"
+      ],
+      "search_queries": [
+        "SK",
+        "SK 실적",
+        "SK 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 토큰으로 오탐 가능성이 높아 exact full name 우선 규칙 권장 짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "035250",
+      "company_name_ko": "강원랜드",
+      "company_name_en": "",
+      "aliases": [
+        "강원랜드",
+        "035250"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "강원랜드",
+        "강원랜드 실적",
+        "강원랜드 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "035420",
+      "company_name_ko": "NAVER",
+      "company_name_en": "NAVER",
+      "aliases": [
+        "NAVER",
+        "네이버",
+        "Naver",
+        "035420"
+      ],
+      "negative_aliases": [
+        "Naver Blog",
+        "네이버 블로그"
+      ],
+      "search_queries": [
+        "NAVER",
+        "네이버",
+        "NAVER 실적",
+        "NAVER 주가",
+        "네이버 AI"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 100,
+      "notes": "source_name 오염(Naver Blog/네이버 블로그) 방지용 negative alias 추가"
+    },
+    {
+      "ticker": "035720",
+      "company_name_ko": "카카오",
+      "company_name_en": "Kakao",
+      "aliases": [
+        "카카오",
+        "Kakao",
+        "035720"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "카카오",
+        "Kakao",
+        "카카오 실적",
+        "카카오 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 85,
+      "notes": "한/영 표기 보강"
+    },
+    {
+      "ticker": "036460",
+      "company_name_ko": "한국가스공사",
+      "company_name_en": "",
+      "aliases": [
+        "한국가스공사",
+        "036460"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한국가스공사",
+        "한국가스공사 실적",
+        "한국가스공사 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "036570",
+      "company_name_ko": "엔씨소프트",
+      "company_name_en": "",
+      "aliases": [
+        "엔씨소프트",
+        "036570"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "엔씨소프트",
+        "엔씨소프트 실적",
+        "엔씨소프트 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "039490",
+      "company_name_ko": "키움증권",
+      "company_name_en": "",
+      "aliases": [
+        "키움증권",
+        "039490"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "키움증권",
+        "키움증권 실적",
+        "키움증권 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "042660",
+      "company_name_ko": "한화오션",
+      "company_name_en": "",
+      "aliases": [
+        "한화오션",
+        "042660"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한화오션",
+        "한화오션 실적",
+        "한화오션 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "042700",
+      "company_name_ko": "한미반도체",
+      "company_name_en": "",
+      "aliases": [
+        "한미반도체",
+        "042700"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한미반도체",
+        "한미반도체 실적",
+        "한미반도체 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "047040",
+      "company_name_ko": "대우건설",
+      "company_name_en": "",
+      "aliases": [
+        "대우건설",
+        "047040"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "대우건설",
+        "대우건설 실적",
+        "대우건설 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "047050",
+      "company_name_ko": "포스코인터내셔널",
+      "company_name_en": "",
+      "aliases": [
+        "포스코인터내셔널",
+        "047050"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "포스코인터내셔널",
+        "포스코인터내셔널 실적",
+        "포스코인터내셔널 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "047810",
+      "company_name_ko": "한국항공우주",
+      "company_name_en": "",
+      "aliases": [
+        "한국항공우주",
+        "047810"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한국항공우주",
+        "한국항공우주 실적",
+        "한국항공우주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "051600",
+      "company_name_ko": "한전KPS",
+      "company_name_en": "",
+      "aliases": [
+        "한전KPS",
+        "051600"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한전KPS",
+        "한전KPS 실적",
+        "한전KPS 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "051900",
+      "company_name_ko": "LG생활건강",
+      "company_name_en": "",
+      "aliases": [
+        "LG생활건강",
+        "051900"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "LG생활건강",
+        "LG생활건강 실적",
+        "LG생활건강 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "051910",
+      "company_name_ko": "LG화학",
+      "company_name_en": "",
+      "aliases": [
+        "LG화학",
+        "051910"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "LG화학",
+        "LG화학 실적",
+        "LG화학 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "052690",
+      "company_name_ko": "한전기술",
+      "company_name_en": "",
+      "aliases": [
+        "한전기술",
+        "052690"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한전기술",
+        "한전기술 실적",
+        "한전기술 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "055550",
+      "company_name_ko": "신한지주",
+      "company_name_en": "",
+      "aliases": [
+        "신한지주",
+        "055550"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "신한지주",
+        "신한지주 실적",
+        "신한지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "062040",
+      "company_name_ko": "산일전기",
+      "company_name_en": "",
+      "aliases": [
+        "산일전기",
+        "062040"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "산일전기",
+        "산일전기 실적",
+        "산일전기 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "064350",
+      "company_name_ko": "현대로템",
+      "company_name_en": "",
+      "aliases": [
+        "현대로템",
+        "064350"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "현대로템",
+        "현대로템 실적",
+        "현대로템 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "064400",
+      "company_name_ko": "LG씨엔에스",
+      "company_name_en": "",
+      "aliases": [
+        "LG씨엔에스",
+        "064400"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "LG씨엔에스",
+        "LG씨엔에스 실적",
+        "LG씨엔에스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "066570",
+      "company_name_ko": "LG전자",
+      "company_name_en": "",
+      "aliases": [
+        "LG전자",
+        "066570"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "LG전자",
+        "LG전자 실적",
+        "LG전자 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "066970",
+      "company_name_ko": "엘앤에프",
+      "company_name_en": "",
+      "aliases": [
+        "엘앤에프",
+        "066970"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "엘앤에프",
+        "엘앤에프 실적",
+        "엘앤에프 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "068270",
+      "company_name_ko": "셀트리온",
+      "company_name_en": "Celltrion",
+      "aliases": [
+        "셀트리온",
+        "Celltrion",
+        "068270"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "셀트리온",
+        "Celltrion",
+        "셀트리온 실적",
+        "셀트리온 주가",
+        "셀트리온 바이오"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 90,
+      "notes": "영문명 보강"
+    },
+    {
+      "ticker": "069260",
+      "company_name_ko": "TKG휴켐스",
+      "company_name_en": "",
+      "aliases": [
+        "TKG휴켐스",
+        "069260"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "TKG휴켐스",
+        "TKG휴켐스 실적",
+        "TKG휴켐스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "069620",
+      "company_name_ko": "대웅제약",
+      "company_name_en": "",
+      "aliases": [
+        "대웅제약",
+        "069620"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "대웅제약",
+        "대웅제약 실적",
+        "대웅제약 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "069960",
+      "company_name_ko": "현대백화점",
+      "company_name_en": "",
+      "aliases": [
+        "현대백화점",
+        "069960"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "현대백화점",
+        "현대백화점 실적",
+        "현대백화점 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "071050",
+      "company_name_ko": "한국금융지주",
+      "company_name_en": "",
+      "aliases": [
+        "한국금융지주",
+        "071050"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한국금융지주",
+        "한국금융지주 실적",
+        "한국금융지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "071320",
+      "company_name_ko": "지역난방공사",
+      "company_name_en": "",
+      "aliases": [
+        "지역난방공사",
+        "071320"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "지역난방공사",
+        "지역난방공사 실적",
+        "지역난방공사 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "071970",
+      "company_name_ko": "HD현대마린엔진",
+      "company_name_en": "",
+      "aliases": [
+        "HD현대마린엔진",
+        "071970"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "HD현대마린엔진",
+        "HD현대마린엔진 실적",
+        "HD현대마린엔진 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "073240",
+      "company_name_ko": "금호타이어",
+      "company_name_en": "",
+      "aliases": [
+        "금호타이어",
+        "073240"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "금호타이어",
+        "금호타이어 실적",
+        "금호타이어 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "078930",
+      "company_name_ko": "GS",
+      "company_name_en": "",
+      "aliases": [
+        "078930"
+      ],
+      "negative_aliases": [
+        "GS"
+      ],
+      "search_queries": [
+        "GS",
+        "GS 실적",
+        "GS 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "079550",
+      "company_name_ko": "LIG넥스원",
+      "company_name_en": "",
+      "aliases": [
+        "LIG넥스원",
+        "079550"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "LIG넥스원",
+        "LIG넥스원 실적",
+        "LIG넥스원 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "081660",
+      "company_name_ko": "미스토홀딩스",
+      "company_name_en": "",
+      "aliases": [
+        "미스토홀딩스",
+        "081660"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "미스토홀딩스",
+        "미스토홀딩스 실적",
+        "미스토홀딩스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "082740",
+      "company_name_ko": "한화엔진",
+      "company_name_en": "",
+      "aliases": [
+        "한화엔진",
+        "082740"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한화엔진",
+        "한화엔진 실적",
+        "한화엔진 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "086280",
+      "company_name_ko": "현대글로비스",
+      "company_name_en": "",
+      "aliases": [
+        "현대글로비스",
+        "086280"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "현대글로비스",
+        "현대글로비스 실적",
+        "현대글로비스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "086790",
+      "company_name_ko": "하나금융지주",
+      "company_name_en": "",
+      "aliases": [
+        "하나금융지주",
+        "086790"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "하나금융지주",
+        "하나금융지주 실적",
+        "하나금융지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "088350",
+      "company_name_ko": "한화생명",
+      "company_name_en": "",
+      "aliases": [
+        "한화생명",
+        "088350"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한화생명",
+        "한화생명 실적",
+        "한화생명 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "090430",
+      "company_name_ko": "아모레퍼시픽",
+      "company_name_en": "",
+      "aliases": [
+        "아모레퍼시픽",
+        "090430"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "아모레퍼시픽",
+        "아모레퍼시픽 실적",
+        "아모레퍼시픽 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "093370",
+      "company_name_ko": "후성",
+      "company_name_en": "",
+      "aliases": [
+        "후성",
+        "093370"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "후성",
+        "후성 실적",
+        "후성 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "096770",
+      "company_name_ko": "SK이노베이션",
+      "company_name_en": "",
+      "aliases": [
+        "SK이노베이션",
+        "096770"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "SK이노베이션",
+        "SK이노베이션 실적",
+        "SK이노베이션 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "097950",
+      "company_name_ko": "CJ제일제당",
+      "company_name_en": "",
+      "aliases": [
+        "CJ제일제당",
+        "097950"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "CJ제일제당",
+        "CJ제일제당 실적",
+        "CJ제일제당 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "103140",
+      "company_name_ko": "풍산",
+      "company_name_en": "",
+      "aliases": [
+        "풍산",
+        "103140"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "풍산",
+        "풍산 실적",
+        "풍산 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "105560",
+      "company_name_ko": "KB금융",
+      "company_name_en": "",
+      "aliases": [
+        "KB금융",
+        "105560"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "KB금융",
+        "KB금융 실적",
+        "KB금융 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "111770",
+      "company_name_ko": "영원무역",
+      "company_name_en": "",
+      "aliases": [
+        "영원무역",
+        "111770"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "영원무역",
+        "영원무역 실적",
+        "영원무역 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "112610",
+      "company_name_ko": "씨에스윈드",
+      "company_name_en": "",
+      "aliases": [
+        "씨에스윈드",
+        "112610"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "씨에스윈드",
+        "씨에스윈드 실적",
+        "씨에스윈드 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "114090",
+      "company_name_ko": "GKL",
+      "company_name_en": "",
+      "aliases": [
+        "114090"
+      ],
+      "negative_aliases": [
+        "GKL"
+      ],
+      "search_queries": [
+        "GKL",
+        "GKL 실적",
+        "GKL 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "120110",
+      "company_name_ko": "코오롱인더",
+      "company_name_en": "",
+      "aliases": [
+        "코오롱인더",
+        "120110"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "코오롱인더",
+        "코오롱인더 실적",
+        "코오롱인더 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "128940",
+      "company_name_ko": "한미약품",
+      "company_name_en": "",
+      "aliases": [
+        "한미약품",
+        "128940"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한미약품",
+        "한미약품 실적",
+        "한미약품 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "137310",
+      "company_name_ko": "에스디바이오센서",
+      "company_name_en": "",
+      "aliases": [
+        "에스디바이오센서",
+        "137310"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "에스디바이오센서",
+        "에스디바이오센서 실적",
+        "에스디바이오센서 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "138040",
+      "company_name_ko": "메리츠금융지주",
+      "company_name_en": "",
+      "aliases": [
+        "메리츠금융지주",
+        "138040"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "메리츠금융지주",
+        "메리츠금융지주 실적",
+        "메리츠금융지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "138930",
+      "company_name_ko": "BNK금융지주",
+      "company_name_en": "",
+      "aliases": [
+        "BNK금융지주",
+        "138930"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "BNK금융지주",
+        "BNK금융지주 실적",
+        "BNK금융지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "139130",
+      "company_name_ko": "iM금융지주",
+      "company_name_en": "",
+      "aliases": [
+        "iM금융지주",
+        "139130"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "iM금융지주",
+        "iM금융지주 실적",
+        "iM금융지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "139480",
+      "company_name_ko": "이마트",
+      "company_name_en": "",
+      "aliases": [
+        "이마트",
+        "139480"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "이마트",
+        "이마트 실적",
+        "이마트 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "161390",
+      "company_name_ko": "한국타이어앤테크놀로지",
+      "company_name_en": "",
+      "aliases": [
+        "한국타이어앤테크놀로지",
+        "161390"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한국타이어앤테크놀로지",
+        "한국타이어앤테크놀로지 실적",
+        "한국타이어앤테크놀로지 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "161890",
+      "company_name_ko": "한국콜마",
+      "company_name_en": "",
+      "aliases": [
+        "한국콜마",
+        "161890"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한국콜마",
+        "한국콜마 실적",
+        "한국콜마 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "175330",
+      "company_name_ko": "JB금융지주",
+      "company_name_en": "",
+      "aliases": [
+        "JB금융지주",
+        "175330"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "JB금융지주",
+        "JB금융지주 실적",
+        "JB금융지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "180640",
+      "company_name_ko": "한진칼",
+      "company_name_en": "",
+      "aliases": [
+        "한진칼",
+        "180640"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한진칼",
+        "한진칼 실적",
+        "한진칼 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "185750",
+      "company_name_ko": "종근당",
+      "company_name_en": "",
+      "aliases": [
+        "종근당",
+        "185750"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "종근당",
+        "종근당 실적",
+        "종근당 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "192080",
+      "company_name_ko": "더블유게임즈",
+      "company_name_en": "",
+      "aliases": [
+        "더블유게임즈",
+        "192080"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "더블유게임즈",
+        "더블유게임즈 실적",
+        "더블유게임즈 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "192820",
+      "company_name_ko": "코스맥스",
+      "company_name_en": "",
+      "aliases": [
+        "코스맥스",
+        "192820"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "코스맥스",
+        "코스맥스 실적",
+        "코스맥스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "204320",
+      "company_name_ko": "HL만도",
+      "company_name_en": "",
+      "aliases": [
+        "HL만도",
+        "204320"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "HL만도",
+        "HL만도 실적",
+        "HL만도 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "207940",
+      "company_name_ko": "삼성바이오로직스",
+      "company_name_en": "Samsung Biologics",
+      "aliases": [
+        "삼성바이오로직스",
+        "Samsung Biologics",
+        "207940"
+      ],
+      "negative_aliases": [
+        "삼성"
+      ],
+      "search_queries": [
+        "삼성바이오로직스",
+        "Samsung Biologics",
+        "삼성바이오로직스 실적"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 85,
+      "notes": "삼성 계열 오탐 방지용 구체명"
+    },
+    {
+      "ticker": "241560",
+      "company_name_ko": "두산밥캣",
+      "company_name_en": "",
+      "aliases": [
+        "두산밥캣",
+        "241560"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "두산밥캣",
+        "두산밥캣 실적",
+        "두산밥캣 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "251270",
+      "company_name_ko": "넷마블",
+      "company_name_en": "",
+      "aliases": [
+        "넷마블",
+        "251270"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "넷마블",
+        "넷마블 실적",
+        "넷마블 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "259960",
+      "company_name_ko": "크래프톤",
+      "company_name_en": "",
+      "aliases": [
+        "크래프톤",
+        "259960"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "크래프톤",
+        "크래프톤 실적",
+        "크래프톤 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "267250",
+      "company_name_ko": "HD현대",
+      "company_name_en": "",
+      "aliases": [
+        "HD현대",
+        "267250"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "HD현대",
+        "HD현대 실적",
+        "HD현대 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "267260",
+      "company_name_ko": "HD현대일렉트릭",
+      "company_name_en": "",
+      "aliases": [
+        "HD현대일렉트릭",
+        "267260"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "HD현대일렉트릭",
+        "HD현대일렉트릭 실적",
+        "HD현대일렉트릭 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "268280",
+      "company_name_ko": "미원에스씨",
+      "company_name_en": "",
+      "aliases": [
+        "미원에스씨",
+        "268280"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "미원에스씨",
+        "미원에스씨 실적",
+        "미원에스씨 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "271560",
+      "company_name_ko": "오리온",
+      "company_name_en": "",
+      "aliases": [
+        "오리온",
+        "271560"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "오리온",
+        "오리온 실적",
+        "오리온 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "272210",
+      "company_name_ko": "한화시스템",
+      "company_name_en": "",
+      "aliases": [
+        "한화시스템",
+        "272210"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한화시스템",
+        "한화시스템 실적",
+        "한화시스템 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "278470",
+      "company_name_ko": "에이피알",
+      "company_name_en": "",
+      "aliases": [
+        "에이피알",
+        "278470"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "에이피알",
+        "에이피알 실적",
+        "에이피알 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "280360",
+      "company_name_ko": "롯데웰푸드",
+      "company_name_en": "",
+      "aliases": [
+        "롯데웰푸드",
+        "280360"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "롯데웰푸드",
+        "롯데웰푸드 실적",
+        "롯데웰푸드 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "282330",
+      "company_name_ko": "BGF리테일",
+      "company_name_en": "",
+      "aliases": [
+        "BGF리테일",
+        "282330"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "BGF리테일",
+        "BGF리테일 실적",
+        "BGF리테일 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "285130",
+      "company_name_ko": "SK케미칼",
+      "company_name_en": "",
+      "aliases": [
+        "SK케미칼",
+        "285130"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "SK케미칼",
+        "SK케미칼 실적",
+        "SK케미칼 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "298020",
+      "company_name_ko": "효성티앤씨",
+      "company_name_en": "",
+      "aliases": [
+        "효성티앤씨",
+        "298020"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "효성티앤씨",
+        "효성티앤씨 실적",
+        "효성티앤씨 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "298040",
+      "company_name_ko": "효성중공업",
+      "company_name_en": "",
+      "aliases": [
+        "효성중공업",
+        "298040"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "효성중공업",
+        "효성중공업 실적",
+        "효성중공업 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "298050",
+      "company_name_ko": "HS효성첨단소재",
+      "company_name_en": "",
+      "aliases": [
+        "HS효성첨단소재",
+        "298050"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "HS효성첨단소재",
+        "HS효성첨단소재 실적",
+        "HS효성첨단소재 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "300720",
+      "company_name_ko": "한일시멘트",
+      "company_name_en": "",
+      "aliases": [
+        "한일시멘트",
+        "300720"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "한일시멘트",
+        "한일시멘트 실적",
+        "한일시멘트 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "302440",
+      "company_name_ko": "SK바이오사이언스",
+      "company_name_en": "",
+      "aliases": [
+        "SK바이오사이언스",
+        "302440"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "SK바이오사이언스",
+        "SK바이오사이언스 실적",
+        "SK바이오사이언스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "307950",
+      "company_name_ko": "현대오토에버",
+      "company_name_en": "",
+      "aliases": [
+        "현대오토에버",
+        "307950"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "현대오토에버",
+        "현대오토에버 실적",
+        "현대오토에버 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "316140",
+      "company_name_ko": "우리금융지주",
+      "company_name_en": "",
+      "aliases": [
+        "우리금융지주",
+        "316140"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "우리금융지주",
+        "우리금융지주 실적",
+        "우리금융지주 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "323410",
+      "company_name_ko": "카카오뱅크",
+      "company_name_en": "",
+      "aliases": [
+        "카카오뱅크",
+        "323410"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "카카오뱅크",
+        "카카오뱅크 실적",
+        "카카오뱅크 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "326030",
+      "company_name_ko": "SK바이오팜",
+      "company_name_en": "",
+      "aliases": [
+        "SK바이오팜",
+        "326030"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "SK바이오팜",
+        "SK바이오팜 실적",
+        "SK바이오팜 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "329180",
+      "company_name_ko": "HD현대중공업",
+      "company_name_en": "",
+      "aliases": [
+        "HD현대중공업",
+        "329180"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "HD현대중공업",
+        "HD현대중공업 실적",
+        "HD현대중공업 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "352820",
+      "company_name_ko": "하이브",
+      "company_name_en": "",
+      "aliases": [
+        "하이브",
+        "352820"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "하이브",
+        "하이브 실적",
+        "하이브 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "361610",
+      "company_name_ko": "SK아이이테크놀로지",
+      "company_name_en": "",
+      "aliases": [
+        "SK아이이테크놀로지",
+        "361610"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "SK아이이테크놀로지",
+        "SK아이이테크놀로지 실적",
+        "SK아이이테크놀로지 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "373220",
+      "company_name_ko": "LG에너지솔루션",
+      "company_name_en": "LG Energy Solution",
+      "aliases": [
+        "LG에너지솔루션",
+        "LG엔솔",
+        "LG Energy Solution",
+        "373220"
+      ],
+      "negative_aliases": [
+        "LG"
+      ],
+      "search_queries": [
+        "LG에너지솔루션",
+        "LG엔솔",
+        "LG Energy Solution",
+        "LG에너지솔루션 실적",
+        "LG에너지솔루션 배터리"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 100,
+      "notes": "LG엔솔 별칭 추가"
+    },
+    {
+      "ticker": "375500",
+      "company_name_ko": "DL이앤씨",
+      "company_name_en": "",
+      "aliases": [
+        "DL이앤씨",
+        "375500"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "DL이앤씨",
+        "DL이앤씨 실적",
+        "DL이앤씨 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "377300",
+      "company_name_ko": "카카오페이",
+      "company_name_en": "",
+      "aliases": [
+        "카카오페이",
+        "377300"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "카카오페이",
+        "카카오페이 실적",
+        "카카오페이 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "383220",
+      "company_name_ko": "F&F",
+      "company_name_en": "",
+      "aliases": [
+        "383220"
+      ],
+      "negative_aliases": [
+        "F&F"
+      ],
+      "search_queries": [
+        "F&F",
+        "F&F 실적",
+        "F&F 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": "짧은 영문명/로마자 토큰 오탐 방지용으로 alias 축소."
+    },
+    {
+      "ticker": "402340",
+      "company_name_ko": "SK스퀘어",
+      "company_name_en": "",
+      "aliases": [
+        "SK스퀘어",
+        "402340"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "SK스퀘어",
+        "SK스퀘어 실적",
+        "SK스퀘어 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "443060",
+      "company_name_ko": "HD현대마린솔루션",
+      "company_name_en": "",
+      "aliases": [
+        "HD현대마린솔루션",
+        "443060"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "HD현대마린솔루션",
+        "HD현대마린솔루션 실적",
+        "HD현대마린솔루션 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "450080",
+      "company_name_ko": "에코프로머티",
+      "company_name_en": "",
+      "aliases": [
+        "에코프로머티",
+        "450080"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "에코프로머티",
+        "에코프로머티 실적",
+        "에코프로머티 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "454910",
+      "company_name_ko": "두산로보틱스",
+      "company_name_en": "",
+      "aliases": [
+        "두산로보틱스",
+        "454910"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "두산로보틱스",
+        "두산로보틱스 실적",
+        "두산로보틱스 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    },
+    {
+      "ticker": "457190",
+      "company_name_ko": "이수스페셜티케미컬",
+      "company_name_en": "",
+      "aliases": [
+        "이수스페셜티케미컬",
+        "457190"
+      ],
+      "negative_aliases": [],
+      "search_queries": [
+        "이수스페셜티케미컬",
+        "이수스페셜티케미컬 실적",
+        "이수스페셜티케미컬 주가"
+      ],
+      "market": "KOSPI",
+      "sector": "",
+      "is_active": true,
+      "match_priority": 50,
+      "notes": ""
+    }
+  ]
+}
