@@ -12,7 +12,6 @@ const router = useRouter()
 
 // ── 글로벌 검색 단축키 Cmd+K / Ctrl+K ────────────────────────────────────────
 const searchOpen = ref(false)
-
 useEventListener(document, 'keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
     e.preventDefault()
@@ -20,16 +19,21 @@ useEventListener(document, 'keydown', (e) => {
   }
 })
 
+// ── 모바일 사이드바 ───────────────────────────────────────────────────────────
+const sideOpen = ref(false)
+
 const NAV_ITEMS = [
-  { to: '/',          label: '홈' },
-  { to: '/stocks',    label: '종목 추천' },
-  { to: '/screener',  label: '스크리너' },
-  { to: '/portfolio', label: '포트폴리오' },
-  { to: '/compare',   label: '비교' },
+  { to: '/',          label: '홈', icon: '🏠' },
+  { to: '/stocks',    label: '종목 추천', icon: '📈' },
+  { to: '/screener',  label: '스크리너', icon: '🔎' },
+  { to: '/portfolio', label: '포트폴리오', icon: '💼' },
+  { to: '/compare',   label: '비교', icon: '⚖️' },
+  { to: '/board',     label: '커뮤니티', icon: '💬' },
 ]
 
 function handleLogout() {
   auth.logout()
+  sideOpen.value = false
   router.push('/login')
 }
 </script>
@@ -38,7 +42,7 @@ function handleLogout() {
   <div
     id="app"
     class="min-h-screen flex flex-col transition-colors duration-200"
-    :class="theme.isDark ? 'bg-[#0F1117] text-[#E4E6EF]' : 'bg-white text-gray-900'"
+    :class="theme.isDark ? 'bg-[#0F1117] text-[#E4E6EF]' : 'bg-[#F5F6F8] text-gray-900'"
   >
 
     <!-- ── 상단 네비게이션 ───────────────────────────────────── -->
@@ -46,15 +50,24 @@ function handleLogout() {
       class="sticky top-0 z-50 border-b transition-colors duration-200"
       :class="theme.isDark ? 'bg-[#1A1D27] border-[#2A2D3A]' : 'bg-white border-gray-100'"
     >
-      <div class="max-w-7xl mx-auto px-4 h-14 flex items-center gap-6">
+      <div class="max-w-7xl mx-auto px-4 h-14 flex items-center gap-3">
+
+        <!-- 햄버거 (모바일) -->
+        <button
+          class="md:hidden w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+          :class="theme.isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'"
+          @click="sideOpen = true"
+        >
+          ☰
+        </button>
 
         <!-- 로고 -->
         <RouterLink to="/" class="font-bold text-base shrink-0" :class="theme.isDark ? 'text-white' : 'text-gray-900'">
           WP_Capstone
         </RouterLink>
 
-        <!-- 메뉴 -->
-        <nav class="flex items-center gap-1 flex-1">
+        <!-- 데스크톱 메뉴 -->
+        <nav class="hidden md:flex items-center gap-1 flex-1">
           <RouterLink
             v-for="item in NAV_ITEMS"
             :key="item.to"
@@ -70,8 +83,8 @@ function handleLogout() {
           </RouterLink>
         </nav>
 
-        <!-- 우측: 다크 토글 + 로그인 -->
-        <div class="flex items-center gap-2 shrink-0">
+        <!-- 우측 -->
+        <div class="ml-auto flex items-center gap-2 shrink-0">
 
           <!-- 검색 버튼 -->
           <button
@@ -89,7 +102,7 @@ function handleLogout() {
             >⌘K</kbd>
           </button>
 
-          <!-- 다크 모드 토글 -->
+          <!-- 다크 토글 -->
           <button
             class="w-8 h-8 flex items-center justify-center rounded-lg text-base transition-colors"
             :class="theme.isDark ? 'text-yellow-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'"
@@ -99,16 +112,17 @@ function handleLogout() {
             {{ theme.isDark ? '☀️' : '🌙' }}
           </button>
 
+          <!-- 데스크톱 로그인 -->
           <template v-if="auth.isLoggedIn">
             <RouterLink
               to="/my"
-              class="text-sm transition-colors"
+              class="hidden sm:block text-sm transition-colors"
               :class="theme.isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'"
             >
               {{ auth.nickname }}
             </RouterLink>
             <button
-              class="text-sm transition-colors"
+              class="hidden sm:block text-sm transition-colors"
               :class="theme.isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'"
               @click="handleLogout"
             >
@@ -118,14 +132,14 @@ function handleLogout() {
           <template v-else>
             <RouterLink
               to="/login"
-              class="text-sm transition-colors"
+              class="hidden sm:block text-sm transition-colors"
               :class="theme.isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'"
             >
               로그인
             </RouterLink>
             <RouterLink
               to="/register"
-              class="text-sm px-3 py-1.5 rounded-md transition-colors"
+              class="hidden sm:block text-sm px-3 py-1.5 rounded-md transition-colors"
               :class="theme.isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-900 text-white hover:bg-gray-700'"
             >
               회원가입
@@ -140,7 +154,113 @@ function handleLogout() {
       <RouterView />
     </main>
 
+    <!-- ── 모바일 하단 탭 바 ───────────────────────────────────── -->
+    <nav
+      class="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t flex transition-colors duration-200"
+      :class="theme.isDark ? 'bg-[#1A1D27] border-[#2A2D3A]' : 'bg-white border-gray-100'"
+    >
+      <RouterLink
+        v-for="item in NAV_ITEMS.slice(0, 5)"
+        :key="item.to"
+        :to="item.to"
+        class="flex-1 flex flex-col items-center justify-center py-2 text-[10px] transition-colors"
+        :class="theme.isDark ? 'text-gray-600 [&.router-link-active]:text-white' : 'text-gray-400 [&.router-link-active]:text-gray-900'"
+        active-class="router-link-active"
+        exact-active-class=""
+      >
+        <span class="text-lg leading-none mb-0.5">{{ item.icon }}</span>
+        <span>{{ item.label }}</span>
+      </RouterLink>
+    </nav>
+
   </div>
+
+  <!-- ── 모바일 슬라이드 사이드바 ────────────────────────────── -->
+  <Transition name="slide">
+    <div v-if="sideOpen" class="fixed inset-0 z-[60] md:hidden">
+      <!-- 백드롭 -->
+      <div class="absolute inset-0 bg-black/50" @click="sideOpen = false" />
+      <!-- 패널 -->
+      <aside
+        class="absolute left-0 top-0 bottom-0 w-72 flex flex-col transition-colors duration-200"
+        :class="theme.isDark ? 'bg-[#1A1D27]' : 'bg-white'"
+      >
+        <!-- 상단 -->
+        <div
+          class="flex items-center justify-between px-5 h-14 border-b shrink-0"
+          :class="theme.isDark ? 'border-[#2A2D3A]' : 'border-gray-100'"
+        >
+          <span class="font-bold" :class="theme.isDark ? 'text-white' : 'text-gray-900'">WP_Capstone</span>
+          <button
+            class="w-8 h-8 flex items-center justify-center rounded-lg"
+            :class="theme.isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'"
+            @click="sideOpen = false"
+          >✕</button>
+        </div>
+
+        <!-- 메뉴 -->
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <RouterLink
+            v-for="item in NAV_ITEMS"
+            :key="item.to"
+            :to="item.to"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
+            :class="theme.isDark
+              ? 'text-gray-400 hover:text-white hover:bg-white/10 [&.router-link-active]:text-white [&.router-link-active]:bg-white/10 [&.router-link-active]:font-medium'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 [&.router-link-active]:text-gray-900 [&.router-link-active]:bg-gray-100 [&.router-link-active]:font-medium'"
+            active-class="router-link-active"
+            exact-active-class=""
+            @click="sideOpen = false"
+          >
+            <span class="text-lg">{{ item.icon }}</span>
+            {{ item.label }}
+          </RouterLink>
+        </nav>
+
+        <!-- 하단 로그인 -->
+        <div
+          class="px-3 pb-6 pt-3 border-t space-y-2"
+          :class="theme.isDark ? 'border-[#2A2D3A]' : 'border-gray-100'"
+        >
+          <template v-if="auth.isLoggedIn">
+            <RouterLink
+              to="/my"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
+              :class="theme.isDark ? 'text-gray-300 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50'"
+              @click="sideOpen = false"
+            >
+              <span class="text-lg">👤</span> {{ auth.nickname }}
+            </RouterLink>
+            <button
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
+              :class="theme.isDark ? 'text-gray-500 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-50'"
+              @click="handleLogout"
+            >
+              <span class="text-lg">🚪</span> 로그아웃
+            </button>
+          </template>
+          <template v-else>
+            <RouterLink
+              to="/login"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
+              :class="theme.isDark ? 'text-gray-300 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50'"
+              @click="sideOpen = false"
+            >
+              <span class="text-lg">🔑</span> 로그인
+            </RouterLink>
+            <RouterLink
+              to="/register"
+              class="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+              :class="theme.isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-900 text-white hover:bg-gray-700'"
+              @click="sideOpen = false"
+            >
+              회원가입
+            </RouterLink>
+          </template>
+        </div>
+      </aside>
+    </div>
+  </Transition>
 
   <!-- ── 글로벌 검색 모달 ─────────────────────────────────────── -->
   <Transition name="search-fade">
@@ -151,4 +271,9 @@ function handleLogout() {
 <style scoped>
 .search-fade-enter-active, .search-fade-leave-active { transition: opacity 0.15s; }
 .search-fade-enter-from, .search-fade-leave-to { opacity: 0; }
+
+.slide-enter-active, .slide-leave-active { transition: opacity 0.2s; }
+.slide-enter-from, .slide-leave-to { opacity: 0; }
+.slide-enter-active aside, .slide-leave-active aside { transition: transform 0.2s ease; }
+.slide-enter-from aside, .slide-leave-to aside { transform: translateX(-100%); }
 </style>
