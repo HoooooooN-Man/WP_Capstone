@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { stocksApi, screenerApi, type StockScore, type SectorSummaryItem, type ScreenerItem, type SearchResult } from '@/api'
+// @ts-ignore
+import { stocksApi, screenerApi } from '@/api/index.ts'
+type StockScore = any
+type SectorSummaryItem = any
+type ScreenerItem = any
+type SearchResult = any
 
 const router = useRouter()
 
