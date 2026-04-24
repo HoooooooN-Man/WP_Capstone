@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/theme.js'
 import { useAuthStore }  from '@/stores/auth.js'
-import api from '@/api/axios.js'
+import dbapi from '@/api/dbapi.js'
 import TierBadge from '@/components/common/TierBadge.vue'
 
 const route  = useRoute()
@@ -23,7 +23,7 @@ async function fetchProfile() {
   loading.value = true
   error.value   = null
   try {
-    const { data } = await api.get(`/users/${nickname}/public`)
+    const { data } = await dbapi.get(`/users/${nickname}/public`)
     profile.value   = data
     posts.value     = data.recent_posts ?? []
     watchlist.value = data.public_watchlist ?? []
@@ -61,11 +61,11 @@ async function toggleFollow() {
   if (!auth.isLoggedIn) { router.push('/login'); return }
   try {
     if (following.value) {
-      await api.delete(`/users/${nickname}/follow`)
+      await dbapi.delete(`/users/${nickname}/follow`)
       following.value = false
       if (profile.value) profile.value.follower_count--
     } else {
-      await api.post(`/users/${nickname}/follow`)
+      await dbapi.post(`/users/${nickname}/follow`)
       following.value = true
       if (profile.value) profile.value.follower_count++
     }

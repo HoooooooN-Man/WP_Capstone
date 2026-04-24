@@ -3,7 +3,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import { useThemeStore } from '@/stores/theme.js'
-import api from '@/api/axios.js'
+import dbapi from '@/api/dbapi.js'
+import NewsDetailModal from '@/page/main/news/NewsDetailModal.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -37,7 +38,7 @@ async function fetchNews(reset = false) {
     if (activeFilter.value !== 'all') params.sentiment = activeFilter.value
     if (tickerFilter.value.trim())    params.ticker    = tickerFilter.value.trim().toUpperCase()
 
-    const { data } = await api.get('/news/feed', { params })
+    const { data } = await dbapi.get('/news/feed', { params })
     const items = data.items ?? data ?? []
     total.value = data.total ?? items.length
     if (reset) news.value = items
@@ -97,6 +98,28 @@ function formatDate(iso) {
   if (diff < 60)  return `${diff}분 전`
   if (diff < 1440) return `${Math.floor(diff / 60)}시간 전`
   return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+}
+
+// ── 뉴스 상세 모달 ─────────────────────────────────────────────────────────────
+const selectedNews  = ref(null)
+const modalOpen     = ref(false)
+
+function openModal(item) {
+  selectedNews.value = {
+    news_id:         item.id,
+    title:           item.title,
+    publisher:       item.source,
+    origin_url:      item.url,
+    image_url:       item.image_url ?? null,
+    sentiment_label: item.sentiment,
+    sentiment_score: item.confidence,
+    pos_prob:        item.sentiment === 'positive' ? item.confidence : (item.sentiment === 'neutral' ? 0.3 : 0.1),
+    neu_prob:        item.sentiment === 'neutral'  ? item.confidence : 0.2,
+    neg_prob:        item.sentiment === 'negative' ? item.confidence : (item.sentiment === 'neutral' ? 0.3 : 0.1),
+    published_at:    item.published_at,
+    rank:            0,
+  }
+  modalOpen.value = true
 }
 
 // ── 더 보기 ────────────────────────────────────────────────────────────────────
@@ -174,15 +197,14 @@ onMounted(() => {
 
     <!-- 뉴스 목록 -->
     <div v-else class="space-y-3">
-      <a
+      <div
         v-for="item in news"
         :key="item.id"
-        :href="item.url !== '#' ? item.url : undefined"
-        :target="item.url !== '#' ? '_blank' : undefined"
-        class="block rounded-xl p-4 border transition-colors"
+        class="block rounded-xl p-4 border transition-colors cursor-pointer"
         :class="theme.isDark
           ? 'bg-[#1A1D27] border-[#2A2D3A] hover:border-gray-600'
           : 'bg-white border-gray-100 hover:border-gray-200'"
+        @click="openModal(item)"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex-1 min-w-0">
@@ -191,7 +213,7 @@ onMounted(() => {
               <button
                 class="text-xs font-medium px-2 py-0.5 rounded-md transition-colors"
                 :class="theme.isDark ? 'bg-white/10 text-gray-300 hover:bg-white/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                @click.prevent="tickerFilter = item.ticker"
+                @click.stop="tickerFilter = item.ticker"
               >
                 {{ item.ticker }}
               </button>
@@ -200,9 +222,9 @@ onMounted(() => {
               </span>
               <span
                 class="text-xs px-2 py-0.5 rounded-full font-medium"
-                :class="sentimentBadge(item.sentiment_label).cls"
+                :class="sentimentBadge(item.sentiment ?? item.sentiment_label).cls"
               >
-                {{ sentimentBadge(item.sentiment_label).label }}
+                {{ sentimentBadge(item.sentiment ?? item.sentiment_label).label }}
               </span>
             </div>
             <!-- 제목 -->
@@ -218,11 +240,11 @@ onMounted(() => {
           <span class="text-xs" :class="theme.isDark ? 'text-gray-600' : 'text-gray-400'">
             {{ formatDate(item.published_at) }}
           </span>
-          <span v-if="item.sentiment_score" class="text-xs ml-auto" :class="theme.isDark ? 'text-gray-600' : 'text-gray-400'">
-            신뢰도 {{ (item.sentiment_score * 100).toFixed(0) }}%
+          <span v-if="item.confidence ?? item.sentiment_score" class="text-xs ml-auto" :class="theme.isDark ? 'text-gray-600' : 'text-gray-400'">
+            신뢰도 {{ ((item.confidence ?? item.sentiment_score) * 100).toFixed(0) }}%
           </span>
         </div>
-      </a>
+      </div>
     </div>
 
     <!-- 더 보기 -->
@@ -239,4 +261,11 @@ onMounted(() => {
     </div>
 
   </div>
+
+  <!-- 뉴스 상세 모달 -->
+  <NewsDetailModal
+    :isOpen="modalOpen"
+    :news="selectedNews"
+    @close="modalOpen = false"
+  />
 </template>
