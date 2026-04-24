@@ -13,6 +13,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/compare',        name: 'Compare',     component: () => import('@/views/CompareView.vue') },
   { path: '/sectors',        name: 'Sectors',     component: () => import('@/views/SectorsView.vue') },
   { path: '/ranking',        name: 'Ranking',     component: () => import('@/views/RankingView.vue') },
+  { path: '/news',           name: 'News',        component: () => import('@/views/NewsView.vue') },
   { path: '/my',             name: 'MyPage',      component: () => import('@/views/MyPageView.vue'), meta: { requiresAuth: true } },
   { path: '/login',          name: 'Login',       component: () => import('@/views/LoginView.vue') },
   { path: '/register',       name: 'Register',    component: () => import('@/views/RegisterView.vue') },

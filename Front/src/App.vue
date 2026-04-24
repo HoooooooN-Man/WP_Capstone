@@ -29,6 +29,7 @@ const NAV_ITEMS = [
   { to: '/sectors',   label: '섹터 맵', icon: '🗺️' },
   { to: '/portfolio', label: '포트폴리오', icon: '💼' },
   { to: '/ranking',   label: '랭킹', icon: '🏆' },
+  { to: '/news',      label: '뉴스', icon: '📰' },
   { to: '/compare',   label: '비교', icon: '⚖️' },
   { to: '/board',     label: '커뮤니티', icon: '💬' },
 ]
