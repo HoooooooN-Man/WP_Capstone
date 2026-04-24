@@ -24,11 +24,8 @@ CAPSTONE_ROOT: Path = Path(os.getenv("CAPSTONE_ROOT", str(_REPO_DIR.parent)))
 MODELS_DIR:    Path = CAPSTONE_ROOT / "models"
 SEED_CSV:      Path = CAPSTONE_ROOT / "preprocessing" / "seed.csv"
 
-# ── DuckDB (OLAP — ML 스코어 / 가격 / 재무 분석) ──────────────────────────────
+# ── DuckDB ───────────────────────────────────────────────────────────────────
 DUCKDB_PATH: Path = Path(os.getenv("DUCKDB_PATH", str(_FASTAPI_DIR / "scores.duckdb")))
-
-# ── SQLite (OLTP — 커뮤니티 게시판 / 댓글 / 좋아요) ──────────────────────────
-BOARD_DB_PATH: Path = Path(os.getenv("BOARD_DB_PATH", str(_FASTAPI_DIR / "board.db")))
 
 # ── Redis ────────────────────────────────────────────────────────────────────
 REDIS_HOST:     str = os.getenv("REDIS_HOST", "localhost")

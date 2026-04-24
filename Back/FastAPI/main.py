@@ -16,10 +16,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .core.config import APP_TITLE, APP_VERSION, API_PREFIX, DUCKDB_PATH, BOARD_DB_PATH
-from .routers import stocks, portfolio, chart, finance, screener, compare, market, board
+from .core.config import APP_TITLE, APP_VERSION, API_PREFIX, DUCKDB_PATH
+from .routers import stocks, portfolio, chart, finance, screener, compare
 from .services.data import init_duckdb
-from .services.board_db import init_board_db
 
 
 # ── 앱 수명 이벤트 ─────────────────────────────────────────────────────────────
@@ -27,11 +26,6 @@ from .services.board_db import init_board_db
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 시작 시 scores.duckdb 존재 여부 확인
-    # ── SQLite (커뮤니티 게시판) 초기화 ───────────────────────────────────────
-    init_board_db()
-    print(f"[OK] SQLite 게시판 DB 초기화 완료: {BOARD_DB_PATH}")
-
-    # ── DuckDB (ML 스코어 / 분석) 워밍업 ──────────────────────────────────────
     if not DUCKDB_PATH.exists():
         print(
             f"\n[WARNING] scores.duckdb 없음: {DUCKDB_PATH}\n"
@@ -39,6 +33,7 @@ async def lifespan(app: FastAPI):
         )
     else:
         import asyncio
+        # 스레드에서 실행하여 이벤트 루프 블로킹 방지
         await asyncio.get_event_loop().run_in_executor(None, init_duckdb)
         print(f"[OK] DuckDB 연결 + 워밍업 완료: {DUCKDB_PATH}")
     yield
@@ -74,8 +69,6 @@ app.include_router(chart.router,     prefix=API_PREFIX)
 app.include_router(finance.router,   prefix=API_PREFIX)
 app.include_router(screener.router,  prefix=API_PREFIX)
 app.include_router(compare.router,   prefix=API_PREFIX)
-app.include_router(market.router,    prefix=API_PREFIX)
-app.include_router(board.router,     prefix=API_PREFIX)
 
 
 # ── 헬스체크 ───────────────────────────────────────────────────────────────────

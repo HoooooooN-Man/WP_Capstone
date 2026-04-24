@@ -33,6 +33,5 @@ Learning/.ipynb_checkpoints/
 .idea/
 .DS_Store
 *.duckdb
-*.db
 *.venv
 __pycache__/**

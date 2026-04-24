@@ -1,17 +1,15 @@
 """
 routers/portfolio.py
 ====================
-백테스트 결과 + KOSPI 200 자동 포트폴리오 엔드포인트.
+백테스트 결과 관련 엔드포인트.
 """
 
 from __future__ import annotations
 
-from typing import Literal
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 
 from ..services import data as svc
 from ..schemas.stocks import BacktestSummaryResponse, BacktestMonthlyResponse
-from ..schemas.portfolio import PortfolioItem, PortfolioResponse
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -44,70 +42,3 @@ def get_backtest_monthly():
         raise HTTPException(status_code=500, detail=str(e))
 
     return BacktestMonthlyResponse(data=data)
-
-
-# ── KOSPI 200 자동 포트폴리오 ──────────────────────────────────────────────────
-
-@router.get(
-    "/kospi200",
-    response_model=PortfolioResponse,
-    summary="KOSPI 200 맞춤형 Top 10 포트폴리오",
-)
-def get_kospi200_portfolio(
-    type:          Literal["growth", "stable"] = Query(
-        "growth",
-        description=(
-            "포트폴리오 유형\n"
-            "- **growth** (성장형): AI score 상위 10종목\n"
-            "- **stable** (안정형): Tier A·B + PBR < 1.5 조건 상위 10종목"
-        ),
-    ),
-    model_version: str = Query("latest", description="모델 버전 (예: v8, latest)"),
-):
-    """
-    KOSPI 200 종목 중 사용자 성향에 맞는 **Top 10 자동 포트폴리오**를 반환합니다.
-
-    | type    | 필터 조건                           | 정렬    |
-    |---------|-------------------------------------|---------|
-    | growth  | KOSPI 200 전체                       | score↓  |
-    | stable  | KOSPI 200 + Tier A·B + PBR < 1.5   | score↓  |
-
-    - **캐시**: 5분 TTL
-    """
-    try:
-        rows = svc.get_kospi200_portfolio(
-            portfolio_type=type,
-            model_version=model_version,
-        )
-    except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
-
-    if not rows:
-        raise HTTPException(
-            status_code=404,
-            detail="포트폴리오 구성 조건에 맞는 종목이 없습니다. stable 타입은 PBR 데이터가 필요합니다.",
-        )
-
-    date          = rows[0].get("date", "")
-    resolved_ver  = rows[0].get("model_version", model_version)
-
-    items = [
-        PortfolioItem(
-            rank   = r["rank"],
-            ticker = r["ticker"],
-            name   = r.get("name"),
-            sector = r.get("sector"),
-            score  = float(r["score"]),
-            tier   = r["tier"],
-            pbr    = float(r["pbr"]) if r.get("pbr") is not None else None,
-        )
-        for r in rows
-    ]
-
-    return PortfolioResponse(
-        type          = type,
-        date          = date,
-        model_version = resolved_ver,
-        total         = len(items),
-        items         = items,
-    )
