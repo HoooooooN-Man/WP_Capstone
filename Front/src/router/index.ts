@@ -15,6 +15,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/ranking',        name: 'Ranking',     component: () => import('@/views/RankingView.vue') },
   { path: '/news',           name: 'News',        component: () => import('@/views/NewsView.vue') },
   { path: '/backtest',       name: 'Backtest',    component: () => import('@/views/BacktestView.vue') },
+  { path: '/user/:nickname', name: 'UserProfile', component: () => import('@/views/UserProfileView.vue') },
   { path: '/my',             name: 'MyPage',      component: () => import('@/views/MyPageView.vue'), meta: { requiresAuth: true } },
   { path: '/login',          name: 'Login',       component: () => import('@/views/LoginView.vue') },
   { path: '/register',       name: 'Register',    component: () => import('@/views/RegisterView.vue') },
