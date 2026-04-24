@@ -1,11 +1,24 @@
 <script setup>
-import { useAuthStore }  from '@/stores/auth.js'
-import { useThemeStore } from '@/stores/theme.js'
-import { useRouter }     from 'vue-router'
+import { ref } from 'vue'
+import { useAuthStore }     from '@/stores/auth.js'
+import { useThemeStore }    from '@/stores/theme.js'
+import { useRouter }        from 'vue-router'
+import { useEventListener } from '@vueuse/core'
+import GlobalSearch from '@/components/common/GlobalSearch.vue'
 
 const auth   = useAuthStore()
 const theme  = useThemeStore()
 const router = useRouter()
+
+// ── 글로벌 검색 단축키 Cmd+K / Ctrl+K ────────────────────────────────────────
+const searchOpen = ref(false)
+
+useEventListener(document, 'keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault()
+    searchOpen.value = !searchOpen.value
+  }
+})
 
 const NAV_ITEMS = [
   { to: '/',          label: '홈' },
@@ -60,6 +73,22 @@ function handleLogout() {
         <!-- 우측: 다크 토글 + 로그인 -->
         <div class="flex items-center gap-2 shrink-0">
 
+          <!-- 검색 버튼 -->
+          <button
+            class="flex items-center gap-1.5 text-xs border rounded-lg px-2.5 py-1.5 transition-colors"
+            :class="theme.isDark
+              ? 'border-[#2A2D3A] text-gray-500 hover:bg-white/10'
+              : 'border-gray-200 text-gray-400 hover:bg-gray-50'"
+            @click="searchOpen = true"
+          >
+            <span>🔍</span>
+            <span class="hidden sm:inline">검색</span>
+            <kbd
+              class="hidden sm:inline border rounded px-1 py-0.5 text-[10px]"
+              :class="theme.isDark ? 'border-[#2A2D3A]' : 'border-gray-200'"
+            >⌘K</kbd>
+          </button>
+
           <!-- 다크 모드 토글 -->
           <button
             class="w-8 h-8 flex items-center justify-center rounded-lg text-base transition-colors"
@@ -112,4 +141,14 @@ function handleLogout() {
     </main>
 
   </div>
+
+  <!-- ── 글로벌 검색 모달 ─────────────────────────────────────── -->
+  <Transition name="search-fade">
+    <GlobalSearch v-if="searchOpen" @close="searchOpen = false" />
+  </Transition>
 </template>
+
+<style scoped>
+.search-fade-enter-active, .search-fade-leave-active { transition: opacity 0.15s; }
+.search-fade-enter-from, .search-fade-leave-to { opacity: 0; }
+</style>
