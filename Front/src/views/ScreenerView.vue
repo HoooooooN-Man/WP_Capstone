@@ -1,11 +1,14 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watchEffect, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import { useScreenerStore } from '@/stores/screener'
 import { useThemeStore } from '@/stores/theme.js'
 import FilterSidebar from '@/components/screener/FilterSidebar.vue'
 import ScreenerTable from '@/components/screener/ScreenerTable.vue'
 
+const route  = useRoute()
+const router = useRouter()
 const store  = useScreenerStore()
 const theme  = useThemeStore()
 const filterSheetOpen = ref(false)
@@ -21,7 +24,28 @@ function onFilterChange({ key, value }) {
 function onResetFinancial() { store.resetFinancialFilters(); store.fetchScreener() }
 function onResetAll()       { store.resetAllFilters();       store.fetchScreener() }
 
-onMounted(() => store.fetchScreener())
+// ── URL 동기화 ────────────────────────────────────────────────────────────────
+watchEffect(() => {
+  const q = {}
+  const f = store.filters
+  if (f.sort_by)   q.sort = f.sort_by
+  if (f.min_roe)   q.min_roe = f.min_roe
+  if (f.max_per)   q.max_per = f.max_per
+  if (f.min_score) q.min_score = f.min_score
+  if (f.sector)    q.sector = f.sector
+  router.replace({ query: q })
+})
+
+onMounted(() => {
+  // URL 쿼리 → 필터 복원
+  const q = route.query
+  if (q.sort)      store.setFilter('sort_by',   q.sort)
+  if (q.min_roe)   store.setFilter('min_roe',   Number(q.min_roe))
+  if (q.max_per)   store.setFilter('max_per',   Number(q.max_per))
+  if (q.min_score) store.setFilter('min_score', Number(q.min_score))
+  if (q.sector)    store.setFilter('sector',    q.sector)
+  store.fetchScreener()
+})
 </script>
 
 <template>

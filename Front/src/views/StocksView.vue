@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watchEffect, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/theme.js'
 import { useDebounceFn } from '@vueuse/core'
@@ -14,56 +14,58 @@ const router = useRouter()
 const store  = useStocksStore()
 const theme  = useThemeStore()
 
-// 모바일 필터 시트
 const filterSheetOpen = ref(false)
-
-// 드로어 상태
 const drawerOpen  = ref(false)
 const drawerStock = ref(null)
 
-function openDrawer(stock) {
-  drawerStock.value = stock
-  drawerOpen.value  = true
-}
+function openDrawer(stock) { drawerStock.value = stock; drawerOpen.value = true }
 
-// 필터 변경
 const fetchDebounced = useDebounceFn(() => store.fetchRecommendations(), 300)
 
 function handleFilterChange({ key, value }) {
   store.setFilter(key, value)
-  if (key === 'date' || key === 'model_version') {
-    store.fetchRecommendations()
-  } else {
-    fetchDebounced()
-  }
+  if (key === 'date' || key === 'model_version') store.fetchRecommendations()
+  else fetchDebounced()
 }
 
-function handleReset() {
-  store.resetFilters()
-  store.fetchRecommendations()
-}
+function handleReset() { store.resetFilters(); store.fetchRecommendations() }
 
-// CSV 내보내기
+// ── URL 동기화 ────────────────────────────────────────────────────────────────
+watchEffect(() => {
+  const q = {}
+  const f = store.filters
+  if (f.date)          q.date = f.date
+  if (f.model_version) q.version = f.model_version
+  if (f.sector)        q.sector = f.sector
+  if (f.min_score)     q.min_score = f.min_score
+  if (f.tier)          q.tier = f.tier
+  router.replace({ query: q })
+})
+
+// ── CSV 내보내기 ──────────────────────────────────────────────────────────────
 function exportCsv() {
-  const header = 'rank,ticker,name,sector,score,tier'
-  const rows   = store.items.map((item, i) =>
+  const rows = store.items.map((item, i) =>
     [i + 1, item.ticker, item.name, item.sector, item.score, item.tier].join(',')
   )
-  const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' })
+  const blob = new Blob([['rank,ticker,name,sector,score,tier', ...rows].join('\n')], { type: 'text/csv' })
   const a    = document.createElement('a')
   a.href     = URL.createObjectURL(blob)
   a.download = `stocks_${store.filters.date ?? 'latest'}.csv`
   a.click()
 }
 
-// 초기화
+// ── 초기화 ────────────────────────────────────────────────────────────────────
 onMounted(async () => {
   if (!store.versions.length) await store.initVersionsAndDates()
 
-  // 라우터 쿼리 섹터 반영
-  if (route.query.sector) {
-    store.setFilter('sector', route.query.sector)
-  }
+  // URL 쿼리 파라미터 → 필터 복원
+  const q = route.query
+  if (q.date)       store.setFilter('date',          q.date)
+  if (q.version)    store.setFilter('model_version', q.version)
+  if (q.sector)     store.setFilter('sector',        q.sector)
+  if (q.min_score)  store.setFilter('min_score',     Number(q.min_score))
+  if (q.tier)       store.setFilter('tier',          q.tier)
+
   await store.fetchRecommendations()
 })
 </script>

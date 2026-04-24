@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watchEffect, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { usePortfolioStore } from '@/stores/portfolio.js'
 import StrategyTabs          from '@/components/portfolio/StrategyTabs.vue'
 import PortfolioCardGrid     from '@/components/portfolio/PortfolioCardGrid.vue'
@@ -7,11 +8,21 @@ import StrategyExplanation   from '@/components/portfolio/StrategyExplanation.vu
 import BacktestSummaryTable  from '@/components/portfolio/BacktestSummaryTable.vue'
 import BacktestMonthlyChart  from '@/components/portfolio/BacktestMonthlyChart.vue'
 
-const store = usePortfolioStore()
+const route  = useRoute()
+const router = useRouter()
+const store  = usePortfolioStore()
 
 const portfolioError = ref(null)
 const backtestOpen   = ref(true)
 const rawOpen        = ref(false)
+
+// ── URL 동기화 ────────────────────────────────────────────────────────────────
+watchEffect(() => {
+  const q = {}
+  if (store.activeType)      q.type    = store.activeType
+  if (store.selectedVersion) q.version = store.selectedVersion
+  router.replace({ query: q })
+})
 
 // ── 이벤트 핸들러 ─────────────────────────────────────────────────────────────
 async function onTypeChange(type) {
@@ -35,6 +46,11 @@ async function onVersionChange(ver) {
 // ── 초기 로드 ─────────────────────────────────────────────────────────────────
 onMounted(async () => {
   await store.initVersions()
+
+  // URL 쿼리 → 상태 복원
+  if (route.query.type)    store.setType(route.query.type)
+  if (route.query.version) store.selectedVersion = route.query.version
+
   await Promise.all([
     store.fetchPortfolio('growth').catch(e => {
       portfolioError.value = e?.response?.status === 404 ? 'not_ready' : 'error'
