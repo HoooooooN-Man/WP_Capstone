@@ -5,7 +5,8 @@ import { useThemeStore }         from '@/stores/theme.js'
 import { useNotificationStore }  from '@/stores/notifications.js'
 import { useRouter }             from 'vue-router'
 import { useEventListener }      from '@vueuse/core'
-import GlobalSearch from '@/components/common/GlobalSearch.vue'
+import GlobalSearch   from '@/components/common/GlobalSearch.vue'
+import OfflineBanner  from '@/components/common/OfflineBanner.vue'
 
 const auth   = useAuthStore()
 const theme  = useThemeStore()
@@ -320,6 +321,9 @@ function handleLogout() {
   <Transition name="search-fade">
     <GlobalSearch v-if="searchOpen" @close="searchOpen = false" />
   </Transition>
+
+  <!-- ── 오프라인 배너 ────────────────────────────────────────── -->
+  <OfflineBanner />
 </template>
 
 <style scoped>
