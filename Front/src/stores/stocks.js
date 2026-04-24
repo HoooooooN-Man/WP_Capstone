@@ -2,43 +2,56 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { stocksApi } from '@/api/stocks'
 
-const DEFAULT_FILTERS = {
-  model_version: 'latest',
-  date:          '',
-  sector:        '',
-  min_score:     0,
-  top_k:         50,
-}
-
 export const useStocksStore = defineStore('stocks', () => {
   const items      = ref([])
   const totalCount = ref(0)
   const loading    = ref(false)
   const error      = ref(null)
-  const filters    = ref({ ...DEFAULT_FILTERS })
+  const versions   = ref([])
+  const dates      = ref([])
+  const filters    = ref({
+    model_version: 'latest',
+    date:          null,
+    sector:        null,
+    min_score:     0,
+    top_k:         0,
+  })
 
   const tierCounts = computed(() => {
-    const counts = { A: 0, B: 0, C: 0, D: 0 }
-    items.value.forEach(i => { if (i.tier in counts) counts[i.tier]++ })
-    return counts
+    const c = { A: 0, B: 0, C: 0, D: 0 }
+    items.value.forEach(i => { if (c[i.tier] !== undefined) c[i.tier]++ })
+    return c
   })
+
+  async function initVersionsAndDates() {
+    try {
+      const { data: v } = await stocksApi.getVersions()
+      versions.value = v.versions ?? []
+      filters.value.model_version = v.latest ?? 'latest'
+
+      const { data: d } = await stocksApi.getDates(v.latest)
+      dates.value = d.dates ?? []
+      filters.value.date = d.latest ?? null
+    } catch (e) {
+      console.error('[stocksStore] initVersionsAndDates failed', e)
+    }
+  }
 
   async function fetchRecommendations() {
     loading.value = true
     error.value   = null
     try {
-      const params = {}
-      if (filters.value.model_version) params.model_version = filters.value.model_version
-      if (filters.value.date)          params.date          = filters.value.date
-      if (filters.value.sector)        params.sector        = filters.value.sector
-      if (filters.value.min_score > 0) params.min_score     = filters.value.min_score
-      if (filters.value.top_k > 0)     params.top_k         = filters.value.top_k
+      const params = { ...filters.value }
+      if (!params.sector)    delete params.sector
+      if (!params.date)      delete params.date
+      if (!params.min_score) delete params.min_score
 
-      const res    = await stocksApi.getRecommendations(params)
-      items.value  = res.data.items ?? []
-      totalCount.value = res.data.total ?? 0
+      const { data } = await stocksApi.getRecommendations(params)
+      items.value      = data.items  ?? []
+      totalCount.value = data.total  ?? 0
     } catch (e) {
-      error.value = e?.response?.data?.detail ?? '데이터를 불러오지 못했습니다.'
+      error.value = e.response?.status === 404 ? 'no_data' : 'error'
+      items.value = []
     } finally {
       loading.value = false
     }
@@ -49,8 +62,13 @@ export const useStocksStore = defineStore('stocks', () => {
   }
 
   function resetFilters() {
-    filters.value = { ...DEFAULT_FILTERS }
+    filters.value.sector    = null
+    filters.value.min_score = 0
+    filters.value.top_k     = 0
   }
 
-  return { items, totalCount, loading, error, filters, tierCounts, fetchRecommendations, setFilter, resetFilters }
+  return {
+    items, totalCount, loading, error, versions, dates, filters,
+    tierCounts, initVersionsAndDates, fetchRecommendations, setFilter, resetFilters,
+  }
 })
