@@ -48,6 +48,12 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/CompareView.vue'),
   },
 
+  {
+    path: '/board',
+    name: 'board',
+    component: () => import('../page/board/Boardview.vue'),
+  },
+
   { 
     path: '/', 
     redirect: '/home' 
