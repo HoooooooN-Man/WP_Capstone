@@ -12,22 +12,22 @@ export const useAuthStore = defineStore('auth', () => {
     token.value    = newToken
     nickname.value = newNickname
     userId.value   = newUserId
-    localStorage.setItem('token',    newToken    ?? '')
-    localStorage.setItem('nickname', newNickname ?? '')
-    localStorage.setItem('userId',   newUserId   ?? '')
+    localStorage.setItem('session_token', newToken     ?? '')
+    localStorage.setItem('nickname',      newNickname  ?? '')
+    localStorage.setItem('userId',        newUserId    ?? '')
   }
 
   function logout() {
     token.value    = null
     nickname.value = null
     userId.value   = null
-    localStorage.removeItem('token')
+    localStorage.removeItem('session_token')
     localStorage.removeItem('nickname')
     localStorage.removeItem('userId')
   }
 
   function initFromStorage() {
-    const storedToken = localStorage.getItem('token')
+    const storedToken = localStorage.getItem('session_token')
     if (storedToken) {
       token.value    = storedToken
       nickname.value = localStorage.getItem('nickname')

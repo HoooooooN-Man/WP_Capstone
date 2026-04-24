@@ -16,14 +16,14 @@ const routes: RouteRecordRaw[] = [
   { path: '/news',           name: 'News',        component: () => import('@/views/NewsView.vue') },
   { path: '/backtest',       name: 'Backtest',    component: () => import('@/views/BacktestView.vue') },
   { path: '/user/:nickname', name: 'UserProfile', component: () => import('@/views/UserProfileView.vue') },
-  { path: '/my',             name: 'MyPage',      component: () => import('@/views/MyPageView.vue'), meta: { requiresAuth: true } },
-  { path: '/login',          name: 'Login',       component: () => import('@/views/LoginView.vue') },
-  { path: '/register',       name: 'Register',    component: () => import('@/views/RegisterView.vue') },
+  { path: '/my',             name: 'MyPage',         component: () => import('@/views/MyPageView.vue'),           meta: { requiresAuth: true } },
+  { path: '/login',          name: 'Login',          component: () => import('@/page/auth/Login.vue') },
+  { path: '/register',       name: 'Register',       component: () => import('@/page/auth/Register.vue') },
+  { path: '/reset-password', name: 'ResetPassword',  component: () => import('@/page/auth/ResetPassword.vue') },
   { path: '/board',          name: 'Board',       component: () => import('@/page/board/Boardview.vue') },
   // 기존 경로 호환
   { path: '/recommend',      redirect: '/stocks' },
   { path: '/stock/:ticker',  redirect: (to) => `/stocks/${to.params.ticker}` },
-  { path: '/reset-password', redirect: '/login' },
 ]
 
 const router = createRouter({
