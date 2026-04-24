@@ -1,14 +1,14 @@
 <!-- front/board/LoginPromptModal.vue -->
-<!-- 비로그인 접근 시 로그인 유도 모달 -->
+<!-- 鍮꾨줈洹몄씤 ?묎렐 ??濡쒓렇???좊룄 紐⑤떖 -->
 
 <template>
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal">
-      <p class="modal__msg">로그인 후 이용 가능합니다.</p>
+      <p class="modal__msg">濡쒓렇?????댁슜 媛?ν빀?덈떎.</p>
       <div class="modal__actions">
-        <button class="btn btn--ghost" @click="$emit('close')">취소</button>
+        <button class="btn btn--ghost" @click="$emit('close')">痍⑥냼</button>
         <router-link to="/login" class="btn btn--primary" @click="$emit('close')">
-          로그인하기
+          濡쒓렇?명븯湲?
         </router-link>
       </div>
     </div>

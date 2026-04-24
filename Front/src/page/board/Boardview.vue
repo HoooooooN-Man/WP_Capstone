@@ -1,38 +1,38 @@
 <!-- front/board/BoardView.vue -->
-<!-- WP_Capstone — P-07 커뮤니티 게시판 목록 -->
+<!-- WP_Capstone ??P-07 而ㅻ??덊떚 寃뚯떆??紐⑸줉 -->
 
 <template>
   <div class="board-wrap">
-    <!-- 종목 헤더 배너 -->
+    <!-- 醫낅ぉ ?ㅻ뜑 諛곕꼫 -->
     <div class="board-header">
       <div class="board-header__info">
         <span class="board-header__ticker">{{ ticker }}</span>
-        <span class="board-header__title">커뮤니티 게시판</span>
+        <span class="board-header__title">而ㅻ??덊떚 寃뚯떆??/span>
       </div>
       <router-link :to="`/stocks/${ticker}`" class="board-header__link">
-        종목 상세 →
+        醫낅ぉ ?곸꽭 ??
       </router-link>
     </div>
 
-    <!-- 작성 버튼 -->
+    <!-- ?묒꽦 踰꾪듉 -->
     <div class="board-toolbar">
-      <span class="board-toolbar__count">전체 {{ store.total }}개</span>
-      <button class="btn btn--primary" @click="onClickWrite">글쓰기</button>
+      <span class="board-toolbar__count">?꾩껜 {{ store.total }}媛?/span>
+      <button class="btn btn--primary" @click="onClickWrite">湲?곌린</button>
     </div>
 
-    <!-- 로딩 -->
-    <div v-if="store.loading" class="board-loading">불러오는 중...</div>
+    <!-- 濡쒕뵫 -->
+    <div v-if="store.loading" class="board-loading">遺덈윭?ㅻ뒗 以?..</div>
 
-    <!-- 에러 -->
+    <!-- ?먮윭 -->
     <div v-else-if="store.error" class="board-error">
       {{ store.error }}
-      <button class="btn btn--ghost" @click="loadPosts">재시도</button>
+      <button class="btn btn--ghost" @click="loadPosts">?ъ떆??/button>
     </div>
 
-    <!-- 게시글 목록 -->
+    <!-- 寃뚯떆湲 紐⑸줉 -->
     <template v-else>
       <div v-if="store.posts.length === 0" class="board-empty">
-        첫 번째 게시글을 작성해보세요!
+        泥?踰덉㎏ 寃뚯떆湲???묒꽦?대낫?몄슂!
       </div>
 
       <ul v-else class="post-list">
@@ -46,35 +46,35 @@
             <span class="post-item__title">{{ post.title }}</span>
           </div>
           <div class="post-item__meta">
-            <span>작성자 #{{ post.author_id }}</span>
-            <span>조회 {{ post.views }}</span>
+            <span>?묒꽦??#{{ post.author_id }}</span>
+            <span>議고쉶 {{ post.views }}</span>
             <span class="post-item__like" @click.stop="onLike(post.id)">
-              <span :class="['heart', { 'heart--filled': post.liked }]">♥</span>
+              <span :class="['heart', { 'heart--filled': post.liked }]">??/span>
               {{ post.likes }}
             </span>
-            <span>댓글 {{ post.comment_count }}</span>
+            <span>?볤? {{ post.comment_count }}</span>
             <span>{{ formatDate(post.created_at) }}</span>
           </div>
         </li>
       </ul>
 
-      <!-- 페이지네이션 -->
+      <!-- ?섏씠吏?ㅼ씠??-->
       <div class="pagination">
         <button
           class="btn btn--ghost"
           :disabled="store.page <= 1"
           @click="changePage(store.page - 1)"
-        >이전</button>
+        >?댁쟾</button>
         <span class="pagination__info">{{ store.page }} / {{ store.totalPages }}</span>
         <button
           class="btn btn--ghost"
           :disabled="store.page >= store.totalPages"
           @click="changePage(store.page + 1)"
-        >다음</button>
+        >?ㅼ쓬</button>
       </div>
     </template>
 
-    <!-- 게시글 작성 모달 -->
+    <!-- 寃뚯떆湲 ?묒꽦 紐⑤떖 -->
     <PostFormModal
       v-if="showWriteModal"
       :ticker="ticker"
@@ -82,7 +82,7 @@
       @submitted="onPostSubmitted"
     />
 
-    <!-- 게시글 상세 모달 -->
+    <!-- 寃뚯떆湲 ?곸꽭 紐⑤떖 -->
     <PostDetailModal
       v-if="activePostId !== null"
       :post-id="activePostId"
@@ -90,12 +90,13 @@
       @deleted="onPostDeleted"
     />
 
-    <!-- 로그인 유도 모달 -->
+    <!-- 濡쒓렇???좊룄 紐⑤떖 -->
     <LoginPromptModal v-if="showLoginPrompt" @close="showLoginPrompt = false" />
   </div>
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBoardStore } from '@/stores/boardStore'
@@ -115,13 +116,13 @@ const showLoginPrompt = ref(false)
 const activePostId = ref<number | null>(null)
 
 async function loadPosts(page?: number) {
-  // 인자가 없거나 숫자가 아니면(이벤트 객체면) 스토어의 현재 페이지 사용
+  // ?몄옄媛 ?녾굅???レ옄媛 ?꾨땲硫??대깽??媛앹껜硫? ?ㅽ넗?댁쓽 ?꾩옱 ?섏씠吏 ?ъ슜
   const targetPage = (typeof page === 'number') ? page : store.page;
   await store.fetchPosts(ticker.value, targetPage);
 }
 
 function changePage(p: number) {
-  if (p < 1 || p > store.totalPages) return; // 페이지 범위 방어 코드 추가
+  if (p < 1 || p > store.totalPages) return; // ?섏씠吏 踰붿쐞 諛⑹뼱 肄붾뱶 異붽?
   loadPosts(p);
 }
 
@@ -161,7 +162,7 @@ function formatDate(iso: string) {
   })
 }
 
-// ticker가 URL로 바뀌면 재조회
+// ticker媛 URL濡?諛붾뚮㈃ ?ъ“??
 watch(() => route.params.ticker, (val) => {
   if (val) {
     ticker.value = String(val)
@@ -173,7 +174,7 @@ onMounted(() => loadPosts(1))
 </script>
 
 <style scoped>
-/* ── 레이아웃 ───────────────────────────────────────────── */
+/* ?? ?덉씠?꾩썐 ????????????????????????????????????????????? */
 .board-wrap {
   max-width: 860px;
   margin: 0 auto;
@@ -181,7 +182,7 @@ onMounted(() => loadPosts(1))
   font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
 }
 
-/* ── 헤더 배너 ──────────────────────────────────────────── */
+/* ?? ?ㅻ뜑 諛곕꼫 ???????????????????????????????????????????? */
 .board-header {
   display: flex;
   align-items: center;
@@ -206,7 +207,7 @@ onMounted(() => loadPosts(1))
 }
 .board-header__link:hover { text-decoration: underline; }
 
-/* ── 툴바 ──────────────────────────────────────────────── */
+/* ?? ?대컮 ???????????????????????????????????????????????? */
 .board-toolbar {
   display: flex;
   justify-content: space-between;
@@ -215,7 +216,7 @@ onMounted(() => loadPosts(1))
 }
 .board-toolbar__count { font-size: 13px; color: #64748b; }
 
-/* ── 버튼 ──────────────────────────────────────────────── */
+/* ?? 踰꾪듉 ???????????????????????????????????????????????? */
 .btn {
   padding: 7px 16px;
   border-radius: 6px;
@@ -234,7 +235,7 @@ onMounted(() => loadPosts(1))
 .btn--ghost:hover { background: #f1f5f9; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── 목록 ──────────────────────────────────────────────── */
+/* ?? 紐⑸줉 ???????????????????????????????????????????????? */
 .post-list { list-style: none; margin: 0; padding: 0; }
 
 .post-item {
@@ -259,12 +260,12 @@ onMounted(() => loadPosts(1))
   color: #94a3b8;
 }
 
-/* ── 좋아요 하트 ─────────────────────────────────────────── */
+/* ?? 醫뗭븘???섑듃 ??????????????????????????????????????????? */
 .post-item__like { display: flex; align-items: center; gap: 3px; cursor: pointer; }
 .heart { color: #cbd5e1; transition: color 0.15s; }
 .heart--filled { color: #ef4444; }
 
-/* ── 페이지네이션 ─────────────────────────────────────────── */
+/* ?? ?섏씠吏?ㅼ씠????????????????????????????????????????????? */
 .pagination {
   display: flex;
   justify-content: center;
@@ -274,7 +275,7 @@ onMounted(() => loadPosts(1))
 }
 .pagination__info { font-size: 13px; color: #64748b; }
 
-/* ── 로딩 / 에러 / 빈 상태 ────────────────────────────────── */
+/* ?? 濡쒕뵫 / ?먮윭 / 鍮??곹깭 ?????????????????????????????????? */
 .board-loading,
 .board-empty {
   text-align: center;

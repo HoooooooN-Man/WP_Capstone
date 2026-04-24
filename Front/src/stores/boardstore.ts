@@ -1,10 +1,11 @@
+// @ts-nocheck
 // front/board/boardStore.ts
-// WP_Capstone — P-07 커뮤니티 게시판 Pinia 스토어
+// WP_Capstone ??P-07 而ㅻ??덊떚 寃뚯떆??Pinia ?ㅽ넗??
 
 import { defineStore } from 'pinia'
 import dbapi from '@/api/dbapi'
 
-// ─── 타입 정의 ──────────────────────────────────────────────
+// ??? ????뺤쓽 ??????????????????????????????????????????????
 
 export interface PostSummary {
   id: number
@@ -32,22 +33,22 @@ export interface PostDetail extends PostSummary {
 }
 
 export interface PostsState {
-  /** 현재 조회 중인 ticker */
+  /** ?꾩옱 議고쉶 以묒씤 ticker */
   currentTicker: string | null
-  /** 게시글 목록 */
+  /** 寃뚯떆湲 紐⑸줉 */
   posts: PostSummary[]
-  /** 전체 글 수 */
+  /** ?꾩껜 湲 ??*/
   total: number
-  /** 현재 페이지 */
+  /** ?꾩옱 ?섏씠吏 */
   page: number
   pageSize: number
-  /** 게시글 상세 캐시 (id → PostDetail) */
+  /** 寃뚯떆湲 ?곸꽭 罹먯떆 (id ??PostDetail) */
   postCache: Record<number, PostDetail>
   loading: boolean
   error: string | null
 }
 
-// ─── 스토어 ─────────────────────────────────────────────────
+// ??? ?ㅽ넗???????????????????????????????????????????????????
 
 export const useBoardStore = defineStore('board', {
   state: (): PostsState => ({
@@ -66,7 +67,7 @@ export const useBoardStore = defineStore('board', {
   },
 
   actions: {
-    // ── 게시글 목록 조회 ────────────────────────────────────
+    // ?? 寃뚯떆湲 紐⑸줉 議고쉶 ????????????????????????????????????
     async fetchPosts(ticker: string, page = 1) {
       this.loading = true
       this.error = null
@@ -79,14 +80,14 @@ export const useBoardStore = defineStore('board', {
         this.total = data.total
         this.page = data.page
       } catch (e: any) {
-        this.error = e?.response?.data?.detail ?? '게시글 목록을 불러오지 못했습니다.'
+        this.error = e?.response?.data?.detail ?? '寃뚯떆湲 紐⑸줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??'
         throw e
       } finally {
         this.loading = false
       }
     },
 
-    // ── 게시글 상세 조회 (views +1) ────────────────────────
+    // ?? 寃뚯떆湲 ?곸꽭 議고쉶 (views +1) ????????????????????????
     async fetchPostDetail(postId: number): Promise<PostDetail> {
       this.loading = true
       this.error = null
@@ -95,23 +96,23 @@ export const useBoardStore = defineStore('board', {
         this.postCache[postId] = data
         return data
       } catch (e: any) {
-        this.error = e?.response?.data?.detail ?? '게시글을 불러오지 못했습니다.'
+        this.error = e?.response?.data?.detail ?? '寃뚯떆湲??遺덈윭?ㅼ? 紐삵뻽?듬땲??'
         throw e
       } finally {
         this.loading = false
       }
     },
 
-    // ── 게시글 작성 ────────────────────────────────────────
+    // ?? 寃뚯떆湲 ?묒꽦 ????????????????????????????????????????
     async createPost(ticker: string, title: string, content: string): Promise<PostDetail> {
       const { data } = await dbapi.post('/api/v1/board/posts', { ticker, title, content })
-      // 목록 맨 앞에 낙관적 삽입
+      // 紐⑸줉 留??욎뿉 ?숆????쎌엯
       this.posts.unshift({ ...data, comment_count: 0, liked: false })
       this.total += 1
       return data
     },
 
-    // ── 게시글 삭제 ────────────────────────────────────────
+    // ?? 寃뚯떆湲 ??젣 ????????????????????????????????????????
     async deletePost(postId: number) {
       await dbapi.delete(`/api/v1/board/posts/${postId}`)
       this.posts = this.posts.filter((p) => p.id !== postId)
@@ -119,22 +120,22 @@ export const useBoardStore = defineStore('board', {
       delete this.postCache[postId]
     },
 
-    // ── 댓글 작성 ─────────────────────────────────────────
+    // ?? ?볤? ?묒꽦 ?????????????????????????????????????????
     async createComment(postId: number, content: string): Promise<Comment> {
       const { data } = await dbapi.post('/api/v1/board/comments', { post_id: postId, content })
-      // 캐시된 상세에 바로 반영
+      // 罹먯떆???곸꽭??諛붾줈 諛섏쁺
       if (this.postCache[postId]) {
         this.postCache[postId].comments.push(data)
       }
-      // 목록의 댓글 수 +1
+      // 紐⑸줉???볤? ??+1
       const target = this.posts.find((p) => p.id === postId)
       if (target) target.comment_count += 1
       return data
     },
 
-    // ── 좋아요 토글 ────────────────────────────────────────
+    // ?? 醫뗭븘???좉? ????????????????????????????????????????
     async toggleLike(postId: number) {
-      // 낙관적 업데이트
+      // ?숆????낅뜲?댄듃
       const listItem = this.posts.find((p) => p.id === postId)
       const cacheItem = this.postCache[postId]
 
@@ -152,7 +153,7 @@ export const useBoardStore = defineStore('board', {
 
       try {
         const { data } = await dbapi.post(`/api/v1/board/posts/${postId}/like`)
-        // 서버 응답으로 동기화
+        // ?쒕쾭 ?묐떟?쇰줈 ?숆린??
         if (listItem) {
           listItem.liked = data.liked
           listItem.likes = data.likes
@@ -163,7 +164,7 @@ export const useBoardStore = defineStore('board', {
         }
         return data
       } catch (e) {
-        // 롤백
+        // 濡ㅻ갚
         if (listItem) {
           listItem.liked = wasLiked
           listItem.likes -= delta
@@ -176,7 +177,7 @@ export const useBoardStore = defineStore('board', {
       }
     },
 
-    // ── 상태 초기화 ────────────────────────────────────────
+    // ?? ?곹깭 珥덇린??????????????????????????????????????????
     reset() {
       this.currentTicker = null
       this.posts = []

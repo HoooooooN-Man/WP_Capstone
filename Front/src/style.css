@@ -1,5 +1,8 @@
-@import "tailwindcss";
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import "tailwindcss";
+
+/* Tailwind v4 dark variant (class strategy) */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ── CSS Variables ─────────────────────────────────────────────────────── */
 :root {
@@ -31,6 +34,84 @@
   --gnb-h: 60px;
   --header-h: 56px;
 }
+
+/* ── Dark Mode Variables ─────────────────────────────────────────────────── */
+.dark {
+  --color-primary:    #A8B0D8;
+  --color-accent:     #7B8FFF;
+  --color-accent-lt:  #1E2240;
+  --color-up:         #FF6370;
+  --color-down:       #4DA8FF;
+  --color-bg:         #0F1117;
+  --color-card:       #1A1D27;
+  --color-border:     #2A2D3A;
+  --color-text:       #E4E6EF;
+  --color-text-sub:   #6B7280;
+  --color-text-muted: #4B5563;
+
+  --shadow-sm: 0 1px 4px rgba(0,0,0,.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.4);
+}
+
+.dark body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* ── Dark Mode: Tailwind class overrides ────────────────────────────────── */
+/* bg */
+.dark .bg-white          { background-color: #1A1D27 !important; }
+.dark .bg-gray-50        { background-color: #1E2030 !important; }
+.dark .bg-gray-100       { background-color: #252836 !important; }
+.dark .bg-gray-200       { background-color: #2A2D3A !important; }
+.dark .bg-amber-50       { background-color: #2A1F0A !important; }
+.dark .bg-blue-50        { background-color: #0A1628 !important; }
+.dark .bg-green-50       { background-color: #0A1F14 !important; }
+.dark .bg-red-50         { background-color: #1F0A0A !important; }
+
+/* border */
+.dark .border-gray-100   { border-color: #2A2D3A !important; }
+.dark .border-gray-200   { border-color: #2A2D3A !important; }
+.dark .border-amber-200  { border-color: #4A3410 !important; }
+.dark .border-blue-200   { border-color: #1A3050 !important; }
+
+/* text */
+.dark .text-gray-900     { color: #E4E6EF !important; }
+.dark .text-gray-800     { color: #CDD0DB !important; }
+.dark .text-gray-700     { color: #B0B8C8 !important; }
+.dark .text-gray-600     { color: #8892A4 !important; }
+.dark .text-gray-500     { color: #6B7280 !important; }
+.dark .text-gray-400     { color: #4B5563 !important; }
+.dark .text-gray-300     { color: #374151 !important; }
+.dark .text-amber-700    { color: #D4963A !important; }
+.dark .text-blue-600     { color: #60A5FA !important; }
+.dark .text-blue-700     { color: #93C5FD !important; }
+.dark .text-green-600    { color: #4ADE80 !important; }
+.dark .text-green-700    { color: #86EFAC !important; }
+.dark .text-red-500      { color: #F87171 !important; }
+
+/* interactive */
+.dark .hover\:bg-gray-50:hover  { background-color: #252836 !important; }
+.dark .hover\:bg-gray-100:hover { background-color: #2A2D3A !important; }
+
+/* inputs & selects */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #252836 !important;
+  border-color: #2A2D3A !important;
+  color: #E4E6EF !important;
+  color-scheme: dark;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #4B5563 !important;
+}
+
+/* scrollbar */
+.dark ::-webkit-scrollbar-track { background: #1A1D27; }
+.dark ::-webkit-scrollbar-thumb { background: #2A2D3A; border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #3A3F52; }
 
 /* ── Reset ──────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
