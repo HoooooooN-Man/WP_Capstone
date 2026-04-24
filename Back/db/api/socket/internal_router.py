@@ -14,44 +14,57 @@ DUCKDB_PATH = os.path.join(BASE_DIR, "db", "stock_analysis.duckdb")
 @router.post("/ingest")
 async def ingest_and_notify(batch_data: dict, db_pg: Session = Depends(get_db)):
     try:
-        # manifest에서 배포 기준 날짜 추출 (기본값 오늘)
         display_date = batch_data.get('display_date') 
         items = batch_data.get('items', [])
-        category_id = batch_data.get('category_id', 'general') # 카테고리 ID 확보
+        category_id = batch_data.get('category_id', 'general')
 
+        # 1. 연결 유지 (Context Manager 내부에서 트랜잭션 관리)
         with duckdb.connect(DUCKDB_PATH) as duck_conn:
+            # 트랜잭션 시작 (성능 최적화)
+            duck_conn.execute("BEGIN TRANSACTION")
+            
             for item in items:
+                # 필드 기본값 처리 (KeyError 방지)
                 sentiment = item.get('sentiment', {'label': 'neutral', 'score': 0, 'pos': 0, 'neg': 0})
-                
-                # [이미지 URL 필터링] 문서에 언급된 fonts.googleapis.com 등 예외 처리
                 img_url = item.get('image_url')
-                if img_url and 'fonts.googleapis.com' in img_url:
+                
+                # 이미지 URL 필터링 보강
+                if not img_url or any(x in img_url for x in ['fonts.googleapis.com', 'pixel']):
                     img_url = None
 
-                # 1. news_normalized 적재 (이미지 및 원문 URL 필드 추가)
+                # 1. news_normalized 적재 (필드명은 전달하신 Redis 규격 기준)
                 duck_conn.execute("""
                     INSERT OR REPLACE INTO news_normalized (
-                        news_id, provider, title, title_norm, title_hash, 
+                        news_id, provider, title, title_hash, 
                         query_text, source_name, google_url, origin_url, image_url,
                         published_at, fetched_at, 
-                        sentiment_label, sentiment_score, pos_prob, neg_prob, neu_prob, 
-                        used_for_ml, source_quality_tier
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        sentiment_label, sentiment_score, pos_prob, neg_prob, neu_prob
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
-                    item['news_id'], item['provider'], item['title'], item.get('title_norm', ''), 
-                    item['title_hash'], item.get('query', ''), item['source_name'], 
-                    item.get('google_news_url', ''), item.get('origin_url', ''), img_url,
-                    item['published_at'], item['fetched_at'], 
-                    sentiment['label'], sentiment['score'], sentiment['pos'], sentiment['neg'], sentiment.get('neu', 0),
-                    item.get('used_for_ml', True), item.get('source_quality_tier', 'normal')
+                    item.get('id'), # Redis/JSON의 'id' 사용
+                    item.get('publisher'), # publisher로 매핑
+                    item.get('title'),
+                    item.get('title_hash', ''), # 해시값 부재 시 빈값
+                    item.get('query', ''),
+                    item.get('publisher'), # source_name
+                    item.get('google_news_url', ''),
+                    item.get('origin_url', ''),
+                    img_url,
+                    item.get('published_at'),
+                    item.get('collected_at'), # Redis 규격의 collected_at
+                    sentiment['label'], 
+                    sentiment['score'], 
+                    sentiment['pos'], 
+                    sentiment['neg'], 
+                    sentiment.get('neu', 0)
                 ))
 
-                # 2. news_rankings (랭킹) 적재 - 오늘 띄워줄 뉴스 정보
+                # 2. news_rankings (랭킹) 적재
                 if display_date and 'rank' in item:
                     duck_conn.execute("""
                         INSERT OR REPLACE INTO news_rankings (display_date, category_id, news_id, rank, score)
                         VALUES (?, ?, ?, ?, ?)
-                    """, (display_date, category_id, item['news_id'], item['rank'], item.get('score', 0)))
+                    """, (display_date, category_id, item.get('id'), item['rank'], item.get('score', 0)))
 
                 # 3. news_company_map 적재 (기존 로직)
                 for m in item.get('matched', []):
@@ -82,4 +95,4 @@ async def ingest_and_notify(batch_data: dict, db_pg: Session = Depends(get_db)):
     except Exception as e:
         import traceback
         traceback.print_exc() 
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Database Ingest Error: {str(e)}")
