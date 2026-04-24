@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { to: '/',          label: '홈', icon: '🏠' },
   { to: '/stocks',    label: '종목 추천', icon: '📈' },
   { to: '/screener',  label: '스크리너', icon: '🔎' },
+  { to: '/sectors',   label: '섹터 맵', icon: '🗺️' },
   { to: '/portfolio', label: '포트폴리오', icon: '💼' },
   { to: '/compare',   label: '비교', icon: '⚖️' },
   { to: '/board',     label: '커뮤니티', icon: '💬' },
