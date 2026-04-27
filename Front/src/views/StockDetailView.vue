@@ -1,434 +1,235 @@
-<script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { chartApi, financeApi, stocksApi, type CandleItem, type FinanceLatest, type StockHistoryItem } from '../api'
-import { createChart, CandlestickSeries, LineSeries } from 'lightweight-charts'
+import { chartApi }   from '@/api/chart'
+import { financeApi } from '@/api/finance'
+import { stocksApi }  from '@/api/stocks'
+import { useAuthStore }      from '@/stores/auth.js'
+import { useWatchlistStore } from '@/stores/watchlist.js'
 
-const route = useRoute()
+import StockHeader       from '@/components/stockDetail/StockHeader.vue'
+import CandleChart       from '@/components/stockDetail/CandleChart.vue'
+import VolumeChart       from '@/components/stockDetail/VolumeChart.vue'
+import ScoreHistoryChart from '@/components/stockDetail/ScoreHistoryChart.vue'
+import FinanceSummary    from '@/components/stockDetail/FinanceSummary.vue'
+import FinanceTable      from '@/components/stockDetail/FinanceTable.vue'
+
+const route  = useRoute()
 const router = useRouter()
-const ticker = route.params.ticker as string
+const auth   = useAuthStore()
+const watchlist = useWatchlistStore()
 
-// ── State ────────────────────────────────────────────────────────────────
-const stockName = ref('')
-const stockSector = ref('')
-const latestScore = ref<number | null>(null)
-const latestTier = ref('')
+const ticker = route.params.ticker
 
-const chartPeriod = ref('1y')
-const candleData = ref<CandleItem[]>([])
-const chartLoading = ref(true)
+// ── 상태 ──────────────────────────────────────────────────────────────────────
+const candles        = ref([])
+const financeLatest  = ref(null)
+const financeHistory = ref([])
+const scoreHistory   = ref([])
 
-const finance = ref<FinanceLatest | null>(null)
-const financeLoading = ref(true)
+const loading     = ref(true)
+const notFound    = ref(false)
+const activePeriod = ref('1y')
+const activeTab   = ref('summary')
+const showLoginModal = ref(false)
 
-const scoreHistory = ref<StockHistoryItem[]>([])
-const historyLoading = ref(true)
+const PERIODS = [
+  { label: '1개월', value: '1m' },
+  { label: '3개월', value: '3m' },
+  { label: '6개월', value: '6m' },
+  { label: '1년',   value: '1y' },
+  { label: '3년',   value: '3y' },
+  { label: '전체',  value: 'all' },
+]
 
-const activeSection = ref<'chart' | 'finance' | 'score'>('chart')
-
-const chartEl = ref<HTMLElement | null>(null)
-let chartInstance: ReturnType<typeof createChart> | null = null
-
-const periods = ['1m', '3m', '6m', '1y', '3y', 'all']
-
-// ── Chart ────────────────────────────────────────────────────────────────
-async function loadChart() {
-  chartLoading.value = true
-  try {
-    const { data } = await chartApi.get(ticker, chartPeriod.value)
-    candleData.value = data.items
-    stockName.value = data.name ?? ticker
-    await nextTick()
-    renderChart()
-  } catch {
-    candleData.value = []
-  } finally {
-    chartLoading.value = false
-  }
-}
-
-function renderChart() {
-  if (!chartEl.value || !candleData.value.length) return
-
-  if (chartInstance) {
-    chartInstance.remove()
-    chartInstance = null
-  }
-
-  const chart = createChart(chartEl.value, {
-    width: chartEl.value.clientWidth,
-    height: 260,
-    layout: {
-      background: { color: '#ffffff' },
-      textColor: '#8C98A7',
-    },
-    grid: {
-      vertLines: { color: '#F5F6F8' },
-      horzLines: { color: '#F5F6F8' },
-    },
-    rightPriceScale: { borderColor: '#E5E8EB' },
-    timeScale: {
-      borderColor: '#E5E8EB',
-      timeVisible: true,
-    },
-  })
-
-  const candleSeries = chart.addSeries(CandlestickSeries, {
-    upColor: '#F03E4C',
-    downColor: '#097DF3',
-    borderUpColor: '#F03E4C',
-    borderDownColor: '#097DF3',
-    wickUpColor: '#F03E4C',
-    wickDownColor: '#097DF3',
-  })
-
-  const formatted = candleData.value.map(c => ({
-    time: c.date as any,
-    open: c.open ?? 0,
-    high: c.high ?? 0,
-    low: c.low ?? 0,
-    close: c.close ?? 0,
-  }))
-  candleSeries.setData(formatted)
-
-  // MA20
-  const hasMA20 = candleData.value.some(c => c.ma20 != null)
-  if (hasMA20) {
-    const ma20Series = chart.addSeries(LineSeries, {
-      color: '#FF7A00',
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    })
-    ma20Series.setData(
-      candleData.value
-        .filter(c => c.ma20 != null)
-        .map(c => ({ time: c.date as any, value: c.ma20! }))
-    )
-  }
-
-  // MA60
-  const hasMA60 = candleData.value.some(c => c.ma60 != null)
-  if (hasMA60) {
-    const ma60Series = chart.addSeries(LineSeries, {
-      color: '#5B6DFF',
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    })
-    ma60Series.setData(
-      candleData.value
-        .filter(c => c.ma60 != null)
-        .map(c => ({ time: c.date as any, value: c.ma60! }))
-    )
-  }
-
-  chart.timeScale().fitContent()
-  chartInstance = chart
-
-  window.addEventListener('resize', () => {
-    if (chartEl.value && chartInstance) {
-      chartInstance.applyOptions({ width: chartEl.value.clientWidth })
-    }
-  }, { once: false })
-}
-
-// ── Finance ──────────────────────────────────────────────────────────────
-async function loadFinance() {
-  financeLoading.value = true
-  try {
-    const { data } = await financeApi.getLatest(ticker)
-    finance.value = data
-    if (!stockName.value && data.name) stockName.value = data.name
-  } catch {
-    finance.value = null
-  } finally {
-    financeLoading.value = false
-  }
-}
-
-// ── Score history ─────────────────────────────────────────────────────────
-async function loadHistory() {
-  historyLoading.value = true
-  try {
-    const { data } = await stocksApi.history(ticker)
-    scoreHistory.value = data.items.slice(-30)
-    if (data.items.length) {
-      const last = data.items[data.items.length - 1]
-      latestScore.value = last.score
-      latestTier.value = last.tier
-    }
-  } catch {
-    scoreHistory.value = []
-  } finally {
-    historyLoading.value = false
-  }
-}
-
-watch(chartPeriod, loadChart)
-watch(activeSection, async (val) => {
-  if (val === 'chart') {
-    await nextTick()
-    renderChart()
-  }
+// ── 파생 데이터 ────────────────────────────────────────────────────────────────
+const stockInfo = computed(() => {
+  if (candles.value.length) return { name: chartName.value, sector: '', midSector: '' }
+  return {}
 })
+const chartName     = ref('')
+const chartSector   = ref('')
 
-function formatNum(v?: number | null, dec = 1) {
-  if (v == null) return '—'
-  return v.toFixed(dec)
+const latestScore = computed(() => scoreHistory.value.at(-1)?.score   ?? 0)
+const latestTier  = computed(() => scoreHistory.value.at(-1)?.tier    ?? 'D')
+const latestScoreItem = computed(() => scoreHistory.value.at(-1) ?? null)
+
+const isFavorite = computed(() => watchlist.isFavorite(ticker))
+
+// ── API 함수들 ─────────────────────────────────────────────────────────────────
+async function fetchChart(period) {
+  try {
+    const res = await chartApi.getCandles(ticker, period)
+    candles.value   = res.data.items ?? []
+    chartName.value = res.data.name  ?? ticker
+  } catch (e) {
+    if (e?.response?.status === 404) notFound.value = true
+  }
 }
 
-function formatBillion(v?: number | null) {
-  if (v == null) return '—'
-  if (Math.abs(v) >= 1e12) return (v / 1e12).toFixed(1) + '조'
-  if (Math.abs(v) >= 1e8) return (v / 1e8).toFixed(0) + '억'
-  return v.toLocaleString()
+async function fetchFinanceLatest() {
+  try {
+    const res = await financeApi.getLatest(ticker)
+    financeLatest.value = res.data
+  } catch {}
 }
 
-const maxHistoryScore = computed(() => Math.max(...scoreHistory.value.map(s => s.score), 1))
-function barHeight(score: number) {
-  return Math.round((score / maxHistoryScore.value) * 64) + 'px'
+async function fetchFinanceHistory() {
+  try {
+    const res = await financeApi.getHistory(ticker, 20)
+    financeHistory.value = res.data.items ?? []
+  } catch {}
 }
 
-import { computed } from 'vue'
+async function fetchScoreHistory() {
+  try {
+    const res = await stocksApi.getHistory(ticker, { model_version: 'latest' })
+    scoreHistory.value = res.data.items ?? []
+  } catch {}
+}
 
+async function changePeriod(p) {
+  activePeriod.value = p
+  await fetchChart(p)
+}
+
+// ── 관심종목 토글 ──────────────────────────────────────────────────────────────
+function toggleFavorite() {
+  if (!auth.isLoggedIn) { showLoginModal.value = true; return }
+  watchlist.toggleTicker(ticker)
+}
+
+// ── 초기 로드 ──────────────────────────────────────────────────────────────────
 onMounted(async () => {
-  await Promise.all([loadChart(), loadFinance(), loadHistory()])
+  await Promise.all([
+    fetchChart('1y'),
+    fetchFinanceLatest(),
+    fetchFinanceHistory(),
+    fetchScoreHistory(),
+  ])
+  loading.value = false
 })
 </script>
 
 <template>
-  <div>
-    <!-- Header -->
-    <div class="stock-detail-header">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-        <button style="color:rgba(255,255,255,.7); font-size:14px;" @click="router.back()">← 뒤로</button>
-        <button
-          style="color:rgba(255,255,255,.7); font-size:13px; border:1px solid rgba(255,255,255,.3); padding:5px 12px; border-radius:20px;"
-          @click="router.push(`/compare?tickers=${ticker}`)"
-        >비교 추가</button>
-      </div>
-      <p class="stock-detail-header__ticker">{{ ticker }}</p>
-      <p class="stock-detail-header__name">{{ stockName || '로딩 중...' }}</p>
-      <div class="stock-detail-header__badges" v-if="latestScore != null">
-        <span class="badge badge--score">{{ Math.round(latestScore) }}점</span>
-        <span class="badge badge--tier">{{ latestTier }} 티어</span>
-        <span v-if="stockSector" class="badge" style="background:rgba(255,255,255,.15); color:#fff;">{{ stockSector }}</span>
-      </div>
-    </div>
+  <!-- 전체 페이지 스켈레톤 -->
+  <div v-if="loading" class="max-w-5xl mx-auto px-6 py-6 flex flex-col gap-4">
+    <div v-for="h in [80, 320, 80, 160, 200]" :key="h"
+      class="bg-gray-100 rounded-xl animate-pulse"
+      :style="{ height: h + 'px' }"
+    />
+  </div>
 
-    <!-- Section tabs -->
-    <div style="background:var(--color-card); display:flex; border-bottom:1px solid var(--color-border); position:sticky; top:0; z-index:40;">
-      <button class="tab-btn" :class="{ active: activeSection === 'chart' }" @click="activeSection = 'chart'">📊 차트</button>
-      <button class="tab-btn" :class="{ active: activeSection === 'finance' }" @click="activeSection = 'finance'">💰 재무</button>
-      <button class="tab-btn" :class="{ active: activeSection === 'score' }" @click="activeSection = 'score'">🤖 AI점수</button>
-    </div>
-
-    <!-- CHART SECTION -->
-    <div v-show="activeSection === 'chart'">
-      <div class="chart-container">
-        <!-- Period tabs -->
-        <div class="chart-periods">
-          <button
-            v-for="p in periods"
-            :key="p"
-            class="chart-period-btn"
-            :class="{ active: chartPeriod === p }"
-            @click="chartPeriod = p"
-          >{{ p }}</button>
-        </div>
-
-        <!-- MA legend -->
-        <div style="display:flex; gap:12px; padding:8px 14px 0; font-size:11px;">
-          <span style="display:flex; align-items:center; gap:4px;">
-            <span style="width:20px; height:2px; background:#FF7A00; display:inline-block; border-radius:1px;"></span> MA20
-          </span>
-          <span style="display:flex; align-items:center; gap:4px;">
-            <span style="width:20px; height:2px; background:#5B6DFF; display:inline-block; border-radius:1px;"></span> MA60
-          </span>
-          <span style="display:flex; align-items:center; gap:4px;">
-            <span style="width:10px; height:10px; background:#F03E4C; display:inline-block; border-radius:2px;"></span> 상승
-          </span>
-          <span style="display:flex; align-items:center; gap:4px;">
-            <span style="width:10px; height:10px; background:#097DF3; display:inline-block; border-radius:2px;"></span> 하락
-          </span>
-        </div>
-
-        <div v-if="chartLoading" class="loading-spinner"><div class="spinner"></div></div>
-        <div v-else-if="!candleData.length" class="empty-state" style="padding:20px;">
-          <span>차트 데이터가 없습니다.</span>
-        </div>
-        <div v-else ref="chartEl" class="chart-area" style="padding:0;"></div>
-      </div>
-
-      <!-- Volume info -->
-      <div v-if="candleData.length" style="padding:0 16px 16px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
-        <div class="card" style="padding:12px; text-align:center;">
-          <p style="font-size:11px; color:var(--color-text-muted);">최근 종가</p>
-          <p style="font-size:16px; font-weight:700; margin-top:4px;">
-            {{ candleData[candleData.length-1]?.close?.toLocaleString() ?? '—' }}
-          </p>
-        </div>
-        <div class="card" style="padding:12px; text-align:center;">
-          <p style="font-size:11px; color:var(--color-text-muted);">거래량</p>
-          <p style="font-size:16px; font-weight:700; margin-top:4px;">
-            {{ formatBillion(candleData[candleData.length-1]?.volume) }}
-          </p>
-        </div>
-        <div class="card" style="padding:12px; text-align:center;">
-          <p style="font-size:11px; color:var(--color-text-muted);">시가총액</p>
-          <p style="font-size:16px; font-weight:700; margin-top:4px;">
-            {{ formatBillion(candleData[candleData.length-1]?.market_cap) }}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- FINANCE SECTION -->
-    <div v-show="activeSection === 'finance'">
-      <div v-if="financeLoading" class="loading-spinner"><div class="spinner"></div></div>
-      <div v-else-if="!finance" class="empty-state">
-        <span class="empty-state__icon">📊</span>
-        <span>재무 데이터가 없습니다.</span>
-      </div>
-      <div v-else>
-        <!-- Finance score big card -->
-        <div style="margin:12px 16px; padding:20px; background:linear-gradient(135deg,#161C40,#2D3580); border-radius:var(--radius-lg); color:#fff;">
-          <p style="font-size:12px; color:rgba(255,255,255,.6); margin-bottom:6px;">
-            {{ finance.year }}년 {{ finance.quarter }}분기 재무 스코어
-          </p>
-          <p style="font-size:42px; font-weight:900; line-height:1;">{{ formatNum(finance.finance_score, 1) }}</p>
-          <p style="font-size:14px; color:rgba(255,255,255,.7);">/ 100점</p>
-          <div class="score-bar" style="margin-top:12px; height:8px;">
-            <div class="score-bar__fill" :style="{ width: (finance.finance_score ?? 0) + '%' }"></div>
-          </div>
-        </div>
-
-        <!-- Grid metrics -->
-        <div class="finance-grid">
-          <div class="finance-metric-card">
-            <p class="finance-metric-card__label">PER</p>
-            <p class="finance-metric-card__value">{{ formatNum(finance.per) }}</p>
-            <p class="finance-metric-card__sub">주가수익비율</p>
-          </div>
-          <div class="finance-metric-card">
-            <p class="finance-metric-card__label">PBR</p>
-            <p class="finance-metric-card__value">{{ formatNum(finance.pbr) }}</p>
-            <p class="finance-metric-card__sub">주가순자산비율</p>
-          </div>
-          <div class="finance-metric-card">
-            <p class="finance-metric-card__label">ROE</p>
-            <p class="finance-metric-card__value" :class="(finance.roe ?? 0) >= 0 ? 'up' : 'down'">
-              {{ formatNum(finance.roe) }}%
-            </p>
-            <p class="finance-metric-card__sub">자기자본이익률</p>
-          </div>
-          <div class="finance-metric-card">
-            <p class="finance-metric-card__label">부채비율</p>
-            <p class="finance-metric-card__value" :class="(finance.debt_ratio ?? 0) > 150 ? 'down' : ''">
-              {{ formatNum(finance.debt_ratio) }}%
-            </p>
-            <p class="finance-metric-card__sub">안전성 지표</p>
-          </div>
-          <div class="finance-metric-card">
-            <p class="finance-metric-card__label">영업이익률</p>
-            <p class="finance-metric-card__value" :class="(finance.op_margin ?? 0) >= 0 ? 'up' : 'down'">
-              {{ formatNum(finance.op_margin) }}%
-            </p>
-            <p class="finance-metric-card__sub">수익성 지표</p>
-          </div>
-          <div class="finance-metric-card">
-            <p class="finance-metric-card__label">매출성장률 YoY</p>
-            <p class="finance-metric-card__value" :class="(finance.rev_growth_yoy ?? 0) >= 0 ? 'up' : 'down'">
-              {{ formatNum(finance.rev_growth_yoy) }}%
-            </p>
-            <p class="finance-metric-card__sub">성장성 지표</p>
-          </div>
-          <div class="finance-metric-card">
-            <p class="finance-metric-card__label">순이익</p>
-            <p class="finance-metric-card__value">{{ formatBillion(finance.net_profit) }}</p>
-            <p class="finance-metric-card__sub">원</p>
-          </div>
-          <div class="finance-metric-card">
-            <p class="finance-metric-card__label">매출액</p>
-            <p class="finance-metric-card__value">{{ formatBillion(finance.revenue) }}</p>
-            <p class="finance-metric-card__sub">원</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SCORE SECTION -->
-    <div v-show="activeSection === 'score'">
-      <div v-if="historyLoading" class="loading-spinner"><div class="spinner"></div></div>
-      <div v-else-if="!scoreHistory.length" class="empty-state">
-        <span class="empty-state__icon">🤖</span>
-        <span>AI 점수 이력이 없습니다.</span>
-      </div>
-      <div v-else>
-        <!-- Current score big -->
-        <div style="margin:12px 16px; padding:20px; background:var(--color-card); border-radius:var(--radius-lg); box-shadow:var(--shadow-md);">
-          <p style="font-size:13px; color:var(--color-text-sub); margin-bottom:8px;">최신 AI ML 점수</p>
-          <div style="display:flex; align-items:baseline; gap:8px;">
-            <span style="font-size:52px; font-weight:900; color:var(--color-accent); line-height:1;">{{ Math.round(latestScore ?? 0) }}</span>
-            <span style="font-size:18px; color:var(--color-text-muted);">/ 100</span>
-            <span class="tier-badge" :class="latestTier" style="width:28px; height:28px; font-size:14px;">{{ latestTier }}</span>
-          </div>
-          <div class="score-bar" style="margin-top:12px; height:8px;">
-            <div class="score-bar__fill" :style="{ width: (latestScore ?? 0) + '%' }"></div>
-          </div>
-          <p style="font-size:12px; color:var(--color-text-muted); margin-top:8px;">
-            80점 이상: A티어 · 60~79: B티어 · 40~59: C티어 · 40 미만: D티어
-          </p>
-        </div>
-
-        <!-- Score history bar chart -->
-        <div class="score-history">
-          <p class="score-history__title">점수 이력 (최근 {{ scoreHistory.length }}일)</p>
-          <div class="score-history__chart">
-            <div
-              v-for="(h, i) in scoreHistory"
-              :key="i"
-              class="score-bar-item"
-              :class="{ highlight: h.tier === 'A' }"
-              :style="{ height: barHeight(h.score) }"
-              :title="`${h.date}: ${Math.round(h.score)}점 (${h.tier})`"
-            ></div>
-          </div>
-          <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--color-text-muted); margin-top:4px;">
-            <span>{{ scoreHistory[0]?.date }}</span>
-            <span>{{ scoreHistory[scoreHistory.length - 1]?.date }}</span>
-          </div>
-        </div>
-
-        <!-- Score table (recent 10) -->
-        <div style="margin:0 16px 16px; background:var(--color-card); border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm);">
-          <table style="width:100%; border-collapse:collapse;">
-            <thead>
-              <tr style="background:var(--color-primary);">
-                <th style="color:#fff; padding:10px 14px; font-size:12px; text-align:left;">날짜</th>
-                <th style="color:#fff; padding:10px 14px; font-size:12px; text-align:right;">점수</th>
-                <th style="color:#fff; padding:10px 14px; font-size:12px; text-align:right;">티어</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="h in [...scoreHistory].reverse().slice(0, 10)"
-                :key="h.date"
-                style="border-bottom:1px solid var(--color-border);"
-              >
-                <td style="padding:10px 14px; font-size:13px; color:var(--color-text-sub);">{{ h.date }}</td>
-                <td style="padding:10px 14px; font-size:13px; font-weight:700; text-align:right; color:var(--color-accent);">
-                  {{ Math.round(h.score) }}점
-                </td>
-                <td style="padding:10px 14px; text-align:right;">
-                  <span class="tier-badge" :class="h.tier">{{ h.tier }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <!-- 404 -->
+  <div v-else-if="notFound" class="flex items-center justify-center min-h-[60vh]">
+    <div class="text-center space-y-3">
+      <p class="text-gray-700 font-medium">종목 정보를 찾을 수 없습니다</p>
+      <button
+        class="text-sm text-gray-500 border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
+        @click="router.back()"
+      >
+        ← 목록으로 돌아가기
+      </button>
     </div>
   </div>
+
+  <!-- 정상 페이지 -->
+  <div v-else class="max-w-5xl mx-auto px-6 py-6 flex flex-col gap-4">
+
+    <!-- 헤더 -->
+    <StockHeader
+      :ticker="ticker"
+      :name="chartName"
+      :sector="chartSector"
+      :latest-score="latestScore"
+      :latest-tier="latestTier"
+      :is-favorite="isFavorite"
+      @toggle-favorite="toggleFavorite"
+    />
+
+    <!-- 기간 탭 -->
+    <div class="flex gap-1">
+      <button
+        v-for="p in PERIODS"
+        :key="p.value"
+        class="px-3 py-1.5 text-xs rounded-lg border transition-colors"
+        :class="activePeriod === p.value
+          ? 'bg-gray-900 text-white border-gray-900'
+          : 'border-gray-200 text-gray-500 hover:bg-gray-50'"
+        @click="changePeriod(p.value)"
+      >
+        {{ p.label }}
+      </button>
+    </div>
+
+    <!-- 캔들 차트 -->
+    <CandleChart :candles="candles" :ticker="ticker" />
+
+    <!-- 거래량 차트 -->
+    <VolumeChart :candles="candles" />
+
+    <!-- ML 점수 이력 -->
+    <ScoreHistoryChart :history="scoreHistory" />
+
+    <!-- 재무 탭 -->
+    <div>
+      <!-- 탭 버튼 -->
+      <div class="flex gap-1 mb-3">
+        <button
+          v-for="tab in [{ value: 'summary', label: '재무 요약' }, { value: 'table', label: '분기별 재무' }]"
+          :key="tab.value"
+          class="px-3 py-1.5 text-sm rounded-lg border transition-colors"
+          :class="activeTab === tab.value
+            ? 'bg-gray-900 text-white border-gray-900'
+            : 'border-gray-200 text-gray-500 hover:bg-gray-50'"
+          @click="activeTab = tab.value"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <FinanceSummary
+        v-if="activeTab === 'summary'"
+        :latest="financeLatest"
+        :score-item="latestScoreItem"
+      />
+      <FinanceTable
+        v-else
+        :items="financeHistory"
+      />
+    </div>
+
+  </div>
+
+  <!-- 로그인 모달 -->
+  <Transition name="fade">
+    <div
+      v-if="showLoginModal"
+      class="fixed inset-0 bg-black/30 z-50 flex items-center justify-center"
+      @click.self="showLoginModal = false"
+    >
+      <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 flex flex-col gap-4">
+        <p class="text-center text-gray-800">관심종목 추가는 로그인이 필요합니다</p>
+        <div class="flex gap-2">
+          <button
+            class="flex-1 bg-gray-900 text-white rounded-lg py-2.5 text-sm hover:bg-gray-700 transition-colors"
+            @click="router.push('/login')"
+          >
+            로그인하기
+          </button>
+          <button
+            class="flex-1 border border-gray-200 text-gray-500 rounded-lg py-2.5 text-sm hover:bg-gray-50 transition-colors"
+            @click="showLoginModal = false"
+          >
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>
+  </Transition>
 </template>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>

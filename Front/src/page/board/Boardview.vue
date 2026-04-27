@@ -1,5 +1,5 @@
 <!-- front/board/BoardView.vue -->
-<!-- WP_Capstone — P-07 커뮤니티 게시판 목록 -->
+<!-- WP_Capstone - 종목 커뮤니티 게시판 목록 -->
 
 <template>
   <div class="board-wrap">
@@ -14,7 +14,7 @@
       </router-link>
     </div>
 
-    <!-- 작성 버튼 -->
+    <!-- 글쓰기 버튼 -->
     <div class="board-toolbar">
       <span class="board-toolbar__count">전체 {{ store.total }}개</span>
       <button class="btn btn--primary" @click="onClickWrite">글쓰기</button>
@@ -26,7 +26,7 @@
     <!-- 에러 -->
     <div v-else-if="store.error" class="board-error">
       {{ store.error }}
-      <button class="btn btn--ghost" @click="loadPosts">재시도</button>
+      <button class="btn btn--ghost" @click="loadPosts">다시 시도</button>
     </div>
 
     <!-- 게시글 목록 -->
@@ -96,6 +96,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBoardStore } from '@/stores/boardStore'
@@ -115,14 +116,13 @@ const showLoginPrompt = ref(false)
 const activePostId = ref<number | null>(null)
 
 async function loadPosts(page?: number) {
-  // 인자가 없거나 숫자가 아니면(이벤트 객체면) 스토어의 현재 페이지 사용
-  const targetPage = (typeof page === 'number') ? page : store.page;
-  await store.fetchPosts(ticker.value, targetPage);
+  const targetPage = (typeof page === 'number') ? page : store.page
+  await store.fetchPosts(ticker.value, targetPage)
 }
 
 function changePage(p: number) {
-  if (p < 1 || p > store.totalPages) return; // 페이지 범위 방어 코드 추가
-  loadPosts(p);
+  if (p < 1 || p > store.totalPages) return
+  loadPosts(p)
 }
 
 function openDetail(id: number) {
@@ -161,7 +161,7 @@ function formatDate(iso: string) {
   })
 }
 
-// ticker가 URL로 바뀌면 재조회
+// ticker가 URL로 변경되면 재조회
 watch(() => route.params.ticker, (val) => {
   if (val) {
     ticker.value = String(val)
@@ -173,7 +173,7 @@ onMounted(() => loadPosts(1))
 </script>
 
 <style scoped>
-/* ── 레이아웃 ───────────────────────────────────────────── */
+/* 전체 레이아웃 */
 .board-wrap {
   max-width: 860px;
   margin: 0 auto;
@@ -181,7 +181,7 @@ onMounted(() => loadPosts(1))
   font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
 }
 
-/* ── 헤더 배너 ──────────────────────────────────────────── */
+/* 헤더 배너 */
 .board-header {
   display: flex;
   align-items: center;
@@ -206,7 +206,7 @@ onMounted(() => loadPosts(1))
 }
 .board-header__link:hover { text-decoration: underline; }
 
-/* ── 툴바 ──────────────────────────────────────────────── */
+/* 도구 모음 */
 .board-toolbar {
   display: flex;
   justify-content: space-between;
@@ -215,7 +215,7 @@ onMounted(() => loadPosts(1))
 }
 .board-toolbar__count { font-size: 13px; color: #64748b; }
 
-/* ── 버튼 ──────────────────────────────────────────────── */
+/* 버튼 */
 .btn {
   padding: 7px 16px;
   border-radius: 6px;
@@ -234,7 +234,7 @@ onMounted(() => loadPosts(1))
 .btn--ghost:hover { background: #f1f5f9; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── 목록 ──────────────────────────────────────────────── */
+/* 목록 */
 .post-list { list-style: none; margin: 0; padding: 0; }
 
 .post-item {
@@ -259,12 +259,12 @@ onMounted(() => loadPosts(1))
   color: #94a3b8;
 }
 
-/* ── 좋아요 하트 ─────────────────────────────────────────── */
+/* 좋아요 버튼 */
 .post-item__like { display: flex; align-items: center; gap: 3px; cursor: pointer; }
 .heart { color: #cbd5e1; transition: color 0.15s; }
 .heart--filled { color: #ef4444; }
 
-/* ── 페이지네이션 ─────────────────────────────────────────── */
+/* 페이지네이션 */
 .pagination {
   display: flex;
   justify-content: center;
@@ -274,7 +274,7 @@ onMounted(() => loadPosts(1))
 }
 .pagination__info { font-size: 13px; color: #64748b; }
 
-/* ── 로딩 / 에러 / 빈 상태 ────────────────────────────────── */
+/* 로딩 / 에러 / 빈 상태 */
 .board-loading,
 .board-empty {
   text-align: center;

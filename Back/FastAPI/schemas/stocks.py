@@ -137,3 +137,67 @@ class StockSearchList(BaseModel):
     query: str
     total: int
     items: list[StockSearchResult]
+
+
+# ── 현재가 ──────────────────────────────────────────────────────────────────────
+
+class StockPrice(BaseModel):
+    """종목 최신 현재가."""
+    ticker:        str
+    name:          Optional[str]  = None
+    close:         Optional[float] = None
+    current_price: Optional[float] = None   # close 의 별칭 (프론트 호환)
+    open:          Optional[float] = None
+    high:          Optional[float] = None
+    low:           Optional[float] = None
+    volume:        Optional[int]  = None
+    date:          Optional[str]  = None
+
+
+# ── 급상승 종목 ─────────────────────────────────────────────────────────────────
+
+class RisingStockItem(BaseModel):
+    """점수 급상승 종목 단건."""
+    ticker:        str
+    name:          Optional[str]  = None
+    sector:        Optional[str]  = None
+    score:         float
+    score_prev:    float
+    score_change:  float
+    tier:          str
+    date:          str
+    model_version: str
+
+
+class RisingStockList(BaseModel):
+    total:         int
+    date:          str
+    model_version: str
+    items:         list[RisingStockItem]
+
+
+# ── 커스텀 백테스트 ─────────────────────────────────────────────────────────────
+
+class BacktestRequest(BaseModel):
+    min_score:     float = 60.0
+    top_k:         int   = 20
+    rebalance:     str   = "monthly"    # "monthly" | "quarterly"
+    start_date:    str   = "2023-01-01"
+    end_date:      str   = "2024-12-31"
+    model_version: str   = "latest"
+
+
+class BacktestMonthlyItem(BaseModel):
+    month:     str
+    strategy:  float
+    benchmark: float
+
+
+class CustomBacktestResponse(BaseModel):
+    total_return:     float
+    benchmark_return: float
+    mdd:              float
+    sharpe:           float
+    win_rate:         float
+    trade_count:      int
+    monthly:          list[BacktestMonthlyItem]

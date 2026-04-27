@@ -22,6 +22,8 @@ from ..schemas.stocks import (
     DatesResponse,
     StockSearchResult,
     StockSearchList,
+    StockPrice,
+    RisingStockList,
 )
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
@@ -177,3 +179,41 @@ def search_stocks(
 
     items = [StockSearchResult(**r) for r in rows]
     return StockSearchList(query=q, total=len(items), items=items)
+
+
+# ── 종목 현재가 ────────────────────────────────────────────────────────────────
+
+@router.get("/{ticker}/price", response_model=StockPrice, summary="종목 최신 현재가")
+def get_stock_price(ticker: str):
+    """prices 테이블 기준 가장 최신 종가(현재가)를 반환합니다."""
+    try:
+        data = svc.get_stock_price(ticker)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"종목 {ticker} 의 가격 데이터가 없습니다.")
+
+    return StockPrice(**data)
+
+
+# ── 급상승 종목 ────────────────────────────────────────────────────────────────
+
+@router.get("/rising", response_model=RisingStockList, summary="전일 대비 급상승 종목")
+def get_rising_stocks(
+    model_version: str = Query("latest", description="모델 버전"),
+    limit:         int = Query(20, ge=1, le=100, description="반환 종목 수"),
+):
+    """최신 날짜 기준 전 거래일 대비 ML 점수 변화량(score_change) 상위 종목을 반환합니다."""
+    try:
+        data = svc.get_rising_stocks(model_version=model_version, limit=limit)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    items = data.get("items", [])
+    return RisingStockList(
+        total=data.get("total", len(items)),
+        date=data.get("date", ""),
+        model_version=data.get("model_version", model_version),
+        items=items,
+    )

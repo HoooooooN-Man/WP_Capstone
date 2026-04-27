@@ -1,18 +1,45 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import App from './App.vue';
-import router from './router';
-import { useAuthStore } from '@/stores/auth';
-
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
+// @ts-ignore
+import VueVirtualScroller from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+import App from './App.vue'
+import router from './router/index.js'
 import '@/style.css'
 
-const app = createApp(App);
-const pinia = createPinia();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,          // 1분 (기본)
+      gcTime: 5 * 60 * 1000,         // 5분 캐시 유지
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
-app.use(pinia);
+const app = createApp(App)
+const pinia = createPinia()
+app.use(pinia)
+app.use(VueQueryPlugin, { queryClient })
+app.use(VueVirtualScroller)
 
-const authStore = useAuthStore();
-authStore.initializeAuth();
+// pinia 등록 후 스토어 초기화
+// @ts-ignore
+import { useAuthStore } from '@/stores/auth.js'
+// @ts-ignore
+import { useMarketStore } from '@/stores/market.js'
+// @ts-ignore
+import { useWatchlistStore } from '@/stores/watchlist.js'
 
-app.use(router);
-app.mount('#app');
+const authStore   = useAuthStore()
+const marketStore = useMarketStore()
+const watchlist   = useWatchlistStore()
+
+authStore.initFromStorage()
+watchlist.fetchWatchlist()
+marketStore.initVersionsAndDates()
+
+app.use(router)
+app.mount('#app')

@@ -1,10 +1,10 @@
 <!-- front/board/LoginPromptModal.vue -->
-<!-- 비로그인 접근 시 로그인 유도 모달 -->
+<!-- 비로그인 사용자 로그인 유도 모달 -->
 
 <template>
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal">
-      <p class="modal__msg">로그인 후 이용 가능합니다.</p>
+      <p class="modal__msg">로그인이 필요한 기능입니다.</p>
       <div class="modal__actions">
         <button class="btn btn--ghost" @click="$emit('close')">취소</button>
         <router-link to="/login" class="btn btn--primary" @click="$emit('close')">

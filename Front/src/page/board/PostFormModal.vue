@@ -40,6 +40,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, reactive } from 'vue'
 import { useBoardStore } from '@/stores/boardStore'
 
@@ -53,8 +54,8 @@ const submitting = ref(false)
 const errors = reactive({ title: '', content: '' })
 
 function validate() {
-  errors.title = title.value.trim() ? '' : '제목을 입력하세요.'
-  errors.content = content.value.trim() ? '' : '내용을 입력하세요.'
+  errors.title = title.value.trim() ? '' : '제목을 입력해주세요.'
+  errors.content = content.value.trim() ? '' : '내용을 입력해주세요.'
   return !errors.title && !errors.content
 }
 

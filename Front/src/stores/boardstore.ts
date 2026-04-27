@@ -1,11 +1,11 @@
+// @ts-nocheck
 // front/board/boardStore.ts
-// WP_Capstone — P-07 커뮤니티 게시판 Pinia 스토어
+// WP_Capstone - 커뮤니티 게시판 Pinia 스토어
 
 import { defineStore } from 'pinia'
 import dbapi from '@/api/dbapi'
 
-// ─── 타입 정의 ──────────────────────────────────────────────
-
+// 타입 정의
 export interface PostSummary {
   id: number
   ticker: string
@@ -36,7 +36,7 @@ export interface PostsState {
   currentTicker: string | null
   /** 게시글 목록 */
   posts: PostSummary[]
-  /** 전체 글 수 */
+  /** 전체 건 수 */
   total: number
   /** 현재 페이지 */
   page: number
@@ -47,8 +47,7 @@ export interface PostsState {
   error: string | null
 }
 
-// ─── 스토어 ─────────────────────────────────────────────────
-
+// 스토어 정의
 export const useBoardStore = defineStore('board', {
   state: (): PostsState => ({
     currentTicker: null,
@@ -66,7 +65,7 @@ export const useBoardStore = defineStore('board', {
   },
 
   actions: {
-    // ── 게시글 목록 조회 ────────────────────────────────────
+    // 게시글 목록 조회
     async fetchPosts(ticker: string, page = 1) {
       this.loading = true
       this.error = null
@@ -86,7 +85,7 @@ export const useBoardStore = defineStore('board', {
       }
     },
 
-    // ── 게시글 상세 조회 (views +1) ────────────────────────
+    // 게시글 상세 조회 (views +1)
     async fetchPostDetail(postId: number): Promise<PostDetail> {
       this.loading = true
       this.error = null
@@ -102,16 +101,16 @@ export const useBoardStore = defineStore('board', {
       }
     },
 
-    // ── 게시글 작성 ────────────────────────────────────────
+    // 게시글 작성
     async createPost(ticker: string, title: string, content: string): Promise<PostDetail> {
       const { data } = await dbapi.post('/api/v1/board/posts', { ticker, title, content })
-      // 목록 맨 앞에 낙관적 삽입
+      // 목록 맨 앞에 추가
       this.posts.unshift({ ...data, comment_count: 0, liked: false })
       this.total += 1
       return data
     },
 
-    // ── 게시글 삭제 ────────────────────────────────────────
+    // 게시글 삭제
     async deletePost(postId: number) {
       await dbapi.delete(`/api/v1/board/posts/${postId}`)
       this.posts = this.posts.filter((p) => p.id !== postId)
@@ -119,10 +118,10 @@ export const useBoardStore = defineStore('board', {
       delete this.postCache[postId]
     },
 
-    // ── 댓글 작성 ─────────────────────────────────────────
+    // 댓글 작성
     async createComment(postId: number, content: string): Promise<Comment> {
       const { data } = await dbapi.post('/api/v1/board/comments', { post_id: postId, content })
-      // 캐시된 상세에 바로 반영
+      // 캐시된 상세에 즉시 반영
       if (this.postCache[postId]) {
         this.postCache[postId].comments.push(data)
       }
@@ -132,7 +131,7 @@ export const useBoardStore = defineStore('board', {
       return data
     },
 
-    // ── 좋아요 토글 ────────────────────────────────────────
+    // 좋아요 토글
     async toggleLike(postId: number) {
       // 낙관적 업데이트
       const listItem = this.posts.find((p) => p.id === postId)
@@ -176,7 +175,7 @@ export const useBoardStore = defineStore('board', {
       }
     },
 
-    // ── 상태 초기화 ────────────────────────────────────────
+    // 상태 초기화
     reset() {
       this.currentTicker = null
       this.posts = []
