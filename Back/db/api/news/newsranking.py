@@ -1,221 +1,201 @@
-from typing import List, Optional
+"""
+뉴스 감성분석 API 라우터
+경로: db/api/news/news.py
+DB: db/db/stock_analysis.duckdb
+
+포함 엔드포인트:
+  GET /api/v1/news/rankings          - 날짜별 뉴스 랭킹 목록 (news_rankings JOIN news_normalized)
+  GET /api/v1/news/rankings/dates    - 랭킹 데이터가 있는 날짜 목록
+  GET /api/v1/news/rankings/{news_id} - 특정 뉴스 상세 (감성 점수 포함)
+"""
+
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
-from datetime import date, datetime
+from typing import Optional
 import duckdb
 import os
 
-# --- API 응답용 모델 (이 파일에서만 사용) ---
-class NewsResponse(BaseModel):
-    rank: int
-    news_id: str
-    title: str
-    publisher: str
-    origin_url: str
-    image_url: Optional[str]
-    sentiment_label: str
-    sentiment_score: float
-    pos_prob: float
-    neg_prob: float
-    neu_prob: float
-    published_at: datetime
+router = APIRouter(prefix="/api/v1/news", tags=["news"])
 
-    class Config:
-        from_attributes = True
+# DuckDB 파일 경로 (server.py 기준 상대경로)
+DB_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "db", "stock_analysis.duckdb")
 
-# --- 라우터 설정 ---
-router = APIRouter(prefix="/news", tags=["news"])
 
-# DuckDB 경로 (환경변수 DUCKDB_PATH 우선, 없으면 통합 DB 기본값)
-DUCKDB_PATH = os.getenv(
-    "DUCKDB_PATH",
-    r"E:\Capstone Data\project_data\db\market_data.duckdb",
-)
+def get_conn():
+    """읽기 전용 DuckDB 연결 반환"""
+    return duckdb.connect(DB_PATH, read_only=True)
 
-@router.get("/list", response_model=List[NewsResponse])
-async def get_news_list(
-    category_id: str, 
-    target_date: Optional[date] = None,
-    provider: Optional[str] = None,      # 발행처 필터링용
-    sort_by: str = "rank"                # "rank"(순위순) 또는 "latest"(최신순)
-):
-    if target_date is None:
-        target_date = date.today()
 
+# ---------------------------------------------------------------------------
+# 날짜 목록
+# ---------------------------------------------------------------------------
+@router.get("/rankings/dates")
+def get_ranking_dates():
+    """랭킹 데이터가 존재하는 날짜 목록 (최신순)"""
     try:
-        with duckdb.connect(DUCKDB_PATH) as duck_conn:
-            # 1. 기본 Join 쿼리 (감성 분석 상세 스코어 포함)
-            base_query = """
-                SELECT 
-                    r.rank, n.news_id, n.title, n.source_name, 
-                    n.origin_url, n.image_url, n.sentiment_label,
-                    n.sentiment_score, n.pos_prob, n.neg_prob, n.neu_prob,
-                    n.published_at
-                FROM news_rankings r
-                JOIN news_normalized n ON r.news_id = n.news_id
-                WHERE r.display_date = ? AND r.category_id = ?
+        conn = get_conn()
+        rows = conn.execute(
             """
-            params = [target_date, category_id]
+            SELECT DISTINCT display_date
+            FROM news_rankings
+            ORDER BY display_date DESC
+            """
+        ).fetchall()
+        conn.close()
 
-            # 2. 발행처(Provider) 필터링 추가
-            if provider:
-                base_query += " AND n.source_name = ?"
-                params.append(provider)
-
-            # 3. 정렬 조건 분기
-            if sort_by == "latest":
-                base_query += " ORDER BY n.published_at DESC"
-            else:
-                base_query += " ORDER BY r.rank ASC"
-
-            results = duck_conn.execute(base_query, params).fetchall()
-
-            # 4. 결과 매핑 (NewsResponse 모델에 맞춤)
-            return [
-                NewsResponse(
-                    rank=row[0],
-                    news_id=row[1],
-                    title=row[2],
-                    publisher=row[3],
-                    origin_url=row[4],
-                    image_url=row[5],
-                    sentiment_label=row[6],
-                    sentiment_score=row[7],
-                    pos_prob=row[8],
-                    neg_prob=row[9],
-                    neu_prob=row[10],
-                    published_at=row[11]
-                ) for row in results
-            ]
-            
+        dates = [row[0] for row in rows]
+        return {
+            "dates": dates,
+            "latest": dates[0] if dates else None,
+        }
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Database Error: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"DB 조회 오류: {str(e)}")
 
 
-# ── /news/feed — 프론트엔드 NewsView 연동용 ──────────────────────────────────
-
-class NewsFeedItem(BaseModel):
-    id:          str
-    title:       str
-    source:      str
-    url:         str
-    image_url:   Optional[str] = None
-    sentiment:   str           # "positive" | "neutral" | "negative"
-    confidence:  float
-    published_at: datetime
-    ticker:      Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-class NewsFeedResponse(BaseModel):
-    total:  int
-    items:  List[NewsFeedItem]
-
-
-SENTIMENT_MAP = {
-    "positive": "positive",
-    "negative": "negative",
-    "neutral":  "neutral",
-    "pos":      "positive",
-    "neg":      "negative",
-    "neu":      "neutral",
-}
-
-
-@router.get("/feed", response_model=NewsFeedResponse, summary="뉴스 피드 (감성 분석 포함)")
-async def get_news_feed(
-    sentiment: Optional[str] = Query(None,  description="긍정/중립/부정 필터"),
-    ticker:    Optional[str] = Query(None,  description="티커 필터 (예: 005930)"),
-    limit:     int           = Query(20,    ge=1, le=100),
-    offset:    int           = Query(0,     ge=0),
-    target_date: Optional[date] = Query(None, description="기준 날짜 (기본: 오늘)"),
+# ---------------------------------------------------------------------------
+# 랭킹 목록
+# ---------------------------------------------------------------------------
+@router.get("/rankings")
+def get_news_rankings(
+    display_date: Optional[str] = Query(None, description="조회 날짜 (YYYY-MM-DD). 미입력 시 최신 날짜"),
+    category_id: Optional[str] = Query(None, description="카테고리 필터"),
+    limit: int = Query(20, ge=1, le=100, description="최대 반환 수"),
 ):
     """
-    감성 분석이 포함된 뉴스 피드를 반환합니다.
-    NewsView.vue 에서 사용합니다.
+    뉴스 랭킹 목록 조회.
+    news_rankings와 news_normalized를 JOIN하여 감성 점수까지 반환합니다.
+
+    sentiment_label: positive / negative / neutral
+    sentiment_score: FinBERT 확신도 (0.0 ~ 1.0)
     """
-    if target_date is None:
-        target_date = date.today()
-
     try:
-        with duckdb.connect(DUCKDB_PATH) as duck_conn:
-            conditions = ["r.display_date = ?"]
-            params: list = [target_date]
+        conn = get_conn()
 
-            # 감성 필터
-            if sentiment:
-                mapped = SENTIMENT_MAP.get(sentiment.lower(), sentiment.lower())
-                conditions.append("LOWER(n.sentiment_label) = ?")
-                params.append(mapped)
+        # 날짜 미입력 시 최신 날짜 자동 선택
+        if not display_date:
+            row = conn.execute(
+                "SELECT MAX(display_date) FROM news_rankings"
+            ).fetchone()
+            if not row or row[0] is None:
+                conn.close()
+                raise HTTPException(status_code=503, detail="랭킹 데이터가 없습니다.")
+            display_date = row[0]
 
-            # 티커 필터 (news_normalized 에 ticker 컬럼이 있는 경우)
-            try:
-                duck_conn.execute("SELECT ticker FROM news_normalized LIMIT 1").fetchone()
-                has_ticker_col = True
-            except Exception:
-                has_ticker_col = False
+        params = [display_date]
+        category_filter = ""
+        if category_id:
+            category_filter = "AND r.category_id = ?"
+            params.append(category_id)
 
-            if ticker and has_ticker_col:
-                conditions.append("n.ticker = ?")
-                params.append(ticker.zfill(6))
+        params.append(limit)
 
-            where_clause = " AND ".join(conditions)
+        query = f"""
+            SELECT
+                r.rank,
+                r.score             AS ranking_score,
+                r.category_id,
+                r.display_date,
+                n.news_id,
+                n.title,
+                n.provider,
+                n.source_name,
+                n.published_at,
+                n.image_url,
+                n.google_url,
+                n.origin_url,
+                n.sentiment_label,
+                n.sentiment_score,
+                n.pos_prob,
+                n.neg_prob,
+                n.neu_prob
+            FROM news_rankings r
+            JOIN news_normalized n ON r.news_id = n.news_id
+            WHERE r.display_date = ?
+            {category_filter}
+            ORDER BY r.rank ASC
+            LIMIT ?
+        """
 
-            # 전체 카운트
-            count_sql = f"""
-                SELECT COUNT(*)
-                FROM news_rankings r
-                JOIN news_normalized n ON r.news_id = n.news_id
-                WHERE {where_clause}
-            """
-            total_row = duck_conn.execute(count_sql, params).fetchone()
-            total = total_row[0] if total_row else 0
+        rows = conn.execute(query, params).fetchall()
+        conn.close()
 
-            # 데이터 조회
-            data_sql = f"""
-                SELECT
-                    n.news_id,
-                    n.title,
-                    n.source_name,
-                    n.origin_url,
-                    n.image_url,
-                    n.sentiment_label,
-                    n.sentiment_score,
-                    n.published_at
-                    {"," + "n.ticker" if has_ticker_col else ""}
-                FROM news_rankings r
-                JOIN news_normalized n ON r.news_id = n.news_id
-                WHERE {where_clause}
-                ORDER BY r.rank ASC
-                LIMIT ? OFFSET ?
-            """
-            params.extend([limit, offset])
-            rows = duck_conn.execute(data_sql, params).fetchall()
+        columns = [
+            "rank", "ranking_score", "category_id", "display_date",
+            "news_id", "title", "provider", "source_name", "published_at",
+            "image_url", "google_url", "origin_url",
+            "sentiment_label", "sentiment_score",
+            "pos_prob", "neg_prob", "neu_prob",
+        ]
 
-            items = []
-            for row in rows:
-                raw_sentiment = (row[5] or "neutral").lower()
-                mapped_sentiment = SENTIMENT_MAP.get(raw_sentiment, "neutral")
-                item_ticker = row[8] if has_ticker_col and len(row) > 8 else None
-                items.append(NewsFeedItem(
-                    id=str(row[0]),
-                    title=row[1] or "",
-                    source=row[2] or "",
-                    url=row[3] or "",
-                    image_url=row[4],
-                    sentiment=mapped_sentiment,
-                    confidence=float(row[6]) if row[6] else 0.5,
-                    published_at=row[7],
-                    ticker=item_ticker,
-                ))
+        items = []
+        for row in rows:
+            item = dict(zip(columns, row))
+            # published_at을 문자열로 변환 (직렬화 안전)
+            if item.get("published_at") and not isinstance(item["published_at"], str):
+                item["published_at"] = str(item["published_at"])
+            if item.get("display_date") and not isinstance(item["display_date"], str):
+                item["display_date"] = str(item["display_date"])
+            items.append(item)
 
-            return NewsFeedResponse(total=total, items=items)
+        return {
+            "display_date": str(display_date),
+            "total": len(items),
+            "items": items,
+        }
 
+    except HTTPException:
+        raise
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Database Error: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"DB 조회 오류: {str(e)}")
+
+
+# ---------------------------------------------------------------------------
+# 뉴스 상세
+# ---------------------------------------------------------------------------
+@router.get("/rankings/{news_id}")
+def get_news_detail(news_id: str):
+    """특정 뉴스 상세 조회 (감성 확률 전체 포함)"""
+    try:
+        conn = get_conn()
+        row = conn.execute(
+            """
+            SELECT
+                n.news_id,
+                n.title,
+                n.provider,
+                n.source_name,
+                n.query_text,
+                n.published_at,
+                n.fetched_at,
+                n.google_url,
+                n.origin_url,
+                n.image_url,
+                n.sentiment_label,
+                n.sentiment_score,
+                n.pos_prob,
+                n.neg_prob,
+                n.neu_prob
+            FROM news_normalized n
+            WHERE n.news_id = ?
+            """,
+            [news_id],
+        ).fetchone()
+        conn.close()
+
+        if not row:
+            raise HTTPException(status_code=404, detail="해당 뉴스를 찾을 수 없습니다.")
+
+        columns = [
+            "news_id", "title", "provider", "source_name", "query_text",
+            "published_at", "fetched_at", "google_url", "origin_url", "image_url",
+            "sentiment_label", "sentiment_score", "pos_prob", "neg_prob", "neu_prob",
+        ]
+        item = dict(zip(columns, row))
+        for key in ("published_at", "fetched_at"):
+            if item.get(key) and not isinstance(item[key], str):
+                item[key] = str(item[key])
+        return item
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"DB 조회 오류: {str(e)}")
