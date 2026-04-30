@@ -17,8 +17,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import APP_TITLE, APP_VERSION, API_PREFIX, DUCKDB_PATH
-from .routers import stocks, portfolio, chart, finance, screener, compare
+from .routers import stocks, portfolio, chart, finance, screener, compare, market, board, news, users_stub
 from .services.data import init_duckdb
+from .services.board_db import init_board_db
 
 
 # ── 앱 수명 이벤트 ─────────────────────────────────────────────────────────────
@@ -36,6 +37,13 @@ async def lifespan(app: FastAPI):
         # 스레드에서 실행하여 이벤트 루프 블로킹 방지
         await asyncio.get_event_loop().run_in_executor(None, init_duckdb)
         print(f"[OK] DuckDB 연결 + 워밍업 완료: {DUCKDB_PATH}")
+
+    # SQLite 게시판 DB 초기화 (로그인 없는 간단 게시판)
+    try:
+        init_board_db()
+        print("[OK] SQLite 게시판 DB 초기화 완료")
+    except Exception as e:
+        print(f"[WARNING] 게시판 DB 초기화 실패: {e}")
     yield
 
 
@@ -65,10 +73,15 @@ app.add_middleware(
 # 라우터 등록 (API 버전 prefix)
 app.include_router(stocks.router,    prefix=API_PREFIX)
 app.include_router(portfolio.router, prefix=API_PREFIX)
+app.include_router(market.router,    prefix=API_PREFIX)
 app.include_router(chart.router,     prefix=API_PREFIX)
 app.include_router(finance.router,   prefix=API_PREFIX)
 app.include_router(screener.router,  prefix=API_PREFIX)
 app.include_router(compare.router,   prefix=API_PREFIX)
+app.include_router(board.router,     prefix=API_PREFIX)
+# 뉴스 / 사용자 stub은 dbapi.js (no /api/v1 prefix) 호환을 위해 prefix 없이 등록
+app.include_router(news.router)
+app.include_router(users_stub.router)
 
 
 # ── 헬스체크 ───────────────────────────────────────────────────────────────────

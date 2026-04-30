@@ -29,7 +29,7 @@ const statusLabel = { greed: '강세장', neutral: '중립', fear: '약세장' }
     <!-- Tier A 비율 -->
     <div class="text-center px-4">
       <p class="text-4xl font-bold text-gray-800">
-        {{ regime ? (regime.tier_a_ratio * 100).toFixed(1) : '—' }}<span class="text-xl font-normal">%</span>
+        {{ regime ? regime.tier_a_ratio.toFixed(1) : '—' }}<span class="text-xl font-normal">%</span>
       </p>
       <p class="text-xs text-gray-500 mt-1">Tier A 비율</p>
     </div>

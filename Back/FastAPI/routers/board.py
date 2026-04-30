@@ -32,6 +32,24 @@ from ..schemas.board import (
 router = APIRouter(prefix="/board", tags=["board"])
 
 
+# ── 인기 게시글 (전체 종목 통합) ──────────────────────────────────────────────
+
+@router.get(
+    "/popular",
+    summary="전체 인기 게시글 (좋아요·댓글·조회수 종합 정렬)",
+)
+def list_popular_posts(
+    limit: int = Query(20, ge=1, le=100, description="가져올 게시글 수"),
+):
+    """
+    종목 구분 없이 **전체 게시글 중 인기순** Top N을 반환합니다.
+
+    인기 점수 = `likes×3 + comments×2 + views`
+    """
+    items = svc.db_list_popular_posts(limit=limit)
+    return {"total": len(items), "items": items}
+
+
 # ── 게시글 목록 ────────────────────────────────────────────────────────────────
 
 @router.get(

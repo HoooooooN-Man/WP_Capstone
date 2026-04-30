@@ -26,9 +26,11 @@ class NewsResponse(BaseModel):
 # --- 라우터 설정 ---
 router = APIRouter(prefix="/news", tags=["news"])
 
-# 경로 설정
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DUCKDB_PATH = os.path.join(BASE_DIR, "db", "stock_analysis.duckdb")
+# DuckDB 경로 (환경변수 DUCKDB_PATH 우선, 없으면 통합 DB 기본값)
+DUCKDB_PATH = os.getenv(
+    "DUCKDB_PATH",
+    r"E:\Capstone Data\project_data\db\market_data.duckdb",
+)
 
 @router.get("/list", response_model=List[NewsResponse])
 async def get_news_list(

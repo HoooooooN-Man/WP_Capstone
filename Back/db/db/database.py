@@ -39,7 +39,10 @@ def get_db():
     finally:
         db.close()
 
-DB_PATH = ".stock_analysis.duckdb"
+DB_PATH = os.getenv(
+    "DUCKDB_PATH",
+    r"E:\Capstone Data\project_data\db\market_data.duckdb",
+)
 
 def get_duckdb():
     conn = duckdb.connect(DB_PATH, read_only=False)

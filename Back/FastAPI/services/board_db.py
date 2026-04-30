@@ -124,6 +124,25 @@ def db_list_posts(
     return [dict(r) for r in rows], total
 
 
+def db_list_popular_posts(limit: int = 20) -> list[dict]:
+    """전체 종목 통합 인기글 (좋아요 + 댓글 + 조회수 가중 점수)."""
+    with get_db() as con:
+        rows = con.execute(
+            """
+            SELECT
+                p.post_id, p.ticker, p.author_id, p.title,
+                p.views, p.likes, p.created_at,
+                (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.post_id) AS comment_count,
+                (p.likes * 3 + (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.post_id) * 2 + p.views) AS popularity
+            FROM posts p
+            ORDER BY popularity DESC, p.created_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
 def db_create_post(
     ticker: str,
     author_id: str,

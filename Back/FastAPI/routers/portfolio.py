@@ -6,10 +6,12 @@ routers/portfolio.py
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from typing import Literal
+from fastapi import APIRouter, HTTPException, Query
 
 from ..services import data as svc
 from ..schemas.stocks import BacktestSummaryResponse, BacktestMonthlyResponse, BacktestRequest, CustomBacktestResponse
+from ..schemas.portfolio import PortfolioResponse
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -65,3 +67,34 @@ def run_custom_backtest(req: BacktestRequest):
         raise HTTPException(status_code=500, detail=f"백테스트 실패: {str(e)}")
 
     return CustomBacktestResponse(**data)
+
+
+@router.get(
+    "/kospi200",
+    response_model=PortfolioResponse,
+    summary="KOSPI 200 맞춤형 자동 포트폴리오 (Top 10)",
+)
+def get_kospi200_portfolio(
+    type: Literal["growth", "stable"] = Query("growth", description="growth=공격형, stable=안정형(PBR<1.5)"),
+    model_version: str = Query("latest", description="모델 버전 (예: v8, latest)"),
+):
+    """
+    사용자 성향별 **KOSPI 200 Top 10 자동 포트폴리오**를 제공합니다.
+
+    | type   | 선정 기준                                                  |
+    |--------|------------------------------------------------------------|
+    | growth | 단순 AI score 상위 10                                       |
+    | stable | Tier A·B + 최신 분기 PBR < 1.5 + score 상위 10              |
+
+    - **캐시**: 5분 TTL (Redis 없으면 DuckDB 직접 조회)
+    """
+    try:
+        result = svc.get_kospi200_portfolio(
+            portfolio_type=type, model_version=model_version
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"포트폴리오 조회 실패: {str(e)}")
+
+    return PortfolioResponse(**result)

@@ -1,6 +1,14 @@
 # Front
 Front/node_modules/
 Front/dist/
+Front/.env
+Front/.env.*
+Front/.env.local
+
+# SQLite WAL 임시 파일
+Back/FastAPI/board.db
+Back/FastAPI/board.db-shm
+Back/FastAPI/board.db-wal
 
 # Back
 Back/.venv/

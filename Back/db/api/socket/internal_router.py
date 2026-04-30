@@ -7,9 +7,11 @@ from db.models import UserWatchlist, Notification
 
 router = APIRouter(prefix="/internal", tags=["internal"])
 
-# 경로 문제 방지를 위해 절대 경로 설정 (현재 파일 위치 기준)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DUCKDB_PATH = os.path.join(BASE_DIR, "db", "stock_analysis.duckdb")
+# DuckDB 경로 (환경변수 DUCKDB_PATH 우선, 없으면 통합 DB 기본값)
+DUCKDB_PATH = os.getenv(
+    "DUCKDB_PATH",
+    r"E:\Capstone Data\project_data\db\market_data.duckdb",
+)
 
 @router.post("/ingest")
 async def ingest_and_notify(batch_data: dict, db_pg: Session = Depends(get_db)):

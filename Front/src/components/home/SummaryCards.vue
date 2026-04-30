@@ -23,7 +23,7 @@ defineProps({
     <div class="bg-gray-50 rounded-xl p-4">
       <p class="text-xs text-gray-500 mb-1">Tier A 비율</p>
       <p class="text-2xl font-medium text-gray-900">
-        {{ regime ? (regime.tier_a_ratio * 100).toFixed(1) : '—' }}
+        {{ regime ? regime.tier_a_ratio.toFixed(1) : '—' }}
         <span class="text-sm font-normal text-gray-500">%</span>
       </p>
     </div>

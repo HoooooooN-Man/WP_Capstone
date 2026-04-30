@@ -104,6 +104,44 @@ def init_duckdb() -> None:
     con.execute("SELECT * FROM scores   LIMIT 500").fetchdf()
     con.execute("SELECT * FROM prices   LIMIT 500").fetchdf()
 
+    # 자주 쓰이는 집계 쿼리 사전 실행 (HomeView 첫 진입 지연 해소)
+    try:
+        latest_ver_row = con.execute(
+            "SELECT model_version FROM scores ORDER BY inserted_at DESC LIMIT 1"
+        ).fetchone()
+        if latest_ver_row:
+            ver = latest_ver_row[0]
+            latest_date_row = con.execute(
+                "SELECT MAX(CAST(date AS VARCHAR)) FROM scores WHERE model_version=?", [ver]
+            ).fetchone()
+            latest_date = latest_date_row[0] if latest_date_row else None
+            if latest_date:
+                # market/regime: 최신 날짜의 tier 카운트
+                con.execute(
+                    """SELECT COUNT(*),
+                              SUM(CASE WHEN tier='A' THEN 1 ELSE 0 END)
+                       FROM scores
+                       WHERE model_version=? AND CAST(date AS VARCHAR)=?""",
+                    [ver, latest_date],
+                ).fetchone()
+                # sectors/summary: 최신 날짜의 sector 집계
+                con.execute(
+                    """SELECT sector, COUNT(*), AVG(score)
+                       FROM scores
+                       WHERE model_version=? AND CAST(date AS VARCHAR)=?
+                       GROUP BY sector""",
+                    [ver, latest_date],
+                ).fetchdf()
+                # recommendations: 최신 날짜 상위
+                con.execute(
+                    """SELECT * FROM scores
+                       WHERE model_version=? AND CAST(date AS VARCHAR)=?
+                       ORDER BY score DESC LIMIT 50""",
+                    [ver, latest_date],
+                ).fetchdf()
+    except Exception:
+        pass  # 워밍업 실패는 무시 (실제 쿼리는 그대로 동작)
+
 
 def _con() -> duckdb.DuckDBPyConnection:
     """읽기 전용 DuckDB 싱글턴 연결.
@@ -287,7 +325,8 @@ def get_sector_summary(
     def fetch():
         con = _con()
 
-        _date = date
+        # 빈 문자열도 None과 동일하게 처리
+        _date = date if (date and str(date).strip()) else None
         if _date is None:
             row = con.execute(
                 "SELECT MAX(CAST(date AS VARCHAR)) FROM scores WHERE model_version=?", [ver]
@@ -358,8 +397,12 @@ def search_stocks(
 
 
 def get_chart(ticker: str, period: str = "1y") -> dict | None:
-    """OHLCV + 이동평균 데이터. period: 1m|3m|6m|1y|3y|all"""
-    from datetime import date as _date, timedelta
+    """OHLCV + 이동평균(Python rolling). period: 1m|3m|6m|1y|3y|all
+
+    - prices.date 는 BIGINT YYYYMMDD 형식
+    - ma5/20/60/120 컬럼이 DB에 없어 Python 측에서 close 기준 SMA를 산출
+    """
+    from datetime import date as _date, timedelta, datetime as _dt
     PERIOD_DAYS = {"1m": 30, "3m": 90, "6m": 180, "1y": 365, "3y": 1095, "all": 0}
     days = PERIOD_DAYS.get(period, 365)
 
@@ -367,41 +410,45 @@ def get_chart(ticker: str, period: str = "1y") -> dict | None:
         con = _con()
         t = ticker.zfill(6)
 
-        # 이름 조회 (scores 테이블에서)
         name_row = con.execute(
             "SELECT name FROM scores WHERE ticker=? LIMIT 1", [t]
         ).fetchone()
         name = name_row[0] if name_row else None
 
-        # prices.date 는 VARCHAR 'YYYY-MM-DD' — 최신 날짜 기준 N일 전부터 조회
+        # 최신 날짜 기준으로 cutoff(YYYYMMDD) 계산
         if days > 0:
-            # 데이터 최신 날짜를 먼저 구해 상대적으로 절단
             max_row = con.execute(
                 "SELECT MAX(date) FROM prices WHERE ticker=?", [t]
             ).fetchone()
             if max_row and max_row[0]:
-                from datetime import datetime
-                max_date = datetime.strptime(str(max_row[0]), "%Y-%m-%d").date()
-                cutoff = (max_date - timedelta(days=days)).strftime("%Y-%m-%d")
+                max_date = _dt.strptime(str(int(max_row[0])), "%Y%m%d").date()
             else:
-                cutoff = (_date.today() - timedelta(days=days)).strftime("%Y-%m-%d")
-            date_cond = f"AND date >= '{cutoff}'"
+                max_date = _date.today()
+            cutoff_int = int((max_date - timedelta(days=days)).strftime("%Y%m%d"))
+            date_cond = "AND date >= ?"
+            params = [t, cutoff_int]
         else:
             date_cond = ""
+            params = [t]
 
         sql = f"""
             SELECT
                 date,
-                open, high, low, close, volume, amount, market_cap,
-                ma5, ma20, ma60, ma120
+                open, high, low, close, volume, amount, market_cap
             FROM prices
             WHERE ticker = ? {date_cond}
             ORDER BY date ASC
         """
-        rows = con.execute(sql, [t]).fetchdf()
-
+        rows = con.execute(sql, params).fetchdf()
         if rows.empty:
             return None
+
+        # 이동평균 계산
+        for w in (5, 20, 60, 120):
+            rows[f"ma{w}"] = rows["close"].rolling(window=w, min_periods=1).mean().round(2)
+
+        # date(BIGINT YYYYMMDD) → 'YYYY-MM-DD' 문자열 변환
+        rows["date"] = rows["date"].apply(lambda d: f"{int(d)//10000:04d}-{(int(d)//100)%100:02d}-{int(d)%100:02d}")
 
         return {
             "ticker": t,
@@ -435,6 +482,11 @@ def get_finance(ticker: str, limit: int = 20) -> tuple[list[dict], str | None]:
         if rows.empty:
             return [], None
         name = rows["name"].iloc[0] if "name" in rows.columns else None
+        # base_date: float(YYYYMMDD.0) → 'YYYYMMDD' 문자열 (스키마 호환)
+        if "base_date" in rows.columns:
+            rows["base_date"] = rows["base_date"].apply(
+                lambda v: str(int(v)) if pd.notna(v) else None
+            )
         data_rows = rows.drop(columns=["name"]).to_dict(orient="records")
         return data_rows, name
 
@@ -462,6 +514,10 @@ def get_finance_latest(ticker: str) -> dict | None:
         row = con.execute(sql, [t]).fetchdf()
         if row.empty:
             return None
+        if "base_date" in row.columns:
+            row["base_date"] = row["base_date"].apply(
+                lambda v: str(int(v)) if pd.notna(v) else None
+            )
         return row.to_dict(orient="records")[0]
 
     return _cached("finance_latest", fetch, ttl=600, ticker=ticker)
@@ -823,6 +879,13 @@ def run_custom_backtest(
     import math
 
     ver = _resolve_version(model_version)
+    # prices.date 는 BIGINT YYYYMMDD 형식 — 비교용 정수 키 준비
+    start_int = int(start_date.replace("-", ""))
+    end_int   = int(end_date.replace("-", ""))
+
+    def _bigint_to_iso(d) -> str:
+        s = str(int(d))
+        return f"{s[:4]}-{s[4:6]}-{s[6:8]}"
 
     def fetch():
         con = _con()
@@ -873,27 +936,31 @@ def run_custom_backtest(
         all_tickers_str = ", ".join(f"'{t.zfill(6)}'" for t in all_tickers)
         prices_df = con.execute(
             f"""
-            SELECT ticker, CAST(date AS VARCHAR) AS date, close
+            SELECT ticker, date, close
             FROM prices
             WHERE ticker IN ({all_tickers_str})
               AND date BETWEEN ? AND ?
             ORDER BY date
             """,
-            [start_date, end_date],
+            [start_int, end_int],
         ).fetchdf()
+        if not prices_df.empty:
+            prices_df["date"] = prices_df["date"].apply(_bigint_to_iso)
 
         # KOSPI 벤치마크 (삼성전자 수익률 대용)
         benchmark_ticker = "005930"
         bench_df = con.execute(
             """
-            SELECT CAST(date AS VARCHAR) AS date, close
+            SELECT date, close
             FROM prices
             WHERE ticker = ?
               AND date BETWEEN ? AND ?
             ORDER BY date
             """,
-            [benchmark_ticker, start_date, end_date],
+            [benchmark_ticker, start_int, end_int],
         ).fetchdf()
+        if not bench_df.empty:
+            bench_df["date"] = bench_df["date"].apply(_bigint_to_iso)
 
         # 월별 수익률 계산
         monthly_returns = []
@@ -976,3 +1043,276 @@ def run_custom_backtest(
         model_version=ver, min_score=min_score, top_k=top_k,
         rebalance=rebalance, start_date=start_date, end_date=end_date,
     )
+
+
+# ── 마켓 레이더 (시장 기상도) ─────────────────────────────────────────────────
+
+def get_market_regime(model_version: str = "latest") -> dict:
+    """Tier A 종목 비율로 현재 시장 국면(greed/neutral/fear)을 판단."""
+    ver = _resolve_version(model_version)
+
+    def fetch():
+        con = _con()
+        date_row = con.execute(
+            "SELECT MAX(CAST(date AS VARCHAR)) FROM scores WHERE model_version=?",
+            [ver],
+        ).fetchone()
+        latest = date_row[0] if date_row else None
+        if not latest:
+            raise RuntimeError(f"scores 데이터 없음 (model_version={ver})")
+
+        row = con.execute(
+            """
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN tier='A' THEN 1 ELSE 0 END) AS tier_a
+            FROM scores
+            WHERE model_version=? AND CAST(date AS VARCHAR)=?
+            """,
+            [ver, latest],
+        ).fetchone()
+        total  = int(row[0] or 0)
+        tier_a = int(row[1] or 0)
+        ratio  = (tier_a / total * 100) if total else 0.0
+
+        if ratio >= 10:
+            status, weather, msg = "greed", "맑음", "상승 모멘텀이 강합니다. 적극적인 투자가 유리한 국면입니다."
+        elif ratio >= 5:
+            status, weather, msg = "neutral", "흐림", "방향성 탐색 구간입니다. 선별적인 종목 접근이 필요합니다."
+        else:
+            status, weather, msg = "fear", "비", "시장 변동성이 커지고 있습니다. 현금 비중 확대를 권장합니다."
+
+        return {
+            "date":          latest,
+            "model_version": ver,
+            "total_count":   total,
+            "tier_a_count":  tier_a,
+            "tier_a_ratio":  round(ratio, 2),
+            "status":        status,
+            "weather":       weather,
+            "message":       msg,
+        }
+
+    return _cached("market_regime", fetch, ttl=300, model_version=ver)
+
+
+# ── KOSPI 200 맞춤형 포트폴리오 ──────────────────────────────────────────────
+
+def get_kospi200_portfolio(
+    portfolio_type: str = "growth",
+    model_version: str = "latest",
+) -> dict:
+    """KOSPI 종목 중 사용자 성향에 맞는 Top 10 자동 포트폴리오.
+
+    - growth : score 상위 10
+    - stable : Tier A·B + 최신 PBR < 1.5 → score 상위 10
+    """
+    from ..core.config import SEED_CSV
+    ver        = _resolve_version(model_version)
+    seed_path  = str(SEED_CSV).replace("\\", "/")
+    is_stable  = (portfolio_type == "stable")
+
+    def fetch():
+        con = _con()
+        row = con.execute(
+            "SELECT MAX(CAST(date AS VARCHAR)) FROM scores WHERE model_version=?",
+            [ver],
+        ).fetchone()
+        latest = row[0] if row else None
+        if not latest:
+            raise RuntimeError(f"scores 데이터 없음 (model_version={ver})")
+
+        if is_stable:
+            sql = f"""
+                WITH last_finance AS (
+                    SELECT ticker, MAX(year * 10 + quarter) AS yq_max
+                    FROM finance
+                    WHERE pbr IS NOT NULL
+                    GROUP BY ticker
+                )
+                SELECT s.ticker, s.name, s.sector,
+                       CAST(s.score AS FLOAT)  AS score,
+                       s.tier,
+                       CAST(f.pbr   AS FLOAT)  AS pbr
+                FROM scores s
+                INNER JOIN read_csv_auto('{seed_path}') seed
+                    ON s.ticker = LPAD(CAST(seed.ticker AS VARCHAR), 6, '0')
+                INNER JOIN last_finance lf
+                    ON s.ticker = lf.ticker
+                INNER JOIN finance f
+                    ON f.ticker = lf.ticker AND (f.year * 10 + f.quarter) = lf.yq_max
+                WHERE s.model_version = ?
+                  AND CAST(s.date AS VARCHAR) = ?
+                  AND seed.exchange = 'KOSPI'
+                  AND s.tier IN ('A', 'B')
+                  AND f.pbr < 1.5
+                ORDER BY s.score DESC
+                LIMIT 10
+            """
+            df = con.execute(sql, [ver, latest]).fetchdf()
+        else:  # growth
+            sql = f"""
+                SELECT s.ticker, s.name, s.sector,
+                       CAST(s.score AS FLOAT) AS score,
+                       s.tier
+                FROM scores s
+                INNER JOIN read_csv_auto('{seed_path}') seed
+                    ON s.ticker = LPAD(CAST(seed.ticker AS VARCHAR), 6, '0')
+                WHERE s.model_version = ?
+                  AND CAST(s.date AS VARCHAR) = ?
+                  AND seed.exchange = 'KOSPI'
+                ORDER BY s.score DESC
+                LIMIT 10
+            """
+            df = con.execute(sql, [ver, latest]).fetchdf()
+
+        items = []
+        for i, r in df.iterrows():
+            item = {
+                "rank":   i + 1,
+                "ticker": r["ticker"],
+                "name":   r.get("name"),
+                "sector": r.get("sector"),
+                "score":  float(r["score"]),
+                "tier":   r["tier"],
+                "pbr":    float(r["pbr"]) if is_stable and pd.notna(r.get("pbr")) else None,
+            }
+            items.append(item)
+
+        return {
+            "type":          portfolio_type,
+            "date":          latest,
+            "model_version": ver,
+            "total":         len(items),
+            "items":         items,
+        }
+
+    return _cached(
+        "kospi200_portfolio", fetch, ttl=300,
+        portfolio_type=portfolio_type, model_version=ver,
+    )
+
+
+# ── 뉴스 피드 (FinBERT 감성 분석) ──────────────────────────────────────────────
+
+def get_news_feed(
+    limit:     int = 20,
+    offset:    int = 0,
+    sentiment: str | None = None,
+    ticker:    str | None = None,
+) -> dict:
+    """
+    `news_normalized` 테이블에서 최신 뉴스 피드 반환.
+
+    - sentiment : 'positive' | 'neutral' | 'negative' (None → 전체)
+    - ticker    : 종목코드 LIKE 매칭 (query_text/title 기준 폴백, 매핑 없을 때만)
+    - 정렬      : 최신 published_at DESC
+    """
+
+    def fetch():
+        con = _con()
+        where = ["1=1"]
+        params: list = []
+
+        if sentiment:
+            where.append("sentiment_label = ?")
+            params.append(sentiment)
+
+        if ticker:
+            # news_company_map이 비어있어 query_text/title LIKE로 폴백
+            where.append("(query_text LIKE ? OR title LIKE ?)")
+            t = f"%{ticker}%"
+            params.extend([t, t])
+
+        where_sql = " AND ".join(where)
+
+        total = con.execute(
+            f"SELECT COUNT(*) FROM news_normalized WHERE {where_sql}", params
+        ).fetchone()[0]
+
+        rows = con.execute(
+            f"""
+            SELECT
+                news_id,
+                provider,
+                title,
+                source_name,
+                origin_url,
+                image_url,
+                CAST(published_at AS VARCHAR) AS published_at,
+                sentiment_label,
+                CAST(sentiment_score AS FLOAT) AS sentiment_score,
+                CAST(pos_prob AS FLOAT) AS pos_prob,
+                CAST(neg_prob AS FLOAT) AS neg_prob,
+                CAST(neu_prob AS FLOAT) AS neu_prob
+            FROM news_normalized
+            WHERE {where_sql}
+            ORDER BY published_at DESC
+            LIMIT ? OFFSET ?
+            """,
+            params + [limit, offset],
+        ).fetchdf()
+
+        items = []
+        for _, r in rows.iterrows():
+            items.append({
+                "id":              r["news_id"],
+                "ticker":          ticker or "",
+                "company_name":    r.get("source_name") or "",
+                "title":           r["title"],
+                "source":          r["provider"],
+                "published_at":    r["published_at"],
+                "sentiment":       r["sentiment_label"],
+                "sentiment_label": r["sentiment_label"],
+                "sentiment_score": float(r["sentiment_score"]) if pd.notna(r["sentiment_score"]) else 0.0,
+                "confidence":      float(r["sentiment_score"]) if pd.notna(r["sentiment_score"]) else 0.0,
+                "pos_prob":        float(r["pos_prob"]) if pd.notna(r["pos_prob"]) else 0.0,
+                "neg_prob":        float(r["neg_prob"]) if pd.notna(r["neg_prob"]) else 0.0,
+                "neu_prob":        float(r["neu_prob"]) if pd.notna(r["neu_prob"]) else 0.0,
+                "url":             r["origin_url"],
+                "image_url":       r.get("image_url"),
+            })
+
+        return {"total": int(total), "items": items}
+
+    return _cached(
+        "news_feed", fetch, ttl=120,
+        limit=limit, offset=offset, sentiment=sentiment or "", ticker=ticker or "",
+    )
+
+
+def get_news_detail(news_id: str) -> dict | None:
+    """단건 뉴스 조회."""
+    con = _con()
+    rows = con.execute(
+        """
+        SELECT news_id, provider, title, source_name, origin_url, image_url,
+               CAST(published_at AS VARCHAR) AS published_at,
+               sentiment_label,
+               CAST(sentiment_score AS FLOAT) AS sentiment_score,
+               CAST(pos_prob AS FLOAT) AS pos_prob,
+               CAST(neg_prob AS FLOAT) AS neg_prob,
+               CAST(neu_prob AS FLOAT) AS neu_prob
+        FROM news_normalized
+        WHERE news_id = ?
+        LIMIT 1
+        """,
+        [news_id],
+    ).fetchdf()
+    if rows.empty:
+        return None
+    r = rows.iloc[0]
+    return {
+        "id":              r["news_id"],
+        "title":           r["title"],
+        "source":          r["provider"],
+        "publisher":       r["provider"],
+        "origin_url":      r["origin_url"],
+        "url":             r["origin_url"],
+        "image_url":       r.get("image_url"),
+        "published_at":    r["published_at"],
+        "sentiment_label": r["sentiment_label"],
+        "sentiment_score": float(r["sentiment_score"]) if pd.notna(r["sentiment_score"]) else 0.0,
+        "pos_prob":        float(r["pos_prob"]) if pd.notna(r["pos_prob"]) else 0.0,
+        "neg_prob":        float(r["neg_prob"]) if pd.notna(r["neg_prob"]) else 0.0,
+        "neu_prob":        float(r["neu_prob"]) if pd.notna(r["neu_prob"]) else 0.0,
+    }

@@ -60,7 +60,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8001',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         //rewrite: (path) => path.replace(/^\/api/, ''), api를 제거하고 보낼거면 주석제거
       },

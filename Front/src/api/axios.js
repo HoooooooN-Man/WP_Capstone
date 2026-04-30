@@ -2,9 +2,10 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 
+const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
 const instance = axios.create({
-  baseURL: 'http://localhost:8001/api/v1',
-  timeout: 10000,
+  baseURL: `${BASE}/api/v1`,
+  timeout: 30000,
 })
 
 // Request interceptor: attach session token

@@ -27,6 +27,9 @@ SEED_CSV:      Path = CAPSTONE_ROOT / "preprocessing" / "seed.csv"
 # ── DuckDB ───────────────────────────────────────────────────────────────────
 DUCKDB_PATH: Path = Path(os.getenv("DUCKDB_PATH", str(_FASTAPI_DIR / "scores.duckdb")))
 
+# ── SQLite (게시판 OLTP) ─────────────────────────────────────────────────────
+BOARD_DB_PATH: Path = Path(os.getenv("BOARD_DB_PATH", str(_FASTAPI_DIR / "board.db")))
+
 # ── Redis ────────────────────────────────────────────────────────────────────
 REDIS_HOST:     str = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT:     int = int(os.getenv("REDIS_PORT", "6379"))
