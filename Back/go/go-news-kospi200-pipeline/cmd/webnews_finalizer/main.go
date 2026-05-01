@@ -128,9 +128,6 @@ func main() {
 				Title:         enrichedItem.Title,
 				Publisher:     enrichedItem.Publisher,
 				GoogleNewsURL: enrichedItem.GoogleNewsURL,
-				OriginURL:     enrichedItem.OriginURL,
-				CanonicalURL:  enrichedItem.CanonicalURL,
-				ImageURL:      enrichedItem.ImageURL,
 
 				PublishedAt: enrichedItem.PublishedAt,
 				CollectedAt: enrichedItem.CollectedAt,

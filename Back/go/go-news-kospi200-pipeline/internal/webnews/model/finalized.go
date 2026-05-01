@@ -1,16 +1,21 @@
 package model
 
-type FinalizedNewsCard struct {
+type FinalizedManifest struct {
+	DisplayDate string   `json:"display_date"`
+	WindowStart string   `json:"window_start"`
+	WindowEnd   string   `json:"window_end"`
+	GeneratedAt string   `json:"generated_at"`
+	Categories  []string `json:"categories"`
+	TopN        int      `json:"top_n"`
+}
+
+type FinalizedNewsItem struct {
 	Rank int `json:"rank"`
 
-	ID string `json:"id"`
-
+	ID            string `json:"id"`
 	Title         string `json:"title"`
 	Publisher     string `json:"publisher"`
 	GoogleNewsURL string `json:"google_news_url"`
-	OriginURL     string `json:"origin_url"`
-	CanonicalURL  string `json:"canonical_url"`
-	ImageURL      string `json:"image_url"`
 
 	PublishedAt string `json:"published_at"`
 	CollectedAt string `json:"collected_at"`
@@ -34,14 +39,13 @@ type FinalizedCategoryFile struct {
 	WindowEnd     string              `json:"window_end"`
 	GeneratedAt   string              `json:"generated_at"`
 	ItemCount     int                 `json:"item_count"`
-	Items         []FinalizedNewsCard `json:"items"`
+	Items         []FinalizedNewsItem `json:"items"`
 }
 
-type FinalizeManifest struct {
-	DisplayDate string   `json:"display_date"`
-	WindowStart string   `json:"window_start"`
-	WindowEnd   string   `json:"window_end"`
-	GeneratedAt string   `json:"generated_at"`
-	Categories  []string `json:"categories"`
-	TopN        int      `json:"top_n"`
-}
+/*
+호환용 alias
+- 기존 코드가 아직 아래 이름들을 참조하고 있어서 같이 살려둠
+*/
+type FinalizeManifest = FinalizedManifest
+type FinalizedNewsCard = FinalizedNewsItem
+type FinalizedCategory = FinalizedCategoryFile

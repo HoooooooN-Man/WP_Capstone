@@ -32,10 +32,8 @@ start_if_missing() {
 
 start_if_missing "webnews_collector" "$ROOT_DIR/scripts/run_webnews_collector_loop.sh"
 start_if_missing "webnews_enricher" "$ROOT_DIR/scripts/run_webnews_enricher_loop.sh"
-start_if_missing "webnews_html_augmentor" "$ROOT_DIR/scripts/run_webnews_html_augmentor_loop.sh"
 
 echo
 echo "[INFO] running binaries"
 pgrep -af "bin/webnews_collector" || true
 pgrep -af "bin/webnews_enricher" || true
-pgrep -af "bin/webnews_html_augmentor" || true

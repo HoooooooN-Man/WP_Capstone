@@ -55,9 +55,6 @@ func UpsertEnrichedItem(
 		"title":           item.Title,
 		"publisher":       item.Publisher,
 		"google_news_url": item.GoogleNewsURL,
-		"origin_url":      item.OriginURL,
-		"canonical_url":   item.CanonicalURL,
-		"image_url":       item.ImageURL,
 
 		"published_at": item.PublishedAt,
 		"collected_at": item.CollectedAt,

@@ -15,8 +15,6 @@ stop_by_pattern() {
 
 stop_by_pattern "collector supervisor" "scripts/run_webnews_collector_loop.sh"
 stop_by_pattern "enricher supervisor" "scripts/run_webnews_enricher_loop.sh"
-stop_by_pattern "html augmentor supervisor" "scripts/run_webnews_html_augmentor_loop.sh"
 
 stop_by_pattern "webnews_collector binary" "bin/webnews_collector"
 stop_by_pattern "webnews_enricher binary" "bin/webnews_enricher"
-stop_by_pattern "webnews_html_augmentor binary" "bin/webnews_html_augmentor"

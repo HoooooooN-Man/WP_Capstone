@@ -3,25 +3,35 @@ package redisstore
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/redis/go-redis/v9"
 )
 
-func ScoreDelta(rank int, imageURL, originURL, googleNewsURL string) float64 {
-	base := 1.0
-	if rank > 0 && rank <= 10 {
-		base = float64(11 - rank)
+func ScoreDelta(rank int) float64 {
+	switch rank {
+	case 1:
+		return 10.0
+	case 2:
+		return 9.0
+	case 3:
+		return 8.0
+	case 4:
+		return 7.0
+	case 5:
+		return 6.0
+	case 6:
+		return 5.0
+	case 7:
+		return 4.0
+	case 8:
+		return 3.0
+	case 9:
+		return 2.0
+	case 10:
+		return 1.0
+	default:
+		return 0.5
 	}
-
-	if strings.TrimSpace(imageURL) != "" {
-		base += 0.2
-	}
-	if strings.TrimSpace(originURL) != "" && strings.TrimSpace(originURL) != strings.TrimSpace(googleNewsURL) {
-		base += 0.2
-	}
-
-	return base
 }
 
 func AddRankScore(
