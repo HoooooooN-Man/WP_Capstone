@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
+# Redis 세션 클라이언트 공유 (auth.py 와 동일 인스턴스 사용)
+from api.auth.auth import rd
+
 load_dotenv()
 
 router = APIRouter(prefix="/api/v1/board", tags=["board"])
@@ -45,31 +48,50 @@ async def db() -> asyncpg.Connection:
 
 
 # ─────────────────────────────────────────────
-# 세션 토큰 → author_id 파싱 헬퍼
-# (실제 프로젝트에서는 auth 서버 8000에 검증 요청)
+# 세션 토큰 → author_id 검증 헬퍼
+# Redis 의 session:{token} → email 을 조회하고
+# PostgreSQL users 테이블에서 user_id 를 얻는다 (auth.py 와 동일한 토큰 체계).
 # ─────────────────────────────────────────────
 
-async def resolve_author(session_token: Optional[str]) -> Optional[int]:
-    """세션 토큰에서 user_id를 꺼낸다. 없으면 None 반환."""
+async def _email_from_session(session_token: Optional[str]) -> Optional[str]:
     if not session_token:
         return None
-    # TODO: auth 서버 8000에 /auth/me 요청 후 user_id 반환
-    # 임시: 토큰이 'user_{id}' 형태라고 가정
     try:
-        return int(session_token.split("_")[1])
+        return rd.get(f"session:{session_token}")
     except Exception:
+        # Redis 연결 실패 시에도 401 처리 (가용성보다 보안 우선)
         return None
 
 
-def require_auth(session_token: Optional[str]) -> int:
-    """인증 필수 엔드포인트용. 로그인 안 되면 401."""
-    # 동기 버전 — 실제론 async 검증으로 교체
+async def resolve_author(
+    session_token: Optional[str],
+    conn: asyncpg.Connection,
+) -> Optional[int]:
+    """세션 토큰 → user_id. 토큰이 없거나 만료되면 None."""
+    email = await _email_from_session(session_token)
+    if not email:
+        return None
+    return await conn.fetchval(
+        "SELECT user_id FROM users WHERE email = $1", email
+    )
+
+
+async def require_auth(
+    session_token: Optional[str],
+    conn: asyncpg.Connection,
+) -> int:
+    """인증 필수 엔드포인트용. 토큰이 없으면 401, user 미존재면 401."""
     if not session_token:
         raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
-    try:
-        return int(session_token.split("_")[1])
-    except Exception:
-        raise HTTPException(status_code=401, detail="유효하지 않은 세션입니다.")
+    email = await _email_from_session(session_token)
+    if not email:
+        raise HTTPException(status_code=401, detail="세션이 만료됐습니다. 다시 로그인해주세요.")
+    user_id = await conn.fetchval(
+        "SELECT user_id FROM users WHERE email = $1", email
+    )
+    if not user_id:
+        raise HTTPException(status_code=401, detail="사용자를 찾을 수 없습니다.")
+    return int(user_id)
 
 
 # ─────────────────────────────────────────────
@@ -92,6 +114,49 @@ class LikeRequest(BaseModel):
 
 
 # ─────────────────────────────────────────────
+# 인기 게시글 (전체 통합)
+# GET /api/v1/board/popular
+# 인기 점수 = likes*3 + comments*2 + views
+# ─────────────────────────────────────────────
+
+@router.get("/popular")
+async def list_popular_posts(
+    limit: int = Query(20, ge=1, le=100, description="가져올 게시글 수"),
+    conn: asyncpg.Connection = Depends(db),
+):
+    rows = await conn.fetch(
+        """
+        SELECT
+            p.id, p.ticker, p.author_id, p.title, p.views, p.likes,
+            p.created_at,
+            (SELECT COUNT(*) FROM board_comments c WHERE c.post_id = p.id) AS comment_count,
+            (p.likes * 3
+             + (SELECT COUNT(*) FROM board_comments c WHERE c.post_id = p.id) * 2
+             + p.views) AS popularity
+        FROM board_posts p
+        ORDER BY popularity DESC, p.created_at DESC
+        LIMIT $1
+        """,
+        limit,
+    )
+    items = [
+        {
+            "id":            r["id"],
+            "ticker":        r["ticker"],
+            "author_id":     r["author_id"],
+            "title":         r["title"],
+            "views":         r["views"],
+            "likes":         r["likes"],
+            "comment_count": r["comment_count"],
+            "popularity":    r["popularity"],
+            "created_at":    r["created_at"].isoformat(),
+        }
+        for r in rows
+    ]
+    return {"total": len(items), "items": items}
+
+
+# ─────────────────────────────────────────────
 # 게시글 목록 조회
 # GET /api/v1/board/posts/{ticker}
 # ─────────────────────────────────────────────
@@ -104,7 +169,7 @@ async def list_posts(
     session_token: Optional[str] = Header(None, alias="session-token"),
     conn: asyncpg.Connection = Depends(db),
 ):
-    author_id = await resolve_author(session_token)
+    author_id = await resolve_author(session_token, conn)
     offset = (page - 1) * page_size
 
     if ticker:
@@ -186,7 +251,7 @@ async def get_post(
     session_token: Optional[str] = Header(None, alias="session-token"),
     conn: asyncpg.Connection = Depends(db),
 ):
-    author_id = await resolve_author(session_token)
+    author_id = await resolve_author(session_token, conn)
 
     row = await conn.fetchrow(
         "UPDATE board_posts SET views = views + 1 WHERE id = $1 RETURNING *",
@@ -241,7 +306,7 @@ async def create_post(
     session_token: Optional[str] = Header(None, alias="session-token"),
     conn: asyncpg.Connection = Depends(db),
 ):
-    author_id = require_auth(session_token)
+    author_id = await require_auth(session_token, conn)
 
     row = await conn.fetchrow(
         """
@@ -274,7 +339,7 @@ async def delete_post(
     session_token: Optional[str] = Header(None, alias="session-token"),
     conn: asyncpg.Connection = Depends(db),
 ):
-    author_id = require_auth(session_token)
+    author_id = await require_auth(session_token, conn)
 
     row = await conn.fetchrow(
         "SELECT author_id FROM board_posts WHERE id = $1", post_id
@@ -299,7 +364,7 @@ async def create_comment(
     session_token: Optional[str] = Header(None, alias="session-token"),
     conn: asyncpg.Connection = Depends(db),
 ):
-    author_id = require_auth(session_token)
+    author_id = await require_auth(session_token, conn)
 
     exists = await conn.fetchval(
         "SELECT EXISTS(SELECT 1 FROM board_posts WHERE id = $1)", body.post_id
@@ -335,7 +400,7 @@ async def toggle_like(
     session_token: Optional[str] = Header(None, alias="session-token"),
     conn: asyncpg.Connection = Depends(db),
 ):
-    author_id = require_auth(session_token)
+    author_id = await require_auth(session_token, conn)
 
     exists = await conn.fetchval(
         "SELECT EXISTS(SELECT 1 FROM board_posts WHERE id = $1)", post_id

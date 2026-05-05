@@ -1,3 +1,14 @@
+# Redis 이중화 (auth / queue 분리).
+#
+# bind/port 는 .env 로 주입.
+#   REDIS_BIND_HOST=127.0.0.1   (외부 노출 금지)
+#   REDIS_AUTH_PORT=6379
+#   REDIS_QUEUE_PORT=6380
+#   REDIS_AUTH_PASSWORD=...     (강력한 임의값)
+#   REDIS_QUEUE_PASSWORD=...
+#
+# .env.example 참조. 절대 .env 파일을 git 에 커밋하지 말 것.
+
 services:
   redis-auth:
     image: redis:7.4
@@ -10,7 +21,7 @@ services:
         "${REDIS_AUTH_PASSWORD}"
       ]
     ports:
-      - "100.67.30.5:6379:6379"
+      - "${REDIS_BIND_HOST:-127.0.0.1}:${REDIS_AUTH_PORT:-6379}:6379"
     volumes:
       - ./auth/redis.conf:/usr/local/etc/redis/redis.conf:ro
       - redis_auth_data:/data
@@ -27,7 +38,7 @@ services:
         "${REDIS_QUEUE_PASSWORD}"
       ]
     ports:
-      - "100.67.30.5:6380:6379"
+      - "${REDIS_BIND_HOST:-127.0.0.1}:${REDIS_QUEUE_PORT:-6380}:6379"
     volumes:
       - ./queue/redis.conf:/usr/local/etc/redis/redis.conf:ro
       - redis_queue_data:/data

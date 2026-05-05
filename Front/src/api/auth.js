@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+// 인증 서버 (FastAPI :8000) 전용 클라이언트.
+const BASE = import.meta.env.VITE_API_BASE_AUTH ?? 'http://localhost:8000'
 const authApi = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: BASE,
   timeout: 10000,
 })
 

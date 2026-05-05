@@ -33,10 +33,13 @@
 
 ## 3. Redis 연결 정책
 ### 권장 서버 역할 분리
-- `redis-auth: 100.67.30.5:6379`
+- `redis-auth: <bind_host>:6379`
   - 로그인/세션/인증 용도
-- `redis-queue: 100.67.30.5:6380`
+- `redis-queue: <bind_host>:6380`
   - 크롤링 이벤트/스트림/배치 용도
+
+`<bind_host>` 는 기본 `127.0.0.1`. 다중 노드/팀 공유가 필요하면 NetBird/Tailscale
+사설망 IP 로 교체하되, 반드시 방화벽으로 외부 차단.
 
 ### 환경변수 우선순위
 1. `REDIS_QUEUE_*`
@@ -45,10 +48,10 @@
 
 즉, 현재 크롤링 파이프라인은 아래처럼 두는 것을 권장한다.
 ```env
-REDIS_QUEUE_HOST=100.67.30.5
+REDIS_QUEUE_HOST=<bind_host>
 REDIS_QUEUE_PORT=6380
 REDIS_QUEUE_DB=0
-REDIS_QUEUE_PASSWORD=
+REDIS_QUEUE_PASSWORD=__SET_VIA_ENV__
 ```
 
 ## 4. Redis 키 설계

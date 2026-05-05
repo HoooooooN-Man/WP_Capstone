@@ -13,6 +13,22 @@ from ..schemas.finance import FinanceResponse, FinanceItem, FinanceLatest
 router = APIRouter(prefix="/finance", tags=["finance"])
 
 
+@router.get("/{ticker}/latest", response_model=FinanceLatest, summary="종목 최신 분기 재무 요약")
+def get_finance_latest(ticker: str):
+    """
+    지정 종목의 가장 최근 분기 재무 지표 요약을 반환합니다.
+    """
+    try:
+        row = svc.get_finance_latest(ticker=ticker)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    if not row:
+        raise HTTPException(status_code=404, detail=f"종목 {ticker} 재무 데이터를 찾을 수 없습니다.")
+
+    return FinanceLatest(**row)
+
+
 @router.get("/{ticker}", response_model=FinanceResponse, summary="종목 전체 재무 이력")
 def get_finance(
     ticker: str,
@@ -32,19 +48,3 @@ def get_finance(
 
     items = [FinanceItem(**r) for r in rows]
     return FinanceResponse(ticker=ticker.zfill(6), name=name, total=len(items), items=items)
-
-
-@router.get("/{ticker}/latest", response_model=FinanceLatest, summary="종목 최신 분기 재무 요약")
-def get_finance_latest(ticker: str):
-    """
-    지정 종목의 가장 최근 분기 재무 지표 요약을 반환합니다.
-    """
-    try:
-        row = svc.get_finance_latest(ticker=ticker)
-    except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
-
-    if not row:
-        raise HTTPException(status_code=404, detail=f"종목 {ticker} 재무 데이터를 찾을 수 없습니다.")
-
-    return FinanceLatest(**row)

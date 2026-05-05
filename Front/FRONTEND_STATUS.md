@@ -181,7 +181,7 @@
 | 파일 | 베이스 URL | 설명 |
 |------|-----------|------|
 | `axios.js` | `http://localhost:8001` | ML 분석 서버 (Axios 인스턴스, 세션 인터셉터) |
-| `dbapi.js` | `http://100.67.18.188:8000` | 인증/커뮤니티 서버 |
+| `dbapi.js` | `http://localhost:8000` (env: `VITE_API_BASE_AUTH`) | 인증/커뮤니티 서버 |
 | `stocks.js` | — | 종목 추천, 검색, 비교 API |
 | `chart.js` | — | 캔들/거래량 차트 데이터 API |
 | `finance.js` | — | 재무 지표 API |

@@ -4,11 +4,14 @@ Front/dist/
 Front/.env
 Front/.env.*
 Front/.env.local
+!Front/.env.example
 
-# SQLite WAL 임시 파일
-Back/FastAPI/board.db
-Back/FastAPI/board.db-shm
-Back/FastAPI/board.db-wal
+# SQLite (게시판 OLTP)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
 
 # Back
 Back/.venv/
@@ -16,6 +19,8 @@ Back/**/__pycache__/
 Back/__pycache__/
 Back/.env
 Back/**/.env
+!Back/**/.env.example
+!Back/**/.env.netbird.example
 Back/*.pyc
 Back/Redis/.env
 Back/go/go-news-kospi200-pipeline/configs/.env
@@ -41,5 +46,6 @@ Learning/.ipynb_checkpoints/
 .idea/
 .DS_Store
 *.duckdb
+*.duckdb.wal
 *.venv
 __pycache__/**

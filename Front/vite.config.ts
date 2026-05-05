@@ -58,12 +58,10 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        //rewrite: (path) => path.replace(/^\/api/, ''), api를 제거하고 보낼거면 주석제거
-      },
-    },
+    // 현재 axios 들은 절대 URL(VITE_API_BASE_ML / _AUTH)로 직접 호출하므로
+    // proxy 는 비활성화 상태. 만약 동일 origin 요청이 필요해지면
+    //   '/api/v1' → ML 서버(:8001)
+    //   '/auth' '/news' '/users' '/internal' → AUTH 서버(:8000)
+    // 두 가지로 분리해서 추가하라.
   },
 })

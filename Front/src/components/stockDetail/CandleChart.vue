@@ -1,13 +1,37 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import {
-  Chart as ChartJS, CategoryScale, LinearScale, TimeScale,
-  LineElement, PointElement, Tooltip, Legend,
+  Chart as ChartJS,
+  BarController,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  TimeScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+  Legend,
 } from 'chart.js'
 import 'chartjs-adapter-date-fns'
-import 'chartjs-chart-financial'
+import {
+  CandlestickController,
+  CandlestickElement,
+} from 'chartjs-chart-financial'
 
-ChartJS.register(CategoryScale, LinearScale, TimeScale, LineElement, PointElement, Tooltip, Legend)
+// chartjs-chart-financial ESM 은 부수효과로 등록하지 않음 — 명시 등록 필요
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  TimeScale,
+  LineElement,
+  PointElement,
+  BarController,
+  BarElement,
+  CandlestickController,
+  CandlestickElement,
+  Tooltip,
+  Legend,
+)
 
 const props = defineProps({
   candles:    { type: Array, default: () => [] },
