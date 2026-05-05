@@ -1,0 +1,52 @@
+{
+  "categories": [
+    {
+      "id": "korea",
+      "label": "대한민국",
+      "mode": "search",
+      "source": "google_news",
+      "query": "대한민국 OR 한국경제 OR 한국정책",
+      "top_n": 10
+    },
+    {
+      "id": "world",
+      "label": "세계",
+      "mode": "search",
+      "source": "google_news",
+      "query": "세계경제 OR 국제정세 OR 미국증시",
+      "top_n": 10
+    },
+    {
+      "id": "business",
+      "label": "비즈니스",
+      "mode": "search",
+      "source": "google_news",
+      "query": "기업 OR 실적 OR 증시 OR 투자",
+      "top_n": 10
+    },
+    {
+      "id": "science_tech",
+      "label": "과학기술",
+      "mode": "search",
+      "source": "google_news",
+      "query": "AI OR 반도체 OR 기술 OR 데이터센터",
+      "top_n": 10
+    },
+    {
+      "id": "policy_finance",
+      "label": "정책금융",
+      "mode": "search",
+      "source": "google_news",
+      "query": "금리 OR 환율 OR 한국은행 OR 금융위원회 OR 증시",
+      "top_n": 10
+    },
+    {
+      "id": "industry_ai",
+      "label": "산업AI",
+      "mode": "search",
+      "source": "google_news",
+      "query": "AI OR 반도체 OR HBM OR 배터리 OR 자동차 OR 데이터센터",
+      "top_n": 10
+    }
+  ]
+}
