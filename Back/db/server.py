@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from api.auth.auth import router as auth_router
+from api.auth.social import router as social_router
 from api.socket.internal_router import router as internal_router
 from api.news.newsranking import router as news_router
 from api.board.board import router as board_router
@@ -24,6 +25,7 @@ app.include_router(internal_router)
 app.include_router(news_router)
 app.include_router(board_router)
 app.include_router(users_router)
+app.include_router(social_router)
 
 @app.get("/")
 def root():

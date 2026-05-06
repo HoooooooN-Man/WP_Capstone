@@ -42,7 +42,16 @@ class User(Base):
     posts         = relationship("BoardPost",     back_populates="author",    cascade="all, delete-orphan")
     comments      = relationship("BoardComment",  back_populates="author",    cascade="all, delete-orphan")
     likes         = relationship("BoardLike",     back_populates="author",    cascade="all, delete-orphan")
-
+    social_accounts = relationship("SocialAccount", back_populates="user", cascade="all, delete-orphan")
+    
+class SocialAccount(Base):
+    __tablename__ = "social_accounts"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String, nullable=False)  # 'google', 'kakao', 'naver'
+    social_id = Column(String, nullable=False, unique=True) # 플랫폼 제공 고유 ID
+    
+    user = relationship("User", back_populates="social_accounts")
 
 # ── 2. user_watchlist (포트폴리오) ────────────────────────────────────────────
 class UserWatchlist(Base):
