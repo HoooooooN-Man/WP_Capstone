@@ -35,10 +35,10 @@ If these are missing, code falls back to generic `REDIS_*` variables.
 
 ## Recommended `.env`
 ```env
-REDIS_QUEUE_HOST=100.67.30.5
+REDIS_QUEUE_HOST=<bind_host>     # 기본 127.0.0.1, 사설망 사용 시 NetBird/Tailscale IP
 REDIS_QUEUE_PORT=6380
 REDIS_QUEUE_DB=0
-REDIS_QUEUE_PASSWORD=
+REDIS_QUEUE_PASSWORD=__SET_VIA_ENV__
 ```
 
 ## Connectivity check

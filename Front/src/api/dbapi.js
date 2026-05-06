@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000';
+// 인증·커뮤니티·뉴스 서버 (FastAPI :8000) 전용 클라이언트.
+const BASE = import.meta.env.VITE_API_BASE_AUTH ?? 'http://localhost:8000';
 const dbapi = axios.create({
   baseURL: BASE,
 });

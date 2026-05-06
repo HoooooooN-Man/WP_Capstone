@@ -38,7 +38,7 @@ async function fetchNews(reset = false) {
     if (activeFilter.value !== 'all') params.sentiment = activeFilter.value
     if (tickerFilter.value.trim())    params.ticker    = tickerFilter.value.trim().toUpperCase()
 
-    const { data } = await dbapi.get('/news/feed', { params })
+    const { data } = await dbapi.get('/api/v1/news/feed', { params })
     const items = data.items ?? data ?? []
     total.value = data.total ?? items.length
     if (reset) news.value = items

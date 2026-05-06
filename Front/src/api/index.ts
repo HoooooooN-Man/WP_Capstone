@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8001'
+// ML 분석 서버 (FastAPI :8001) 전용 클라이언트.
+const BASE = import.meta.env.VITE_API_BASE_ML ?? 'http://localhost:8001'
 
 const api = axios.create({
   baseURL: `${BASE}/api/v1`,

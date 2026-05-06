@@ -37,6 +37,11 @@ class StockScore(BaseModel):
 
     model_version:  str
 
+    # S3 전략 메타 (strategy=s3 일 때만 포함)
+    regime:         Optional[int]   = None  # 1=상승, 0=하락(방어)
+    regime_label:   Optional[str]   = None  # "상승" | "하락(방어)"
+    position_scale: Optional[float] = None  # 1.0 또는 0.5
+
 
 class StockScoreList(BaseModel):
     """추천 목록 응답."""

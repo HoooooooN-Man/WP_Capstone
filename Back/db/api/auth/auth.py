@@ -1,6 +1,7 @@
 from fastapi import Header, APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
+from dotenv import load_dotenv
 import redis
 import random
 import os
@@ -10,34 +11,41 @@ from db.models import User
 from .schemas import UserCreate, UserLogin, EmailVerification, PasswordResetRequest, PasswordResetEmailRequest
 from .smtp import send_verification_email
 
+# Back/db/.env 로드 (REDIS_*, DB_* 환경변수)
+load_dotenv()
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # 비밀번호 암호화 설정
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-# Redis 연결 (decode_responses=True로 설정하면 문자열로 바로 읽힘)
-# --- Redis Configuration ---
-REDIS_HOST = os.getenv("REDIS_HOST", "100.67.30.5")
-REDIS_PORT = int(os.getenv("REDIS_PORT", 6380))
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "change_this_queue_password_456!")
-REDIS_DECODE_RESPONSES = os.getenv("REDIS_DECODE_RESPONSES", "True") == "True"
 
-# 연결 옵션 적용
+# --- Redis Configuration ---
+# 8000 인증 서버는 redis-auth 인스턴스(:6379, db=0) 를 사용한다.
+# 비밀번호는 REDIS_AUTH_PASSWORD 우선, 없으면 REDIS_PASSWORD 폴백 (한 프로세스에서
+# 두 .env 가 섞여도 인스턴스별로 안전하게 읽히도록).
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+REDIS_PASSWORD = (
+    os.getenv("REDIS_AUTH_PASSWORD")
+    or os.getenv("REDIS_PASSWORD")
+    or None
+)
+REDIS_DECODE_RESPONSES = os.getenv("REDIS_DECODE_RESPONSES", "True").lower() == "true"
+REDIS_AUTH_DB = int(os.getenv("REDIS_AUTH_DB", "0"))
+
 rd = redis.Redis(
     host=REDIS_HOST,
     port=REDIS_PORT,
     password=REDIS_PASSWORD,
     decode_responses=REDIS_DECODE_RESPONSES,
-    socket_timeout=float(os.getenv("REDIS_SOCKET_TIMEOUT", 60)),
-    socket_connect_timeout=float(os.getenv("REDIS_CONNECT_TIMEOUT", 10)),
-    retry_on_timeout=os.getenv("REDIS_RETRY_ON_TIMEOUT", "True") == "True",
-    db=0
+    socket_timeout=float(os.getenv("REDIS_SOCKET_TIMEOUT", "60")),
+    socket_connect_timeout=float(os.getenv("REDIS_CONNECT_TIMEOUT", "10")),
+    retry_on_timeout=os.getenv("REDIS_RETRY_ON_TIMEOUT", "True").lower() == "true",
+    db=REDIS_AUTH_DB,
 )
 
 # --- 헬퍼 함수 ---
-def get_password_hash(password):
-    print(f"DEBUG: hashing target content -> {password}")
-    print(f"DEBUG: hashing target type -> {type(password)}")
-    print(f"DEBUG: hashing target length -> {len(str(password))}")
+def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 def verify_password(plain_password, hashed_password):

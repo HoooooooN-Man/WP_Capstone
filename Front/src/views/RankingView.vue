@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/theme.js'
 import { stocksApi } from '@/api/stocks'
 import api from '@/api/axios.js'
+import dbapi from '@/api/dbapi.js'
 import TierBadge from '@/components/common/TierBadge.vue'
 
 const router = useRouter()
@@ -23,7 +24,8 @@ async function fetchAiRanking() {
 
 async function fetchCommunity() {
   try {
-    const { data } = await api.get('/board/popular?limit=20')
+    // 인기 게시글은 8000 (PostgreSQL board) 에서 제공.
+    const { data } = await dbapi.get('/api/v1/board/popular?limit=20')
     communityList.value = data.items ?? data ?? []
   } catch {
     communityList.value = []

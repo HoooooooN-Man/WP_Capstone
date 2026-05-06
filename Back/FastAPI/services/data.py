@@ -1,200 +1,91 @@
 """
 services/data.py
 ================
-DuckDB 쿼리 레이어 + Redis 캐시 래퍼.
+DuckDB 쿼리 레이어 (도메인 함수 + 호환 re-export).
 
-- 모든 public 함수는 model_version 파라미터를 받음.
-- "latest" 전달 시 scores 테이블에서 가장 최근 inserted_at 의 버전을 자동 선택.
-- Redis 캐시 TTL은 config.REDIS_CACHE_TTL (기본 60초).
-  Redis 연결 실패 시 캐시 없이 DuckDB 직접 조회로 graceful fallback.
+분할 전 1200+ 라인 단일 파일이었으나, 공유 인프라 (Redis/DuckDB/캐시/버전 해석) 는
+`services/_core.py` 로 분리됨. 이 모듈은 도메인 함수 본체를 보유하고,
+기존 라우터의 `from ..services import data as svc` 임포트 패턴을 유지하기 위해
+`_core` 의 헬퍼를 동일 이름으로 노출한다.
+
+향후 추가 분할 후보 (TODO):
+  - scores_svc.py  : get_recommendations, get_stock_history, get_sector_summary,
+                     search_stocks, screen_stocks, compare_stocks,
+                     get_market_regime, get_kospi200_portfolio
+  - charts_svc.py  : get_chart, get_stock_price, get_rising_stocks
+  - finance_svc.py : get_finance, get_finance_latest
+  - backtest_svc.py: get_backtest_*, run_custom_backtest
+  - news_svc.py    : get_news_feed, get_news_detail
+  - metrics_svc.py : get_model_metrics
 """
 
 from __future__ import annotations
 
-import json
-import hashlib
-import threading
-from typing import Any
-
-import duckdb
 import pandas as pd
 
-try:
-    import redis as _redis_lib
-    _REDIS_OK = True
-except ImportError:
-    _REDIS_OK = False
+from ..core.config import DUCKDB_PATH, NEWS_DUCKDB_PATH, REDIS_HOST, REDIS_PORT, REDIS_DB, REDIS_CACHE_TTL
+from ._core import (
+    init_duckdb,
+    con as _con,
+    news_con as _news_con,
+    cached as _cached,
+    cache_key as _cache_key,
+    get_redis as _get_redis,
+    resolve_version as _resolve_version,
+    get_available_dates,
+    get_available_versions,
+)
 
-from ..core.config import DUCKDB_PATH, REDIS_HOST, REDIS_PORT, REDIS_DB, REDIS_CACHE_TTL
+# 하위 호환을 위해 ASCII alias 도 노출 (외부 코드가 _con 등을 직접 import 했을 가능성).
+__all__ = [
+    "init_duckdb",
+    "_con",
+    "_news_con",
+    "_cached",
+    "_cache_key",
+    "_get_redis",
+    "_resolve_version",
+    "get_available_dates",
+    "get_available_versions",
+]
 
-# ── Redis 연결 (싱글턴, 실패 허용) ───────────────────────────────────────────
-import time as _time
 
-_redis_client: Any = None
-_redis_last_fail: float = 0.0
-_REDIS_RETRY_INTERVAL = 30.0  # 실패 후 30초간 재시도 안 함
-
-
-def _get_redis():
-    global _redis_client, _redis_last_fail
-    if not _REDIS_OK:
+def _norm_optional_str(val: str | None) -> str | None:
+    """쿼리·캐시 키용: 빈 문자열과 공백만 있는 값은 None 으로 통일."""
+    if val is None:
         return None
-    # 이미 연결됨
-    if _redis_client is not None:
-        return _redis_client
-    # 최근에 실패한 경우 재시도 억제
-    if _time.time() - _redis_last_fail < _REDIS_RETRY_INTERVAL:
-        return None
-    try:
-        _redis_client = _redis_lib.Redis(
-            host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB,
-            decode_responses=True,
-            socket_connect_timeout=1,
-            socket_timeout=1,
-        )
-        _redis_client.ping()
-    except Exception:
-        _redis_client = None
-        _redis_last_fail = _time.time()
-    return _redis_client
+    s = str(val).strip()
+    return s if s else None
 
 
-def _cache_key(fn_name: str, **kwargs) -> str:
-    raw = json.dumps({"fn": fn_name, **kwargs}, sort_keys=True, default=str)
-    return "ml_api:" + hashlib.md5(raw.encode()).hexdigest()
+# ── Public API (도메인 함수) ────────────────────────────────────────────────
 
-
-def _cached(fn_name: str, fetch_fn, ttl: int = REDIS_CACHE_TTL, **kwargs):
-    """Redis 캐시 래퍼. 직렬화는 JSON."""
-    r = _get_redis()
-    key = _cache_key(fn_name, **kwargs)
-    if r:
-        try:
-            hit = r.get(key)
-            if hit:
-                return json.loads(hit)
-        except Exception:
-            pass
-
-    result = fetch_fn()
-
-    if r:
-        try:
-            r.setex(key, ttl, json.dumps(result, default=str))
-        except Exception:
-            pass
-    return result
-
-
-# ── DuckDB 헬퍼 ───────────────────────────────────────────────────────────────
-
-_duckdb_con: duckdb.DuckDBPyConnection | None = None
-_duckdb_lock = threading.Lock()
-
-
-def init_duckdb() -> None:
-    """앱 시작 시(lifespan) 한 번만 호출 — 파일 열기 + 워밍업 쿼리로 첫 요청 지연 제거."""
-    global _duckdb_con
-    with _duckdb_lock:
-        if _duckdb_con is None:
-            _duckdb_con = duckdb.connect(str(DUCKDB_PATH), read_only=True)
-    # 전체 컬럼을 샘플 조회하여 OS 파일 캐시 확보 (컬럼 스토리지 워밍업)
-    con = _duckdb_con
-    con.execute("SELECT * FROM finance  LIMIT 500").fetchdf()
-    con.execute("SELECT * FROM scores   LIMIT 500").fetchdf()
-    con.execute("SELECT * FROM prices   LIMIT 500").fetchdf()
-
-    # 자주 쓰이는 집계 쿼리 사전 실행 (HomeView 첫 진입 지연 해소)
-    try:
-        latest_ver_row = con.execute(
-            "SELECT model_version FROM scores ORDER BY inserted_at DESC LIMIT 1"
-        ).fetchone()
-        if latest_ver_row:
-            ver = latest_ver_row[0]
-            latest_date_row = con.execute(
-                "SELECT MAX(CAST(date AS VARCHAR)) FROM scores WHERE model_version=?", [ver]
-            ).fetchone()
-            latest_date = latest_date_row[0] if latest_date_row else None
-            if latest_date:
-                # market/regime: 최신 날짜의 tier 카운트
-                con.execute(
-                    """SELECT COUNT(*),
-                              SUM(CASE WHEN tier='A' THEN 1 ELSE 0 END)
-                       FROM scores
-                       WHERE model_version=? AND CAST(date AS VARCHAR)=?""",
-                    [ver, latest_date],
-                ).fetchone()
-                # sectors/summary: 최신 날짜의 sector 집계
-                con.execute(
-                    """SELECT sector, COUNT(*), AVG(score)
-                       FROM scores
-                       WHERE model_version=? AND CAST(date AS VARCHAR)=?
-                       GROUP BY sector""",
-                    [ver, latest_date],
-                ).fetchdf()
-                # recommendations: 최신 날짜 상위
-                con.execute(
-                    """SELECT * FROM scores
-                       WHERE model_version=? AND CAST(date AS VARCHAR)=?
-                       ORDER BY score DESC LIMIT 50""",
-                    [ver, latest_date],
-                ).fetchdf()
-    except Exception:
-        pass  # 워밍업 실패는 무시 (실제 쿼리는 그대로 동작)
-
-
-def _con() -> duckdb.DuckDBPyConnection:
-    """읽기 전용 DuckDB 싱글턴 연결.
-    init_duckdb() 이후 항상 동일한 연결 객체를 반환.
-    동시 read는 DuckDB read_only에서 안전하다.
+def _get_kospi_regime(con, ref_date: str, ma_window: int = 20) -> int:
     """
-    global _duckdb_con
-    if _duckdb_con is None:
-        with _duckdb_lock:
-            if _duckdb_con is None:
-                _duckdb_con = duckdb.connect(str(DUCKDB_PATH), read_only=True)
-    return _duckdb_con
-
-
-def _resolve_version(model_version: str) -> str:
-    """'latest' → 실제 버전 문자열 변환."""
-    if model_version != "latest":
-        return model_version
-    con = _con()
-    row = con.execute(
-        "SELECT model_version FROM scores ORDER BY inserted_at DESC LIMIT 1"
-    ).fetchone()
-    if row is None:
-        raise RuntimeError("scores 테이블이 비어 있습니다. precompute_scores.py 를 먼저 실행하세요.")
-    return row[0]
-
-
-# ── Public API ────────────────────────────────────────────────────────────────
-
-def get_available_dates(model_version: str = "latest") -> list[str]:
-    """scores 테이블에 있는 날짜 목록(오름차순)."""
-    ver = _resolve_version(model_version)
-
-    def fetch():
-        con = _con()
+    ref_date 기준 KOSPI 20일 MA 레짐 계산.
+    prices 테이블의 삼성전자(005930) 종가를 KOSPI 프록시로 사용.
+    Returns: 1=상승(정상), 0=하락(방어)
+    """
+    try:
+        ref_int = int(ref_date.replace("-", ""))
         rows = con.execute(
-            "SELECT DISTINCT CAST(date AS VARCHAR) FROM scores WHERE model_version=? ORDER BY 1",
-            [ver],
-        ).fetchall()
-        return [r[0] for r in rows]
-
-    return _cached("available_dates", fetch, model_version=ver)
-
-
-def get_available_versions() -> list[str]:
-    """적재된 model_version 목록."""
-    def fetch():
-        con = _con()
-        rows = con.execute(
-            "SELECT DISTINCT model_version FROM scores ORDER BY inserted_at"
-        ).fetchall()
-        return [r[0] for r in rows]
-    return _cached("available_versions", fetch, ttl=300)
+            """
+            SELECT date, close
+            FROM prices
+            WHERE ticker = '005930' AND date <= ?
+            ORDER BY date DESC
+            LIMIT ?
+            """,
+            [ref_int, ma_window * 2],
+        ).fetchdf()
+        if rows.empty or len(rows) < 5:
+            return 1
+        rows = rows.sort_values("date")
+        ma = rows["close"].rolling(min(ma_window, len(rows)), min_periods=3).mean().iloc[-1]
+        last = float(rows["close"].iloc[-1])
+        return 1 if last >= ma else 0
+    except Exception:
+        return 1
 
 
 def get_recommendations(
@@ -203,20 +94,24 @@ def get_recommendations(
     sector: str | None = None,
     top_k: int = 20,
     min_score: float = 0.0,
+    strategy: str = "base",
 ) -> list[dict]:
     """
     날짜별 종목 추천 목록 (score 내림차순).
 
-    - date=None → 가장 최신 날짜
-    - top_k=0   → 전체 반환
+    - date=None   → 가장 최신 날짜
+    - top_k=0     → 전체 반환
+    - strategy    → "base"(기본) | "s3"(v9 S3: prob Top-150 + 레짐 신호 포함)
     """
+    date_key = _norm_optional_str(date)
+    sector_key = _norm_optional_str(sector)
     ver = _resolve_version(model_version)
 
     def fetch():
         con = _con()
 
-        # 날짜 결정
-        _date = date
+        # 날짜 결정 — None 또는 빈 문자열이면 최신 날짜 사용
+        _date = date_key
         if _date is None:
             row = con.execute(
                 "SELECT MAX(CAST(date AS VARCHAR)) FROM scores WHERE model_version=?", [ver]
@@ -229,41 +124,55 @@ def get_recommendations(
         conditions = ["model_version = ?", "CAST(date AS VARCHAR) = ?", "score >= ?"]
         params: list = [ver, _date, min_score]
 
-        if sector:
+        if sector_key:
             conditions.append("sector = ?")
-            params.append(sector)
+            params.append(sector_key)
 
-        limit_clause = f"LIMIT {int(top_k)}" if top_k > 0 else ""
+        # S3 전략: prob 상위 기준, top_k를 150으로 고정
+        _top_k = 150 if strategy == "s3" else top_k
+        limit_clause = f"LIMIT {int(_top_k)}" if _top_k > 0 else ""
 
         sql = f"""
             SELECT
-                CAST(date AS VARCHAR)   AS date,
-                ticker,
-                name,
-                sector,
-                mid_sector,
-                close,
-                ROUND(prob_lgbm, 6)     AS prob_lgbm,
-                ROUND(prob_xgb,  6)     AS prob_xgb,
-                ROUND(prob_cat,  6)     AS prob_cat,
-                ROUND(prob_ensemble, 6)         AS prob_ensemble,
-                ROUND(CAST(score AS DOUBLE), 1) AS score,
-                tier,
-                rank_in_date,
-                total_in_date,
-                model_version
-            FROM scores
+                CAST(s.date AS VARCHAR)            AS date,
+                s.ticker,
+                COALESCE(s.name, st.name)          AS name,
+                COALESCE(s.sector, st.wics_large_name) AS sector,
+                s.mid_sector,
+                s.close,
+                ROUND(s.prob_lgbm, 6)              AS prob_lgbm,
+                ROUND(s.prob_xgb,  6)              AS prob_xgb,
+                ROUND(s.prob_cat,  6)              AS prob_cat,
+                ROUND(s.prob_ensemble, 6)          AS prob_ensemble,
+                ROUND(CAST(s.score AS DOUBLE), 1)  AS score,
+                s.tier,
+                s.rank_in_date,
+                s.total_in_date,
+                s.model_version
+            FROM scores s
+            LEFT JOIN stocks st ON s.ticker = st.ticker
             WHERE {' AND '.join(conditions)}
-            ORDER BY score DESC
+            ORDER BY s.score DESC
             {limit_clause}
         """
         rows = con.execute(sql, params).fetchdf()
-        return rows.to_dict(orient="records")
+        result = rows.to_dict(orient="records")
+
+        # S3 전략: 레짐 신호를 각 종목에 메타데이터로 부착
+        if strategy == "s3":
+            regime = _get_kospi_regime(con, _date)
+            for r in result:
+                r["regime"] = regime
+                r["regime_label"] = "상승" if regime == 1 else "하락(방어)"
+                # 하락 구간 경고: 실제 포지션 축소는 클라이언트 측에서 처리
+                r["position_scale"] = 1.0 if regime == 1 else 0.5
+
+        return result
 
     return _cached(
         "recommendations", fetch,
-        date=date, model_version=ver,
-        sector=sector, top_k=top_k, min_score=min_score,
+        date=date_key, model_version=ver,
+        sector=sector_key, top_k=top_k, min_score=min_score, strategy=strategy,
     )
 
 
@@ -275,42 +184,44 @@ def get_stock_history(
 ) -> list[dict]:
     """특정 종목의 날짜별 스코어 이력."""
     ver = _resolve_version(model_version)
+    t_hist = str(ticker or "").strip().zfill(6)
 
     def fetch():
         con = _con()
-        conditions = ["model_version = ?", "ticker = ?"]
-        params: list = [ver, ticker.zfill(6)]
+        conditions = ["s.model_version = ?", "s.ticker = ?"]
+        params: list = [ver, t_hist]
 
         if start_date:
-            conditions.append("CAST(date AS VARCHAR) >= ?")
+            conditions.append("CAST(s.date AS VARCHAR) >= ?")
             params.append(start_date)
         if end_date:
-            conditions.append("CAST(date AS VARCHAR) <= ?")
+            conditions.append("CAST(s.date AS VARCHAR) <= ?")
             params.append(end_date)
 
         sql = f"""
             SELECT
-                CAST(date AS VARCHAR) AS date,
-                ticker,
-                name,
-                sector,
-                close,
-                ROUND(prob_ensemble, 6)         AS prob_ensemble,
-                ROUND(CAST(score AS DOUBLE), 1) AS score,
-                tier,
-                rank_in_date,
-                total_in_date,
-                model_version
-            FROM scores
+                CAST(s.date AS VARCHAR)                AS date,
+                s.ticker,
+                COALESCE(s.name, st.name)              AS name,
+                COALESCE(s.sector, st.wics_large_name) AS sector,
+                s.close,
+                ROUND(s.prob_ensemble, 6)              AS prob_ensemble,
+                ROUND(CAST(s.score AS DOUBLE), 1)      AS score,
+                s.tier,
+                s.rank_in_date,
+                s.total_in_date,
+                s.model_version
+            FROM scores s
+            LEFT JOIN stocks st ON s.ticker = st.ticker
             WHERE {' AND '.join(conditions)}
-            ORDER BY date
+            ORDER BY s.date
         """
         rows = con.execute(sql, params).fetchdf()
         return rows.to_dict(orient="records")
 
     return _cached(
         "stock_history", fetch,
-        ticker=ticker, model_version=ver,
+        ticker=t_hist, model_version=ver,
         start_date=start_date, end_date=end_date,
     )
 
@@ -320,13 +231,13 @@ def get_sector_summary(
     model_version: str = "latest",
 ) -> list[dict]:
     """섹터별 평균 점수 요약 (특정 날짜 기준)."""
+    date_key = _norm_optional_str(date)
     ver = _resolve_version(model_version)
 
     def fetch():
         con = _con()
 
-        # 빈 문자열도 None과 동일하게 처리
-        _date = date if (date and str(date).strip()) else None
+        _date = date_key
         if _date is None:
             row = con.execute(
                 "SELECT MAX(CAST(date AS VARCHAR)) FROM scores WHERE model_version=?", [ver]
@@ -354,7 +265,7 @@ def get_sector_summary(
         rows = con.execute(sql, [ver, _date]).fetchdf()
         return rows.to_dict(orient="records")
 
-    return _cached("sector_summary", fetch, date=date, model_version=ver)
+    return _cached("sector_summary", fetch, date=date_key, model_version=ver)
 
 
 def search_stocks(
@@ -408,11 +319,13 @@ def get_chart(ticker: str, period: str = "1y") -> dict | None:
 
     def fetch():
         con = _con()
-        t = ticker.zfill(6)
+        t = t_chart
 
         name_row = con.execute(
-            "SELECT name FROM scores WHERE ticker=? LIMIT 1", [t]
+            "SELECT name FROM stocks WHERE ticker=? LIMIT 1", [t]
         ).fetchone()
+        if not name_row or not name_row[0]:
+            name_row = con.execute("SELECT name FROM scores WHERE ticker=? LIMIT 1", [t]).fetchone()
         name = name_row[0] if name_row else None
 
         # 최신 날짜 기준으로 cutoff(YYYYMMDD) 계산
@@ -456,59 +369,73 @@ def get_chart(ticker: str, period: str = "1y") -> dict | None:
             "items":  rows.to_dict(orient="records"),
         }
 
-    return _cached("chart", fetch, ttl=300, ticker=ticker, period=period)
+    t_chart = str(ticker or "").strip().zfill(6)
+    return _cached("chart", fetch, ttl=300, ticker=t_chart, period=period)
 
 
 def get_finance(ticker: str, limit: int = 20) -> tuple[list[dict], str | None]:
-    """분기별 재무 이력 (최신순 N개)."""
+    """분기별 재무 이력 (최신순 N개).
+
+    Redis 에 (rows, name) 튜플을 JSON 직렬화하면 역직렬화 시 list 가 되어
+    클라이언트에 잘못 전달될 수 있으므로 dict 로만 캐시한다.
+    """
+    tkey = str(ticker or "").strip().zfill(6)
+
     def fetch():
         con = _con()
-        t = ticker.zfill(6)
+        t = tkey
         sql = """
             SELECT
-                year, quarter, base_date, market_cap,
-                per, pbr, eps, bps, dps, dividend_yield,
-                op_margin, net_margin, roe, debt_ratio, current_ratio,
-                revenue, op_profit, net_profit,
-                equity, total_debt, current_assets, current_liab,
-                rev_growth_yoy, rev_growth_qoq, op_growth_yoy, op_growth_qoq,
-                finance_score, name
-            FROM finance
-            WHERE ticker = ?
-            ORDER BY year DESC, quarter DESC
+                f.year, f.quarter, f.base_date, f.market_cap,
+                f.per, f.pbr, f.eps, f.bps, f.dps, f.dividend_yield,
+                f.op_margin, f.net_margin, f.roe, f.debt_ratio, f.current_ratio,
+                f.revenue, f.op_profit, f.net_profit,
+                f.equity, f.total_debt, f.current_assets, f.current_liab,
+                f.rev_growth_yoy, f.rev_growth_qoq, f.op_growth_yoy, f.op_growth_qoq,
+                f.finance_score,
+                COALESCE(f.name, st.name) AS name
+            FROM finance f
+            LEFT JOIN stocks st ON f.ticker = st.ticker
+            WHERE f.ticker = ?
+            ORDER BY f.year DESC, f.quarter DESC
             LIMIT ?
         """
         rows = con.execute(sql, [t, limit]).fetchdf()
         if rows.empty:
-            return [], None
-        name = rows["name"].iloc[0] if "name" in rows.columns else None
+            return {"rows": [], "name": None}
+        name_val = rows["name"].iloc[0] if "name" in rows.columns else None
         # base_date: float(YYYYMMDD.0) → 'YYYYMMDD' 문자열 (스키마 호환)
         if "base_date" in rows.columns:
             rows["base_date"] = rows["base_date"].apply(
                 lambda v: str(int(v)) if pd.notna(v) else None
             )
         data_rows = rows.drop(columns=["name"]).to_dict(orient="records")
-        return data_rows, name
+        return {"rows": data_rows, "name": name_val}
 
-    result = _cached("finance", fetch, ttl=600, ticker=ticker, limit=limit)
-    if isinstance(result, list):
-        return result, None
-    return result
+    result = _cached("finance_v2", fetch, ttl=600, ticker=tkey, limit=int(limit))
+    if not isinstance(result, dict):
+        return [], None
+    return result.get("rows") or [], result.get("name")
 
 
 def get_finance_latest(ticker: str) -> dict | None:
     """가장 최근 분기 재무 요약."""
+    tkey = str(ticker or "").strip().zfill(6)
+
     def fetch():
         con = _con()
-        t = ticker.zfill(6)
+        t = tkey
         sql = """
             SELECT
-                ticker, name, year, quarter, base_date,
-                per, pbr, eps, roe, debt_ratio, op_margin,
-                rev_growth_yoy, finance_score
-            FROM finance
-            WHERE ticker = ?
-            ORDER BY year DESC, quarter DESC
+                f.ticker,
+                COALESCE(f.name, st.name) AS name,
+                f.year, f.quarter, f.base_date,
+                f.per, f.pbr, f.eps, f.roe, f.debt_ratio, f.op_margin,
+                f.rev_growth_yoy, f.finance_score
+            FROM finance f
+            LEFT JOIN stocks st ON f.ticker = st.ticker
+            WHERE f.ticker = ?
+            ORDER BY f.year DESC, f.quarter DESC
             LIMIT 1
         """
         row = con.execute(sql, [t]).fetchdf()
@@ -520,7 +447,7 @@ def get_finance_latest(ticker: str) -> dict | None:
             )
         return row.to_dict(orient="records")[0]
 
-    return _cached("finance_latest", fetch, ttl=600, ticker=ticker)
+    return _cached("finance_latest", fetch, ttl=600, ticker=tkey)
 
 
 def screen_stocks(
@@ -1209,7 +1136,10 @@ def get_news_feed(
     """
 
     def fetch():
-        con = _con()
+        con = _news_con()
+        if con is None:
+            # 뉴스 DB 가 아직 생성되지 않았으면 빈 결과 반환 (501 대신 graceful 빈 응답)
+            return {"total": 0, "items": []}
         where = ["1=1"]
         params: list = []
 
@@ -1282,7 +1212,9 @@ def get_news_feed(
 
 def get_news_detail(news_id: str) -> dict | None:
     """단건 뉴스 조회."""
-    con = _con()
+    con = _news_con()
+    if con is None:
+        return None
     rows = con.execute(
         """
         SELECT news_id, provider, title, source_name, origin_url, image_url,
@@ -1316,3 +1248,167 @@ def get_news_detail(news_id: str) -> dict | None:
         "neg_prob":        float(r["neg_prob"]) if pd.notna(r["neg_prob"]) else 0.0,
         "neu_prob":        float(r["neu_prob"]) if pd.notna(r["neu_prob"]) else 0.0,
     }
+
+
+# ── 모델 모니터링 (드리프트 감지) ────────────────────────────────────────────
+
+def get_model_metrics(
+    model_version: str = "latest",
+    window_days: int = 30,
+) -> dict:
+    """
+    최근 `window_days` 거래일의 일별 점수 분포 + 티어 분포.
+
+    응답 형식::
+
+        {
+          "model_version": "v8",
+          "window_days": 30,
+          "metrics": [
+            {"date": "2026-04-30",
+             "n": 200, "mean": 50.1, "median": 49.8, "stddev": 28.7,
+             "p10": 12.3, "p25": 26.0, "p50": 49.8, "p75": 74.5, "p90": 88.1,
+             "tier_a": 22, "tier_b": 41, "tier_c": 79, "tier_d": 58},
+            ...
+          ],
+          "summary": {
+            "mean_of_means": 50.0,
+            "stddev_of_means": 1.2,
+            "drift_alert": false        # 평균이 ±2σ 벗어났는지
+          }
+        }
+    """
+    ver = _resolve_version(model_version)
+
+    def fetch():
+        con = _con()
+        # 최신 N개 distinct 날짜
+        date_rows = con.execute(
+            """
+            SELECT DISTINCT CAST(date AS VARCHAR)
+            FROM scores
+            WHERE model_version = ?
+            ORDER BY 1 DESC
+            LIMIT ?
+            """,
+            [ver, int(window_days)],
+        ).fetchall()
+        if not date_rows:
+            return {
+                "model_version": ver,
+                "window_days": window_days,
+                "metrics": [],
+                "summary": {
+                    "mean_of_means": None,
+                    "stddev_of_means": None,
+                    "drift_alert": False,
+                },
+            }
+        dates = [r[0] for r in date_rows]
+        dates.reverse()  # 오름차순으로 반환
+
+        df = con.execute(
+            """
+            SELECT
+                CAST(date AS VARCHAR)              AS date,
+                COUNT(*)                           AS n,
+                AVG(CAST(score AS DOUBLE))         AS mean,
+                MEDIAN(CAST(score AS DOUBLE))      AS median,
+                STDDEV_POP(CAST(score AS DOUBLE))  AS stddev,
+                QUANTILE_CONT(CAST(score AS DOUBLE), 0.10) AS p10,
+                QUANTILE_CONT(CAST(score AS DOUBLE), 0.25) AS p25,
+                QUANTILE_CONT(CAST(score AS DOUBLE), 0.50) AS p50,
+                QUANTILE_CONT(CAST(score AS DOUBLE), 0.75) AS p75,
+                QUANTILE_CONT(CAST(score AS DOUBLE), 0.90) AS p90,
+                SUM(CASE WHEN tier='A' THEN 1 ELSE 0 END) AS tier_a,
+                SUM(CASE WHEN tier='B' THEN 1 ELSE 0 END) AS tier_b,
+                SUM(CASE WHEN tier='C' THEN 1 ELSE 0 END) AS tier_c,
+                SUM(CASE WHEN tier='D' THEN 1 ELSE 0 END) AS tier_d,
+                -- prob_ensemble 분포 (모델 신호 강도 모니터링)
+                AVG(CAST(prob_ensemble AS DOUBLE))         AS prob_mean,
+                STDDEV_POP(CAST(prob_ensemble AS DOUBLE))  AS prob_std,
+                MIN(CAST(prob_ensemble AS DOUBLE))         AS prob_min,
+                MAX(CAST(prob_ensemble AS DOUBLE))         AS prob_max,
+                -- prob 클러스터 비율: 0.28~0.32 범위에 몰린 종목 비율 (%)
+                ROUND(
+                    SUM(CASE WHEN prob_ensemble BETWEEN 0.28 AND 0.32 THEN 1 ELSE 0 END)
+                    * 100.0 / COUNT(*), 1
+                ) AS prob_cluster_pct
+            FROM scores
+            WHERE model_version = ?
+              AND CAST(date AS VARCHAR) IN ({plc})
+            GROUP BY date
+            ORDER BY date ASC
+            """.format(plc=",".join("?" * len(dates))),
+            [ver, *dates],
+        ).fetchdf()
+
+        _f = lambda v: round(float(v), 4) if pd.notna(v) else None
+        _i = lambda v: int(v) if pd.notna(v) else 0
+
+        metrics = []
+        for _, row in df.iterrows():
+            metrics.append({
+                "date":            row["date"],
+                "n":               _i(row["n"]),
+                "mean":            _f(row["mean"]),
+                "median":          _f(row["median"]),
+                "stddev":          _f(row["stddev"]),
+                "p10":             _f(row["p10"]),
+                "p25":             _f(row["p25"]),
+                "p50":             _f(row["p50"]),
+                "p75":             _f(row["p75"]),
+                "p90":             _f(row["p90"]),
+                "tier_a":          _i(row["tier_a"]),
+                "tier_b":          _i(row["tier_b"]),
+                "tier_c":          _i(row["tier_c"]),
+                "tier_d":          _i(row["tier_d"]),
+                # prob 신호 강도 지표
+                "prob_mean":       _f(row["prob_mean"]),
+                "prob_std":        _f(row["prob_std"]),
+                "prob_min":        _f(row["prob_min"]),
+                "prob_max":        _f(row["prob_max"]),
+                "prob_cluster_pct": _f(row["prob_cluster_pct"]),
+            })
+
+        # 드리프트 알림: 가장 최근 mean 이 전체 mean ± 2σ 벗어나면 true
+        means_series = df["mean"].dropna()
+        prob_std_series = df["prob_std"].dropna()
+        if len(means_series) >= 5:
+            mean_of_means = float(means_series.mean())
+            stddev_of_means = float(means_series.std(ddof=0)) or 1e-9
+            latest_mean = float(means_series.iloc[-1])
+            drift_alert = abs(latest_mean - mean_of_means) > (2.0 * stddev_of_means)
+            # prob_std 기준 신호 품질 (< 0.03이면 클러스터링 경고)
+            avg_prob_std = float(prob_std_series.mean()) if len(prob_std_series) else None
+            prob_signal_ok = avg_prob_std > 0.03 if avg_prob_std is not None else None
+            summary = {
+                "mean_of_means":  round(mean_of_means, 2),
+                "stddev_of_means": round(stddev_of_means, 2),
+                "latest_mean":    round(latest_mean, 2),
+                "drift_alert":    bool(drift_alert),
+                # 신호 품질 지표 (prob_std < 0.03 → 모델 클러스터링 경고)
+                "avg_prob_std":   round(avg_prob_std, 4) if avg_prob_std is not None else None,
+                "prob_signal_ok": prob_signal_ok,
+            }
+        else:
+            summary = {
+                "mean_of_means":  None,
+                "stddev_of_means": None,
+                "latest_mean":    None,
+                "drift_alert":    False,
+                "avg_prob_std":   None,
+                "prob_signal_ok": None,
+            }
+
+        return {
+            "model_version": ver,
+            "window_days":   window_days,
+            "metrics":       metrics,
+            "summary":       summary,
+        }
+
+    return _cached(
+        "model_metrics", fetch, ttl=300,
+        model_version=ver, window_days=window_days,
+    )

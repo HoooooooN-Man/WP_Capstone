@@ -2,7 +2,9 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 
-const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
+// ML 분석 서버 (FastAPI :8001) 전용 클라이언트.
+// 인증/커뮤니티 서버는 dbapi.js / auth.js 를 사용한다.
+const BASE = import.meta.env.VITE_API_BASE_ML ?? 'http://localhost:8001'
 const instance = axios.create({
   baseURL: `${BASE}/api/v1`,
   timeout: 30000,

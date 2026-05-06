@@ -2,16 +2,25 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import duckdb
 import os
+from pathlib import Path
 from db.database import get_db
 from db.models import UserWatchlist, Notification
 
 router = APIRouter(prefix="/internal", tags=["internal"])
 
-# DuckDB 경로 (환경변수 DUCKDB_PATH 우선, 없으면 통합 DB 기본값)
-DUCKDB_PATH = os.getenv(
-    "DUCKDB_PATH",
-    r"E:\Capstone Data\project_data\db\market_data.duckdb",
-)
+# ─────────────────────────────────────────────────────────────────────────────
+# 뉴스 적재 전용 DuckDB.
+#
+# 중요: ML 서버(8001)가 market_data.duckdb 를 read-only 로 잡고 있어
+# 같은 파일에 쓰기를 시도하면 DuckDB lock 충돌이 발생한다.
+# 따라서 적재 대상은 NEWS_DUCKDB_PATH (기본: news_data.duckdb) 로 분리한다.
+# 같은 경로를 newsranking.py 가 read-only 로 조회한다.
+# ─────────────────────────────────────────────────────────────────────────────
+_HERE = Path(__file__).resolve()
+_DB_PKG = _HERE.parent.parent.parent          # Back/db/
+_DEFAULT_NEWS_DB = _DB_PKG / "db" / "news_data.duckdb"
+
+NEWS_DUCKDB_PATH = os.getenv("NEWS_DUCKDB_PATH", str(_DEFAULT_NEWS_DB))
 
 @router.post("/ingest")
 async def ingest_and_notify(batch_data: dict, db_pg: Session = Depends(get_db)):
@@ -27,10 +36,48 @@ async def ingest_and_notify(batch_data: dict, db_pg: Session = Depends(get_db)):
         total_processed = 0
         
         # 디버깅 로그: 실제 어디에 저장되는지 출력
-        print(f"[*] Target DB Path: {os.path.abspath(DUCKDB_PATH)}")
+        print(f"[*] Target DB Path: {os.path.abspath(NEWS_DUCKDB_PATH)}")
         print(f"[*] Received Categories: {len(categories)}")
 
-        with duckdb.connect(DUCKDB_PATH) as duck_conn:
+        # 디렉토리 자동 생성 (최초 적재 시 파일이 없을 수 있음)
+        Path(NEWS_DUCKDB_PATH).parent.mkdir(parents=True, exist_ok=True)
+
+        with duckdb.connect(NEWS_DUCKDB_PATH) as duck_conn:
+            # 스키마 보장 (newsranking.py 와 동일한 테이블 사용)
+            duck_conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS news_normalized (
+                    news_id          VARCHAR PRIMARY KEY,
+                    provider         VARCHAR,
+                    title            VARCHAR,
+                    title_hash       VARCHAR,
+                    query_text       VARCHAR,
+                    source_name      VARCHAR,
+                    google_url       VARCHAR,
+                    origin_url       VARCHAR,
+                    image_url        VARCHAR,
+                    published_at     VARCHAR,
+                    fetched_at       VARCHAR,
+                    sentiment_label  VARCHAR,
+                    sentiment_score  DOUBLE,
+                    pos_prob         DOUBLE,
+                    neg_prob         DOUBLE,
+                    neu_prob         DOUBLE
+                )
+                """
+            )
+            duck_conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS news_rankings (
+                    display_date  VARCHAR,
+                    category_id   VARCHAR,
+                    news_id       VARCHAR,
+                    rank          INTEGER,
+                    score         DOUBLE,
+                    PRIMARY KEY (display_date, category_id, news_id)
+                )
+                """
+            )
             duck_conn.execute("BEGIN TRANSACTION")
             
             for cat_group in categories:

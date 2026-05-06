@@ -24,44 +24,59 @@ WP_Capstone/
 
 | 서버 | 포트 | 역할 | 주요 DB |
 |------|------|------|---------|
-| `Back/FastAPI/main.py` | **8001** | ML 추천·차트·재무·스크리너·게시판·마켓 레이더 | DuckDB + SQLite + Redis(캐시) |
-| `Back/db/server.py` | **8000** | 회원 인증·뉴스 랭킹·내부 데이터 적재 | PostgreSQL + DuckDB(뉴스) + Redis(세션) |
+| `Back/FastAPI/main.py` | **8001** | ML 추천·차트·재무·스크리너·비교·포트폴리오·마켓 레이더 (READ-ONLY) | DuckDB(market_data) + Redis(응답 캐시) |
+| `Back/db/server.py`    | **8000** | 회원 인증·게시판·뉴스(피드/랭킹)·알림·내부 적재 (OLTP)         | PostgreSQL + DuckDB(news_data, 쓰기 전용 분리) + Redis(세션) |
+
+> 두 DuckDB 파일은 **물리적으로 분리**되어 lock 충돌이 없다.
+> `DUCKDB_PATH` (시장·스코어·재무, read-only) ↔ `NEWS_DUCKDB_PATH` (뉴스 적재).
 
 ---
 
-## FastAPI 추천 서버 API 목록 (`/api/v1`)
+## FastAPI ML 서버 API 목록 (`:8001/api/v1`)
 
 | 라우터 | 엔드포인트 | 설명 |
 |--------|-----------|------|
-| stocks | `GET /stocks/recommendations` | 날짜·섹터·점수 필터 종목 추천 |
-| stocks | `GET /stocks/search` | 티커·회사명 검색 |
-| stocks | `GET /stocks/{ticker}/history` | 종목별 ML 점수 이력 |
-| stocks | `GET /stocks/sectors/summary` | 섹터별 평균 점수 요약 |
-| chart | `GET /chart/{ticker}` | OHLCV + 이동평균(5/20/60/120) |
-| finance | `GET /finance/{ticker}` | 분기별 재무 지표 이력 |
-| finance | `GET /finance/{ticker}/latest` | 최신 분기 재무 요약 |
-| screener | `GET /screener` | ML점수 + PER/PBR/ROE 복합 스크리너 |
-| compare | `GET /compare` | 2~10개 종목 점수이력·재무 비교 |
-| portfolio | `GET /portfolio/backtest/summary` | v7·v8 백테스트 성과 요약 |
-| portfolio | `GET /portfolio/backtest/monthly` | v8 Walk-Forward 월별 수익률 |
-| board | `GET/POST /board/posts` | 종목 토론 게시글 CRUD |
-| board | `GET/POST /board/comments` | 댓글 작성·조회 |
-| board | `POST /board/posts/{id}/like` | 좋아요 토글 |
-| market | `GET /market/regime` | 마켓 레이더 (Tier A 비율 → 국면 판단) |
+| stocks    | `GET /stocks/recommendations`        | 날짜·섹터·점수 필터 종목 추천 |
+| stocks    | `GET /stocks/search`                 | 티커·회사명 검색 |
+| stocks    | `GET /stocks/{ticker}/history`       | 종목별 ML 점수 이력 |
+| stocks    | `GET /stocks/sectors/summary`        | 섹터별 평균 점수 요약 |
+| chart     | `GET /chart/{ticker}`                | OHLCV + 이동평균(5/20/60/120) |
+| finance   | `GET /finance/{ticker}`              | 분기별 재무 지표 이력 |
+| finance   | `GET /finance/{ticker}/latest`       | 최신 분기 재무 요약 |
+| screener  | `GET /screener`                      | ML점수 + PER/PBR/ROE 복합 스크리너 |
+| compare   | `GET /compare`                       | 2~10개 종목 점수이력·재무 비교 |
+| portfolio | `GET /portfolio/backtest/summary`    | v7·v8 백테스트 성과 요약 |
+| portfolio | `GET /portfolio/backtest/monthly`    | v8 Walk-Forward 월별 수익률 |
+| market    | `GET /market/regime`                 | 마켓 레이더 (Tier A 비율 → 국면 판단) |
 
 ---
 
-## 인증·뉴스 서버 API 목록
+## 인증·커뮤니티·뉴스 서버 API 목록 (`:8000`)
 
 | 라우터 | 엔드포인트 | 설명 |
 |--------|-----------|------|
-| auth | `POST /auth/check-email` | 이메일 중복 확인 + 인증번호 발송 |
-| auth | `POST /auth/verify-code` | 인증번호 확인 |
-| auth | `POST /auth/register` | 회원가입 |
-| auth | `POST /auth/login` | 로그인 (Redis 세션 발급) |
-| auth | `POST /auth/reset-password` | 비밀번호 변경 |
-| news | `GET /news/list` | 날짜·카테고리 기반 뉴스 랭킹 조회 |
-| internal | `POST /internal/ingest` | Go 파이프라인 뉴스 배치 적재 |
+| auth      | `POST /auth/check-email`                   | 이메일 중복 확인 + 인증번호 발송 |
+| auth      | `POST /auth/verify-code`                   | 인증번호 확인 |
+| auth      | `POST /auth/register`                      | 회원가입 |
+| auth      | `POST /auth/login`                         | 로그인 (Redis 세션 발급) |
+| auth      | `POST /auth/reset-password`                | 비밀번호 변경 (로그인 상태) |
+| auth      | `POST /auth/reset-password-via-email`      | 비밀번호 변경 (이메일 인증) |
+| users     | `GET  /users/notifications`                | 내 알림 목록 |
+| users     | `POST /users/notifications/read-all`       | 모든 알림 읽음 처리 |
+| users     | `GET  /users/{nickname}/public`            | 공개 프로필 조회 |
+| board     | `GET /api/v1/board/popular`                | 인기 게시글 |
+| board     | `GET /api/v1/board/posts?ticker=...`       | 게시글 목록 (페이지네이션) |
+| board     | `GET /api/v1/board/posts/detail/{post_id}` | 게시글 상세 (조회수 +1) |
+| board     | `POST /api/v1/board/posts`                 | 게시글 작성 (인증 필수) |
+| board     | `DELETE /api/v1/board/posts/{post_id}`     | 게시글 삭제 (작성자 본인) |
+| board     | `POST /api/v1/board/comments`              | 댓글 작성 |
+| board     | `POST /api/v1/board/posts/{post_id}/like`  | 좋아요 토글 |
+| news      | `GET /api/v1/news/feed`                    | 최신 뉴스 피드 (감성 라벨) |
+| news      | `GET /api/v1/news/detail/{news_id}`        | 뉴스 단건 상세 |
+| news      | `GET /api/v1/news/rankings`                | 날짜·카테고리 뉴스 랭킹 |
+| news      | `GET /api/v1/news/rankings/dates`          | 랭킹 데이터 보유 날짜 |
+| news      | `GET /api/v1/news/rankings/{news_id}`      | 랭킹 항목 상세 |
+| internal  | `POST /internal/ingest`                    | Go 파이프라인 뉴스 배치 적재 |
 
 ---
 
@@ -71,10 +86,16 @@ WP_Capstone/
 
 ```bash
 cd Front
-npm install
+# Vite 8 + Tailwind v4 + vite-plugin-pwa 의 peerDependencies 가
+# 일부 비호환 메타데이터를 가지므로 --legacy-peer-deps 권장.
+npm install --legacy-peer-deps
 npm run dev
 # http://localhost:5173
 ```
+
+> 주요 빌드 의존성은 모두 안정 릴리스(`vue-router 5.0.x` / `vite 8.0.x`)이며,
+> `package.json` 은 `~` 범위로 패치 업데이트만 허용하도록 잠가두었다.
+> 환경변수는 `Front/.env.example` 참조 (`VITE_API_BASE_ML`, `VITE_API_BASE_AUTH`).
 
 ### 2. FastAPI 추천 서버
 

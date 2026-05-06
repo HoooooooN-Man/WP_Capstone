@@ -7,6 +7,7 @@
 import { useQuery } from '@tanstack/vue-query'
 import { stocksApi } from '@/api/stocks'
 import api from '@/api/axios.js'
+import dbapi from '@/api/dbapi.js'
 
 // ── 버전 목록 (5분) ──────────────────────────────────────────────────────────
 export function useVersions() {
@@ -45,11 +46,11 @@ export function useStockDetail(tickerRef) {
   })
 }
 
-// ── 뉴스 피드 (30초) ─────────────────────────────────────────────────────────
+// ── 뉴스 피드 (30초) — 인증/뉴스 서버(:8000) ───────────────────────────────
 export function useNewsFeed(paramsRef) {
   return useQuery({
     queryKey: ['news', paramsRef],
-    queryFn: () => api.get('/news/feed', { params: paramsRef.value ?? paramsRef }).then(r => r.data),
+    queryFn: () => dbapi.get('/api/v1/news/feed', { params: paramsRef.value ?? paramsRef }).then(r => r.data),
     staleTime: 30 * 1000,
   })
 }

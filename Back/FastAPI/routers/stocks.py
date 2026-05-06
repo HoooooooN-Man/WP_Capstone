@@ -33,10 +33,10 @@ router = APIRouter(prefix="/stocks", tags=["stocks"])
 
 @router.get("/versions", response_model=VersionsResponse, summary="사용 가능한 model_version 목록")
 def list_versions():
-    versions = svc.get_available_versions()
+    versions = svc.get_available_versions()  # inserted_at DESC 순 (v9 먼저)
     return VersionsResponse(
         versions=versions,
-        latest=versions[-1] if versions else None,
+        latest=versions[0] if versions else None,
     )
 
 
@@ -60,10 +60,11 @@ def list_dates(
 @router.get("/recommendations", response_model=StockScoreList, summary="종목 추천 목록")
 def get_recommendations(
     date:          Optional[str]   = Query(None,      description="조회 날짜 YYYY-MM-DD (생략 시 최신)"),
-    model_version: str             = Query("latest",  description="모델 버전 (예: v7, latest)"),
+    model_version: str             = Query("latest",  description="모델 버전 (예: v9, latest)"),
     sector:        Optional[str]   = Query(None,      description="섹터 필터 (예: IT, 금융)"),
     top_k:         int             = Query(20,        ge=0, le=500, description="상위 N개 (0=전체)"),
     min_score:     float           = Query(0.0,       ge=0, le=100, description="최소 점수 필터"),
+    strategy:      str             = Query("base",    description="선별 전략: base(기본) | s3(v9 S3: prob Top-150 + 레짐 신호)"),
 ):
     """
     날짜·섹터·점수 필터로 추천 종목을 내림차순으로 반환합니다.
@@ -71,7 +72,12 @@ def get_recommendations(
     - **model_version=latest** → 가장 최근 적재된 버전 자동 선택
     - **top_k=0** → 전체 반환
     - **min_score=60** → B티어 이상(60점 이상)만 반환
+    - **strategy=s3** → v9 S3 전략: prob 상위 150 + KOSPI 레짐 신호 포함
+      - `regime` 필드: 1=상승, 0=하락(방어)
+      - `position_scale` 필드: 1.0 또는 0.5 (하락장 포지션 50% 축소 권고)
     """
+    if strategy not in ("base", "s3"):
+        strategy = "base"
     try:
         rows = svc.get_recommendations(
             date=date,
@@ -79,6 +85,7 @@ def get_recommendations(
             sector=sector,
             top_k=top_k,
             min_score=min_score,
+            strategy=strategy,
         )
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
