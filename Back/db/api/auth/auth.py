@@ -106,7 +106,6 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.nickname == user_data.nickname).first():
         raise HTTPException(status_code=400, detail="이미 사용 중인 닉네임입니다.")
 
-    # 3. 유저 생성 및 저장
     new_user = User(
         email=user_data.email,
         hashed_password=get_password_hash(user_data.password),
