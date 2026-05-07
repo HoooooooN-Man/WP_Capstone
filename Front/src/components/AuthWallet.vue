@@ -18,9 +18,11 @@
         'translate-x-1/2 translate-y-[120vh]': step >= 3
       }"
     >
-      <!-- 지갑 두께감 -->
-      <div class="absolute inset-0 bg-[#1e1009] rounded-r-[2.5rem] shadow-[inset_10px_0_30px_rgba(0,0,0,0.9)] border border-white/5 overflow-hidden">
-        <div class="absolute inset-0 opacity-50 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]"></div>
+      <!-- 지갑 두께감 (오른쪽 패널 — 뒷면의 좌우 대칭) -->
+      <div class="absolute inset-0 bg-gradient-to-br from-[#2a1a0d] via-[#1e1209] to-[#261608] rounded-r-[2.5rem] shadow-[inset_-10px_0_30px_rgba(0,0,0,0.9)] border border-white/5 overflow-hidden">
+        <div class="absolute inset-0 opacity-55 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]"></div>
+        <!-- 뒷면 봉제선의 좌우 대칭: 상+우+하, 왼쪽 없음 -->
+        <div class="absolute top-4 right-4 bottom-4 left-0 border-t-2 border-r-2 border-b-2 border-dashed border-[#c9a227]/18 rounded-tr-[2rem] rounded-br-[2rem] pointer-events-none"></div>
       </div>
 
       <!-- 3D 플립 -->
@@ -37,50 +39,61 @@
             <div class="absolute left-0 inset-y-0 w-8 bg-gradient-to-r from-black/30 via-white/5 to-transparent z-10"></div>
             <div class="absolute left-0 inset-y-0 w-px bg-black/40"></div>
           </div>
-          <!-- 봉제선: 상/우/하, 왼쪽 없음 -->
-          <div class="absolute top-4 right-4 bottom-4 left-4 border-t-2 border-r-2 border-b-2 border-dashed border-[#c9a227]/20 rounded-tr-[2rem] rounded-br-[2rem] pointer-events-none z-20"></div>
+          <!-- 봉제선: 상/우/하, 왼쪽 없음 — left-0으로 접히는 부분까지 연장 -->
+          <div class="absolute top-4 right-4 bottom-4 left-0 border-t-2 border-r-2 border-b-2 border-dashed border-[#c9a227]/20 rounded-tr-[2rem] rounded-br-[2rem] pointer-events-none z-20"></div>
 
-          <!-- 전체 컨텐츠: flex column, 봉제선 안쪽에 맞게 패딩 -->
+          <!-- 전체 컨텐츠: 세 블록을 하나로 묶어 세로 중앙 정렬 -->
           <div
-            class="absolute inset-0 flex flex-col items-center pt-8 pb-9 z-20 transition-opacity duration-300"
+            class="absolute inset-0 flex items-center justify-center z-20 transition-opacity duration-300"
             :class="{'opacity-0 pointer-events-none': step >= 1}"
           >
-            <!-- 타이틀 -->
-            <div class="text-center w-full max-w-[340px] px-6 mb-5 flex-shrink-0">
-              <h1
-                class="font-black text-white tracking-tighter uppercase italic leading-none"
-                style="font-size: clamp(26px, 6vw, 42px); text-shadow: 0 2px 30px rgba(0,0,0,0.9), 0 0 50px rgba(100,75,15,0.25)"
-              >PROTECTOR</h1>
-              <div class="h-px w-20 bg-gradient-to-r from-transparent via-[#c9a227]/55 to-transparent mt-3 mx-auto"></div>
-              <p class="text-[9px] text-[#9a7418] font-bold uppercase tracking-[0.35em] mt-2">Advanced Security Access</p>
-            </div>
+            <div class="flex flex-col items-center gap-5 w-full max-w-[320px] px-6">
 
-            <!-- 입력폼 -->
-            <form @submit.prevent class="w-full max-w-[340px] px-6 space-y-3 flex-shrink-0">
-              <input v-model="email" type="email" placeholder="EMAIL ADDRESS" required
-                class="w-full px-5 py-3.5 bg-black/50 border border-white/10 rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 focus:border-[#c9a227]/40 outline-none tracking-[0.2em] shadow-inner transition-colors" />
-              <input v-model="password" type="password" placeholder="PASSWORD" required
-                class="w-full px-5 py-3.5 bg-black/50 border border-white/10 rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 focus:border-[#c9a227]/40 outline-none tracking-[0.2em] shadow-inner transition-colors" />
-            </form>
-
-            <!-- 스페이서: 남은 공간을 채워 소셜을 아래로 밀어냄 -->
-            <div class="flex-1"></div>
-
-            <!-- 소셜 로그인 -->
-            <div class="flex flex-col items-center flex-shrink-0">
-              <div class="flex items-center gap-3 mb-3 w-44">
-                <div class="flex-1 h-px bg-gradient-to-r from-transparent to-white/10"></div>
-                <span class="text-[8px] text-[#7a5c20]/70 uppercase tracking-[0.3em] font-semibold">or</span>
-                <div class="flex-1 h-px bg-gradient-to-l from-transparent to-white/10"></div>
+              <!-- 타이틀 -->
+              <div class="text-center w-full">
+                <h1
+                  class="font-black text-white tracking-tighter uppercase italic leading-none"
+                  style="font-size: clamp(24px, 5vw, 38px); text-shadow: 0 2px 30px rgba(0,0,0,0.9), 0 0 50px rgba(100,75,15,0.25)"
+                >WALLET PROTECTOR</h1>
+                <div class="h-px w-16 bg-gradient-to-r from-transparent via-[#c9a227]/55 to-transparent mt-2.5 mx-auto"></div>
+                <p class="text-[8px] text-[#9a7418] font-bold uppercase tracking-[0.35em] mt-1.5">Advanced Security Access</p>
               </div>
-              <div class="flex gap-3">
-                <button type="button" class="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:border-[#c9a227]/30 hover:bg-black/60 transition-all">
-                  <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" class="w-4 h-4" />
-                </button>
-                <button type="button" class="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:border-[#c9a227]/30 hover:bg-black/60 transition-all text-white/60">
-                  <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-                </button>
+
+              <!-- 입력폼 -->
+              <form @submit.prevent class="w-full space-y-2.5">
+                <input v-model="email" type="email" placeholder="EMAIL ADDRESS" required
+                  class="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 focus:border-[#c9a227]/40 outline-none tracking-[0.18em] shadow-inner transition-colors" />
+                <input v-model="password" type="password" placeholder="PASSWORD" required
+                  class="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 focus:border-[#c9a227]/40 outline-none tracking-[0.18em] shadow-inner transition-colors" />
+              </form>
+
+              <!-- 소셜 로그인 -->
+              <div class="flex flex-col items-center w-full">
+                <div class="flex items-center gap-3 mb-3 w-full">
+                  <div class="flex-1 h-px bg-gradient-to-r from-transparent to-white/10"></div>
+                  <span class="text-[8px] text-[#7a5c20]/70 uppercase tracking-[0.3em] font-semibold">or</span>
+                  <div class="flex-1 h-px bg-gradient-to-l from-transparent to-white/10"></div>
+                </div>
+                <div class="flex gap-3">
+                  <!-- Google -->
+                  <button type="button" class="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:border-[#c9a227]/30 hover:bg-black/60 transition-all">
+                    <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" class="w-[15px] h-[15px]" />
+                  </button>
+                  <!-- Naver -->
+                  <button type="button" class="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:border-[#c9a227]/30 hover:bg-black/60 transition-all">
+                    <svg viewBox="0 0 24 24" fill="#03C75A" class="w-[15px] h-[15px]">
+                      <path d="M15.5 12.4L8.5 3H6v18h3.5V8.6L16.5 18H19V3h-3.5z"/>
+                    </svg>
+                  </button>
+                  <!-- Kakao -->
+                  <button type="button" class="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:border-[#c9a227]/30 hover:bg-black/60 transition-all">
+                    <svg viewBox="0 0 24 24" fill="#FEE500" class="w-[16px] h-[16px]">
+                      <path d="M12 3.5C6.75 3.5 2.5 7.05 2.5 11.45c0 2.76 1.8 5.2 4.54 6.64l-.96 3.97 4.28-2.6c.51.07 1.05.11 1.64.11 5.25 0 9.5-3.55 9.5-7.95S17.25 3.5 12 3.5z"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
+
             </div>
           </div>
 
@@ -102,7 +115,8 @@
         <!-- ── 뒷면 ── -->
         <div class="absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br from-[#2a1a0d] via-[#1e1209] to-[#261608] rounded-l-[2.5rem] shadow-inner border-t border-b border-l border-white/5 overflow-hidden">
           <div class="absolute inset-0 opacity-55 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]"></div>
-          <div class="absolute top-4 left-4 bottom-4 right-4 border-t-2 border-l-2 border-b-2 border-dashed border-[#c9a227]/20 rounded-tl-[2rem] rounded-bl-[2rem] pointer-events-none"></div>
+          <!-- 뒷면 봉제선: right-0으로 접히는 부분까지 연장 -->
+          <div class="absolute top-4 left-4 bottom-4 right-0 border-t-2 border-l-2 border-b-2 border-dashed border-[#c9a227]/18 rounded-tl-[2rem] rounded-bl-[2rem] pointer-events-none"></div>
         </div>
       </div>
     </div>

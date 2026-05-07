@@ -1,29 +1,9 @@
 ﻿<template>
-  <div id="app" class="min-h-screen w-screen max-w-none m-0 bg-[#050505] text-slate-50 relative overflow-hidden font-sans selection:bg-[#d9b9a9]/30">
-    
-    <div class="fixed inset-0 w-full h-full pointer-events-none z-0">
-      <div class="absolute w-[150vw] h-[150vw] bg-[#4a3520] rounded-full blur-[120px] -top-[50vh] -left-[40vw] opacity-20"></div>
-      <div class="absolute w-[120vw] h-[120vw] bg-[#1a1f1a] rounded-full blur-[100px] -bottom-[40vh] -right-[30vw] opacity-15"></div>
-      <div class="absolute inset-0 bg-gradient-to-tr from-[#1a1a1a]/10 via-transparent to-[#3d2b1f]/10"></div>
-      <div class="absolute inset-0 opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
-    </div>
-
-    <div class="relative z-10 w-full h-full min-h-screen">
-      <transition name="fade" mode="out-in">
-        
-        <AuthWallet 
-          v-if="!isLoggedIn" 
-          @login="handleLogin" 
-        />
-
-        <CardWallet 
-          v-else
-          :user="userInfo"
-        />
-
-      </transition>
-    </div>
-
+  <div id="app">
+    <transition name="fade" mode="out-in">
+      <AuthWallet v-if="!isLoggedIn" @login="handleLogin" />
+      <CardWallet v-else :user="userInfo" />
+    </transition>
   </div>
 </template>
 
@@ -46,33 +26,3 @@ const handleLogin = (payload) => {
 };
 </script>
 
-<style>
-/* Vue 기본 여백 및 제약 해제 */
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  overflow: hidden !important; 
-  background-color: #050505;
-}
-
-#app { 
-  width: 100vw !important; 
-  min-height: 100vh !important; 
-  max-width: 100% !important; 
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* 화면 전환 애니메이션 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.8s ease-in-out;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

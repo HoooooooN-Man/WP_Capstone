@@ -10,7 +10,7 @@
     </div>
 
     <!-- 메인 컨텐츠 -->
-    <div class="absolute top-[4%] bottom-[165px] left-[2%] right-[2%] flex justify-center items-center z-0">
+    <div class="absolute top-[4%] bottom-[100px] left-[2%] right-[2%] flex justify-center items-center z-0">
       <transition name="fade-scale" mode="out-in">
         <ProfileView   v-if="activeCard === 'profile'"   :user="user" />
         <FeedView      v-else-if="activeCard === 'feed'" />
@@ -36,8 +36,8 @@
       <!-- 가죽 질감 -->
       <div class="absolute inset-0 opacity-60 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')] rounded-t-[2.5rem] pointer-events-none"></div>
 
-      <!-- 상단 봉제선 -->
-      <div class="absolute top-3 left-4 right-4 border-t-2 border-dashed border-[#c9a227]/20 pointer-events-none z-20"></div>
+      <!-- 봉제선: 카드보다 아래 레이어 (z-[2]) -->
+      <div class="absolute top-3 left-4 right-4 bottom-0 border-t-2 border-l-2 border-r-2 border-dashed border-[#c9a227]/20 rounded-t-[2rem] pointer-events-none z-[2]"></div>
 
       <!-- 중앙 분리선 -->
       <div class="absolute left-1/2 top-0 bottom-0 w-12 -translate-x-1/2 bg-gradient-to-r from-black/50 via-transparent to-black/50 pointer-events-none z-30"></div>
@@ -48,75 +48,77 @@
       <div class="w-full h-full flex relative z-10">
 
         <!-- 왼쪽 열 -->
-        <div class="flex-1 flex flex-col items-center pt-3 pb-3 gap-3">
+        <div class="flex-1 flex flex-col items-center pt-0 pb-2 gap-0">
 
-          <!-- 슬롯 1: Profile -->
-          <div class="w-[78%] flex-1 relative">
-            <!-- 슬롯 배경 필러: 카드가 올라갈 때 지갑색으로 채워져 자연스럽게 보임 -->
-            <div class="absolute inset-0 bg-[#2a1a0d] rounded-t-[10px]"></div>
-            <!-- 카드 -->
+          <!-- 슬롯 1: Profile (위 카드)
+               홈 라인은 z-index 없음 → DOM 순서상 슬롯2 카드가 자연스럽게 위에 올라옴 -->
+          <div class="w-[74%] flex-1 relative">
             <div
               @click="activeCard = 'profile'"
-              class="absolute inset-0 rounded-t-[10px] bg-gradient-to-br from-[#fcfbf7] to-[#e6e2d3] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-3"
-              :class="activeCard === 'profile' ? '-translate-y-4' : 'hover:-translate-y-4'"
+              class="absolute top-0 left-[3px] right-[3px] bottom-[0px] rounded-t-[10px] bg-gradient-to-br from-[#fcfbf7] to-[#e6e2d3] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-3"
+              :class="activeCard === 'profile' ? '-translate-y-1' : 'hover:-translate-y-1'"
             >
-              <div class="w-7 h-7 rounded bg-black/5 flex items-center justify-center">
-                <LucideUser class="w-4 h-4 text-black/60" />
+              <div class="w-6 h-6 rounded bg-black/5 flex items-center justify-center flex-shrink-0">
+                <LucideUser class="w-3.5 h-3.5 text-black/60" />
               </div>
-              <div class="flex flex-col justify-center">
-                <span class="text-[13px] font-bold text-gray-800 leading-tight">{{ user.name || 'User' }}</span>
+              <div class="flex flex-col justify-center min-w-0">
+                <span class="text-[12px] font-bold text-gray-800 leading-tight truncate">{{ user.name || 'User' }}</span>
                 <span class="text-[9px] text-gray-500 font-medium leading-tight">Personal ID</span>
               </div>
             </div>
-            <!-- 슬롯 홈 라인 (카드 위에 올라와 홈 효과) -->
-            <div class="absolute bottom-0 w-full h-[4px] bg-[#0b0704] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] z-10 pointer-events-none rounded-b-sm"></div>
+            <!-- 홈 라인: z-index 없음 (슬롯2 카드가 DOM 순서상 이 위에 올라옴) -->
+            <div class="absolute bottom-[0px] w-full h-[4px] bg-[#0b0704] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] pointer-events-none rounded-b-sm"></div>
           </div>
 
-          <!-- 슬롯 2: Feed -->
-          <div class="w-[78%] flex-1 relative">
-            <div class="absolute inset-0 bg-[#1e1a0a] rounded-t-[10px]"></div>
+          <!-- 슬롯 2: Feed (아래 카드 — DOM 순서상 슬롯1 홈 라인 위에 렌더링) -->
+          <div class="w-[74%] flex-1 relative">
             <div
               @click="activeCard = 'feed'"
-              class="absolute inset-0 rounded-t-[10px] bg-gradient-to-br from-[#2edc68] to-[#1cb550] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-2"
-              :class="activeCard === 'feed' ? '-translate-y-4' : 'hover:-translate-y-4'"
+              class="absolute top-0 left-[3px] right-[3px] bottom-[0px] rounded-t-[10px] bg-gradient-to-br from-[#2edc68] to-[#1cb550] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2"
+              :class="activeCard === 'feed' ? '-translate-y-2' : 'hover:-translate-y-2'"
             >
-              <LucideSparkles class="w-5 h-5 text-white/90" />
-              <span class="text-[15px] font-bold text-white tracking-wide">Latest Feed</span>
+              <LucideSparkles class="w-4 h-4 text-white/90 flex-shrink-0" />
+              <span class="text-[13px] font-bold text-white tracking-wide">Latest Feed</span>
             </div>
-            <div class="absolute bottom-0 w-full h-[4px] bg-[#0b0704] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] z-10 pointer-events-none rounded-b-sm"></div>
+            <!-- 홈 아래 커버: 카드가 홈 아래로 보이지 않게 지갑 배경색으로 덮음 (z-[24] = 홈보다 아래) -->
+            <div class="absolute bottom-0 left-0 right-0 h-[8px] pointer-events-none z-[24]" style="background: linear-gradient(to bottom, #231409, #1a0e07)"></div>
+            <!-- 홈 라인: z-[25] → 슬롯2 카드 위에 표시 -->
+            <div class="absolute bottom-[8px] w-full h-[4px] bg-[#0b0704] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] z-[25] pointer-events-none rounded-b-sm"></div>
           </div>
 
         </div>
 
-        <!-- 오른쪽 열 -->
-        <div class="flex-1 flex flex-col items-center pt-3 pb-3 gap-3">
+        <!-- 오른쪽 열 (왼쪽과 동일한 레이어 구조) -->
+        <div class="flex-1 flex flex-col items-center pt-0 pb-2 gap-0">
 
-          <!-- 슬롯 3: Company -->
-          <div class="w-[78%] flex-1 relative">
-            <div class="absolute inset-0 bg-[#0e1520] rounded-t-[10px]"></div>
+          <!-- 슬롯 3: Company (위 카드) -->
+          <div class="w-[74%] flex-1 relative">
             <div
               @click="activeCard = 'company'"
-              class="absolute inset-0 rounded-t-[10px] bg-gradient-to-br from-[#1f3756] to-[#14253a] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-2"
-              :class="activeCard === 'company' ? '-translate-y-4' : 'hover:-translate-y-4'"
+              class="absolute top-0 left-[3px] right-[3px] bottom-[0px] rounded-t-[10px] bg-gradient-to-br from-[#1f3756] to-[#14253a] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2"
+              :class="activeCard === 'company' ? '-translate-y-1' : 'hover:-translate-y-1'"
             >
-              <LucideBuilding2 class="w-5 h-5 text-blue-200" />
-              <span class="text-[15px] font-bold text-gray-100 tracking-wide">Company List</span>
+              <LucideBuilding2 class="w-4 h-4 text-blue-200 flex-shrink-0" />
+              <span class="text-[13px] font-bold text-gray-100 tracking-wide">Company List</span>
             </div>
-            <div class="absolute bottom-0 w-full h-[4px] bg-[#0b0704] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] z-10 pointer-events-none rounded-b-sm"></div>
+            <!-- 홈 라인: z-index 없음 (슬롯4 카드가 위에 올라옴) -->
+            <div class="absolute bottom-[0px] w-full h-[4px] bg-[#0b0704] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] pointer-events-none rounded-b-sm"></div>
           </div>
 
-          <!-- 슬롯 4: Portfolio -->
-          <div class="w-[78%] flex-1 relative">
-            <div class="absolute inset-0 bg-[#091422] rounded-t-[10px]"></div>
+          <!-- 슬롯 4: Portfolio (아래 카드) -->
+          <div class="w-[74%] flex-1 relative">
             <div
               @click="activeCard = 'portfolio'; $emit('toggle-portfolio')"
-              class="absolute inset-0 rounded-t-[10px] bg-gradient-to-br from-[#007ad9] to-[#0052a3] shadow-lg transition-transform duration-300 cursor-pointer flex items-center px-4 gap-2"
-              :class="activeCard === 'portfolio' ? '-translate-y-4' : 'hover:-translate-y-4'"
+              class="absolute top-0 left-[3px] right-[3px] bottom-[0px] rounded-t-[10px] bg-gradient-to-br from-[#007ad9] to-[#0052a3] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2"
+              :class="activeCard === 'portfolio' ? '-translate-y-2' : 'hover:-translate-y-2'"
             >
-              <LucideFolder class="w-5 h-5 text-blue-100" />
-              <span class="text-[15px] font-bold text-white tracking-wide">Portfolio</span>
+              <LucideFolder class="w-4 h-4 text-blue-100 flex-shrink-0" />
+              <span class="text-[13px] font-bold text-white tracking-wide">Portfolio</span>
             </div>
-            <div class="absolute bottom-0 w-full h-[4px] bg-[#0b0704] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] z-10 pointer-events-none rounded-b-sm"></div>
+            <!-- 홈 아래 커버: 카드가 홈 아래로 보이지 않게 지갑 배경색으로 덮음 (z-[24] = 홈보다 아래) -->
+            <div class="absolute bottom-0 left-0 right-0 h-[8px] pointer-events-none z-[24]" style="background: linear-gradient(to bottom, #231409, #1a0e07)"></div>
+            <!-- 홈 라인: z-[25] → 슬롯4 카드 위에 표시 -->
+            <div class="absolute bottom-[8px] w-full h-[4px] bg-[#0b0704] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] z-[25] pointer-events-none rounded-b-sm"></div>
           </div>
 
         </div>
@@ -176,31 +178,15 @@ const handleCompanySelect = (company) => {
 <style scoped>
 .wallet-bar {
   background: linear-gradient(to bottom, #3d2616, #2c1a0d 60%, #1e1009);
-  height: 148px;
-}
-
-@keyframes slideUpWallet {
-  0%   { transform: translateY(100%); opacity: 0; }
-  75%  { transform: translateY(-2px);  opacity: 1; }
-  100% { transform: translateY(10px);  opacity: 1; }
+  height: 100px;
 }
 
 .animate-slide-up-wallet {
-  animation: slideUpWallet 1s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
-}
-
-@keyframes fadeInDelayed {
-  0%   { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
+  animation: slide-up-wallet 1s var(--ease-wallet) forwards;
 }
 
 .animate-fade-in-delayed {
   opacity: 0;
-  animation: fadeInDelayed 0.5s ease forwards;
+  animation: fade-in-delayed 0.5s ease forwards;
 }
-
-.fade-scale-enter-active,
-.fade-scale-leave-active  { transition: all 0.4s ease; }
-.fade-scale-enter-from    { opacity: 0; transform: scale(0.95) translateY(10px); }
-.fade-scale-leave-to      { opacity: 0; transform: scale(1.05) translateY(-10px); }
 </style>
