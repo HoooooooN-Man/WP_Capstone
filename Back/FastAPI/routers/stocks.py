@@ -8,9 +8,12 @@ routers/stocks.py
 from __future__ import annotations
 
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from ..services import data as svc
+from ..services.confidence import annotate_confidence
+from ..services.personalization import rerank_for_cohort
+from ..schemas.meta import attach_meta
 from ..schemas.stocks import (
     StockScore,
     StockScoreList,
@@ -59,12 +62,14 @@ def list_dates(
 
 @router.get("/recommendations", response_model=StockScoreList, summary="종목 추천 목록")
 def get_recommendations(
+    request:       Request,
     date:          Optional[str]   = Query(None,      description="조회 날짜 YYYY-MM-DD (생략 시 최신)"),
     model_version: str             = Query("latest",  description="모델 버전 (예: v9, latest)"),
     sector:        Optional[str]   = Query(None,      description="섹터 필터 (예: IT, 금융)"),
     top_k:         int             = Query(20,        ge=0, le=500, description="상위 N개 (0=전체)"),
     min_score:     float           = Query(0.0,       ge=0, le=100, description="최소 점수 필터"),
     strategy:      str             = Query("base",    description="선별 전략: base(기본) | s3(v9 S3: prob Top-150 + 레짐 신호)"),
+    cohort:        Optional[str]   = Query(None,      description="W2 — conservative/balanced/growth/dividend/value (기본 None=balanced)"),
 ):
     """
     날짜·섹터·점수 필터로 추천 종목을 내림차순으로 반환합니다.
@@ -73,17 +78,22 @@ def get_recommendations(
     - **top_k=0** → 전체 반환
     - **min_score=60** → B티어 이상(60점 이상)만 반환
     - **strategy=s3** → v9 S3 전략: prob 상위 150 + KOSPI 레짐 신호 포함
-      - `regime` 필드: 1=상승, 0=하락(방어)
-      - `position_scale` 필드: 1.0 또는 0.5 (하락장 포지션 50% 축소 권고)
+    - **cohort** → W2 cohort reranking (None/balanced 시 no-op = 기존 동작)
+      "내 관심사 기반 정렬" — 자문이 아닌 정보 정렬.
     """
     if strategy not in ("base", "s3"):
         strategy = "base"
+
+    # W2: cohort 명시 시 reranking 후 일부가 필터링 될 수 있어 더 큰 풀로 가져온 뒤 자름.
+    # cohort=None 일 때는 기존 동작 그대로 (캐시 키 호환성 유지 — CLAUDE.md §반드시 지킬 것 2번).
+    fetch_top_k = max(top_k * 3, 100) if (top_k > 0 and cohort) else top_k
+
     try:
         rows = svc.get_recommendations(
             date=date,
             model_version=model_version,
             sector=sector,
-            top_k=top_k,
+            top_k=fetch_top_k,
             min_score=min_score,
             strategy=strategy,
         )
@@ -93,15 +103,34 @@ def get_recommendations(
     if not rows:
         raise HTTPException(status_code=404, detail="해당 날짜·조건에 맞는 데이터가 없습니다.")
 
+    rows = annotate_confidence(rows)
+
+    # W2 cohort 후처리. 컬럼 부재 시 graceful no-op (현 응답엔 finance/volatility 없음).
+    rows = rerank_for_cohort(rows, cohort, top_k=top_k)
+
+    if not rows:
+        raise HTTPException(
+            status_code=404, detail="선택한 정렬 조건에 맞는 종목이 없습니다.",
+        )
+
     items = [StockScore(**r) for r in rows]
     resolved_date = items[0].date if items else (date or "")
     resolved_ver  = items[0].model_version if items else model_version
 
-    return StockScoreList(
+    payload = StockScoreList(
         date=resolved_date,
         model_version=resolved_ver,
         total=len(items),
         items=items,
+    )
+    # W1C: impression_id 자동. W2: cohort 메타에 echo (사용자가 명시한 라벨 그대로).
+    return attach_meta(
+        payload,
+        request,
+        model_version=resolved_ver,
+        as_of_date=resolved_date,
+        is_impression=True,
+        cohort=cohort or None,
     )
 
 
@@ -110,6 +139,7 @@ def get_recommendations(
 @router.get("/{ticker}/history", response_model=StockHistory, summary="종목 스코어 이력")
 def get_stock_history(
     ticker:        str,
+    request:       Request,
     model_version: str           = Query("latest", description="모델 버전"),
     start_date:    Optional[str] = Query(None,     description="시작일 YYYY-MM-DD"),
     end_date:      Optional[str] = Query(None,     description="종료일 YYYY-MM-DD"),
@@ -131,11 +161,18 @@ def get_stock_history(
     items = [StockHistoryItem(**r) for r in rows]
     resolved_ver = items[0].model_version if items else model_version
 
-    return StockHistory(
+    payload = StockHistory(
         ticker=ticker.zfill(6),
         model_version=resolved_ver,
         total=len(items),
         items=items,
+    )
+    last_date = items[-1].date if items else None
+    return attach_meta(
+        payload,
+        request,
+        model_version=resolved_ver,
+        as_of_date=last_date,
     )
 
 
@@ -143,6 +180,7 @@ def get_stock_history(
 
 @router.get("/sectors/summary", response_model=SectorSummaryList, summary="섹터별 평균 점수 요약")
 def get_sector_summary(
+    request:       Request,
     date:          Optional[str] = Query(None,     description="조회 날짜 (생략 시 최신)"),
     model_version: str           = Query("latest", description="모델 버전"),
 ):
@@ -159,11 +197,17 @@ def get_sector_summary(
     resolved_date = items[0].date if items else (date or "")
     resolved_ver  = items[0].model_version if items else model_version
 
-    return SectorSummaryList(
+    payload = SectorSummaryList(
         date=resolved_date,
         model_version=resolved_ver,
         total=len(items),
         items=items,
+    )
+    return attach_meta(
+        payload,
+        request,
+        model_version=resolved_ver,
+        as_of_date=resolved_date,
     )
 
 

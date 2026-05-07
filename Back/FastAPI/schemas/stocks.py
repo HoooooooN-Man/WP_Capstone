@@ -11,6 +11,8 @@ from __future__ import annotations
 from typing import Any, Optional
 from pydantic import BaseModel
 
+from .meta import ResponseMeta
+
 
 # ── 종목 스코어 ────────────────────────────────────────────────────────────────
 
@@ -37,6 +39,19 @@ class StockScore(BaseModel):
 
     model_version:  str
 
+    # ── 신뢰구간 (Tier 1.4 / 차별화 §2.1) ────────────────────────────────────
+    # 세 모델 확률의 표본 표준편차. 클수록 모델 의견 불일치.
+    prob_std:       Optional[float] = None
+    # 점수 단위(1~100) 환산 표준편차. score ± score_std 형태로 UI 표시.
+    score_std:      Optional[float] = None
+    # 모델 의견 불일치 플래그. prob_std > DISAGREEMENT_THRESHOLD 일 때 True.
+    model_disagreement: Optional[bool] = None
+
+    # ── SHAP 기여 피처 (Tier 1.3 / 차별화 §2.3) ──────────────────────────────
+    # 종목별 상위 3개 기여 피처 (자연어 라벨 포함). compute_shap.py 가 적재.
+    # 각 원소: {feature, contribution, direction, label, display}
+    top_factors:    Optional[list[dict]] = None
+
     # S3 전략 메타 (strategy=s3 일 때만 포함)
     regime:         Optional[int]   = None  # 1=상승, 0=하락(방어)
     regime_label:   Optional[str]   = None  # "상승" | "하락(방어)"
@@ -49,6 +64,7 @@ class StockScoreList(BaseModel):
     model_version: str
     total:         int
     items:         list[StockScore]
+    meta:          Optional[ResponseMeta] = None
 
 
 # ── 종목 이력 ──────────────────────────────────────────────────────────────────
@@ -74,6 +90,7 @@ class StockHistory(BaseModel):
     model_version: str
     total:         int
     items:         list[StockHistoryItem]
+    meta:          Optional[ResponseMeta] = None
 
 
 # ── 섹터 요약 ──────────────────────────────────────────────────────────────────
@@ -94,6 +111,7 @@ class SectorSummaryList(BaseModel):
     model_version: str
     total:         int
     items:         list[SectorSummaryItem]
+    meta:          Optional[ResponseMeta] = None
 
 
 # ── 공통 유틸 ──────────────────────────────────────────────────────────────────

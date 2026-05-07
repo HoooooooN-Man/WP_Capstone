@@ -1,0 +1,142 @@
+# feature_descriptions.yaml
+# =========================
+# Tier 1.3 (PRD §4.4 / 차별화 §2.3)
+# v9 모델 피처 → 자연어 설명. SHAP 기여도가 양(+) 일 때 / 음(-) 일 때
+# 사용자에게 보일 한 줄 메시지를 분리 정의한다.
+#
+# key 는 v9 LightGBM 모델이 보는 *safe* 피처명 (feature_cols.json) 또는
+# col_name_map 의 *orig* 한글 피처명. 양쪽 모두 매칭되도록 양식을 통일했다.
+#
+# 매핑 우선순위:
+#   1. orig 한글 키
+#   2. safe ASCII 키 (orig 매칭 실패 시 폴백)
+#   3. 매칭 실패 시 safe 키 그대로 + "이/가 강한/약한 영향"
+#
+# 채워진 피처 25개: 캡스톤 시연·보고서 챕터 ("추천의 설명가능성") 핵심 자산.
+# 나머지 ~45개 피처는 자동 생성 폴백을 사용 (정직성 우선).
+
+# ── 거시·매크로 ─────────────────────────────────────────────────────────────
+VIX:
+  display: VIX 변동성 지수
+  positive: VIX(시장 공포지수) 환경에서도 상대적 강세 신호
+  negative: VIX(시장 공포지수) 영향으로 부정 신호
+US_10Y:
+  display: 미국 10년물 국채금리
+  positive: 미국 10년물 금리 환경이 우호적으로 작용
+  negative: 미국 10년물 금리 부담
+fx_rate:
+  display: 원/달러 환율
+  positive: 환율 효과(수출주 등) 유리하게 반영
+  negative: 환율 영향 부정적
+US_PMI:
+  display: 미국 ISM 제조업 PMI
+  positive: 미국 제조업 경기 우호적
+  negative: 미국 제조업 경기 부진 신호
+KR_PMI:
+  display: 한국 PMI
+  positive: 한국 경기 회복 신호
+  negative: 한국 경기 둔화 신호
+
+# ── 외국인·기관 수급 ─────────────────────────────────────────────────────────
+외국인보유비율:
+  display: 외국인 지분율
+  positive: 외국인 지분율(현재 수준) 우호적
+  negative: 외국인 지분율 낮음/감소
+외국인_거래대금:
+  display: 외국인 순매수 (5일)
+  positive: 외국인 5일 순매수 양호
+  negative: 외국인 5일 순매도 우세
+연기금_거래대금:
+  display: 연기금 매수
+  positive: 연기금 매수세 유입
+  negative: 연기금 매도 우세
+기관합계_거래대금:
+  display: 기관 합계 순매수
+  positive: 기관 매수세 양호
+  negative: 기관 매도 우세
+공매도거래량비중:
+  display: 공매도 비중
+  positive: 공매도 비중이 낮아 부담 적음
+  negative: 공매도 비중이 높아 매도 압력
+
+# ── 모멘텀·기술적 ────────────────────────────────────────────────────────────
+ret_lag_20d:
+  display: 20일 수익률
+  positive: 최근 1개월 수익률 양호
+  negative: 최근 1개월 수익률 부진
+ret_lag_60d:
+  display: 60일 수익률
+  positive: 3개월 모멘텀 양호
+  negative: 3개월 모멘텀 부진
+ret_lag_120d:
+  display: 120일 수익률
+  positive: 6개월 추세 양호
+  negative: 6개월 추세 약세
+RSI_14:
+  display: RSI(14)
+  positive: RSI 적정 구간
+  negative: RSI 과열 또는 침체 영역
+MACD:
+  display: MACD
+  positive: MACD 양의 흐름
+  negative: MACD 부정적 흐름
+Disparity_20:
+  display: 이격도(20일)
+  positive: 20일선 대비 적정 위치
+  negative: 20일선과 괴리 큼
+
+# ── 변동성·리스크 ────────────────────────────────────────────────────────────
+HV_20:
+  display: 20일 역사적 변동성
+  positive: 변동성이 낮아 안정적
+  negative: 변동성이 높아 리스크 부담
+ATR_14:
+  display: ATR(14)
+  positive: 일봉 변동폭 안정
+  negative: 일봉 변동폭 큼
+
+# ── 가치·재무 ────────────────────────────────────────────────────────────────
+ROE(%):
+  display: ROE
+  positive: ROE 섹터 평균 대비 우수
+  negative: ROE 섹터 평균 대비 부진
+PER:
+  display: PER
+  positive: PER 섹터 평균 대비 매력적
+  negative: PER 섹터 평균 대비 고평가
+PBR:
+  display: PBR
+  positive: PBR 매력적 수준
+  negative: PBR 부담스러운 수준
+영업이익률(%):
+  display: 영업이익률
+  positive: 영업이익률 양호
+  negative: 영업이익률 부진
+부채비율(%):
+  display: 부채비율
+  positive: 부채비율 안정적
+  negative: 부채비율 높아 재무 리스크
+매출액증가율(YoY,%):
+  display: 매출액 증가율(YoY)
+  positive: 매출 성장 양호
+  negative: 매출 성장 둔화
+
+# ── 종합 점수 ────────────────────────────────────────────────────────────────
+total_score:
+  display: 종합 스코어
+  positive: 종합 스코어가 우수
+  negative: 종합 스코어가 부진
+
+# ── safe ASCII 폴백 (col_name_map 에서 ROE → ROE(%) 등으로 매핑되지 않는 경우) ──
+ROE:
+  display: ROE
+  positive: ROE 양호
+  negative: ROE 부진
+YoY:
+  display: 매출 증가율(YoY)
+  positive: 매출 성장 양호
+  negative: 매출 성장 둔화
+YoY_1:
+  display: 영업이익 증가율(YoY)
+  positive: 영업이익 성장 양호
+  negative: 영업이익 성장 둔화

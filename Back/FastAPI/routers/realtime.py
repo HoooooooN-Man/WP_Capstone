@@ -9,15 +9,25 @@ WebSocket 실시간 시세 라우터.
 
 클라이언트 ↔ 서버 메시지 형식 (JSON)::
 
-    server → client:
-        { "ticker": "005930", "price": 78500, "ts": "2026-05-05T15:00:01" }
+    server → client (snapshot, tick):
+        {
+          "ticker":     "005930",
+          "price":      78500,
+          "ts":         "2026-05-05T15:00:01+00:00",
+          "source":     "simulation",      # PRICE_PROVIDER 환경변수 값 그대로
+          "delay_ms":   0,
+          "snapshot":   true               # 최초 스냅샷에만 포함
+        }
     client → server:
         { "type": "subscribe",   "tickers": ["005930", "000660"] }
         { "type": "unsubscribe", "tickers": ["000660"] }
 
+`source` 필드는 프론트에서 노란 "시뮬레이션" 배지를 노출하는 신호로 사용된다
+(PRD §1.1 / Tier 1.7). 실제 증권사 OpenAPI 가 연결되면 PRICE_PROVIDER=live 로
+바꾸고 `_simulate_tick` 자리를 어댑터로 교체.
+
 기본 동작 (시뮬레이션):
     DuckDB prices 테이블의 마지막 종가를 시드로 매 N초마다 ±0.3% 의 무작위 변동을 적용.
-    실제 증권사 OpenAPI 가 연결되면 `_price_provider` 만 교체하면 된다.
 """
 
 from __future__ import annotations
@@ -94,6 +104,26 @@ hub = _Hub()
 TICK_INTERVAL_SECONDS = float(os.getenv("WS_TICK_INTERVAL_SECONDS", "2.0"))
 WS_MAX_TICKERS = int(os.getenv("WS_MAX_TICKERS", "20"))
 
+# 시세 소스 라벨 — 프론트가 "시뮬레이션" 배지 노출 여부를 결정.
+# 값 예시: "simulation" (현재 ±0.3% 무작위) | "live" (KIS API 등 실연동 시).
+PRICE_SOURCE = os.getenv("PRICE_PROVIDER", "simulation")
+# 단순 시뮬레이션은 즉시 생성이라 0ms. 실시간 어댑터 도입 시 어댑터가 채움.
+PRICE_DELAY_MS = int(os.getenv("PRICE_DELAY_MS", "0"))
+
+
+def _envelope(ticker: str, price: float, ts: str, *, snapshot: bool = False) -> str:
+    """모든 가격 페이로드에 source/delay_ms 라벨을 강제."""
+    body = {
+        "ticker":   ticker,
+        "price":    price,
+        "ts":       ts,
+        "source":   PRICE_SOURCE,
+        "delay_ms": PRICE_DELAY_MS,
+    }
+    if snapshot:
+        body["snapshot"] = True
+    return json.dumps(body)
+
 
 # ── 백그라운드 브로드캐스터 ──────────────────────────────────────────────────
 
@@ -120,7 +150,7 @@ async def _broadcaster_loop() -> None:
 
             ts = datetime.now(timezone.utc).isoformat()
             for ticker, price in ticks.items():
-                payload = json.dumps({"ticker": ticker, "price": price, "ts": ts})
+                payload = _envelope(ticker, price, ts)
                 for ws in list(hub.subscribers_of(ticker)):
                     try:
                         await ws.send_text(payload)
@@ -160,9 +190,7 @@ async def ws_prices(
         seed = await _seed_prices(initial)
         ts = datetime.now(timezone.utc).isoformat()
         for t, p in seed.items():
-            await websocket.send_text(json.dumps({
-                "ticker": t, "price": p, "ts": ts, "snapshot": True,
-            }))
+            await websocket.send_text(_envelope(t, p, ts, snapshot=True))
 
     try:
         while True:

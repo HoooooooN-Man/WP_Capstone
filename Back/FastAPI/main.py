@@ -18,9 +18,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import APP_TITLE, APP_VERSION, API_PREFIX, DUCKDB_PATH
+from .core.errors import register_exception_handlers
+from .core.middleware import RequestIDMiddleware
 # 8001 = ML 분석 서버. 게시판/뉴스/사용자/인증은 8000 (Back/db/server.py) 가 담당.
 # (board/news/users_stub 코드 파일은 보관하되 본 서버에서는 등록하지 않음.)
-from .routers import stocks, portfolio, chart, finance, screener, compare, market, realtime
+from .routers import stocks, portfolio, chart, finance, screener, compare, market, realtime, transparency, playground
 from .schemas.health import RootResponse, HealthResponse, MetricsResponse
 from .services.data import init_duckdb, get_model_metrics
 
@@ -83,7 +85,15 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
 )
+
+# Request-ID 부여 — 가장 외층에 둔다 (Starlette: 나중에 추가된 미들웨어가 외층).
+# 모든 응답에 X-Request-ID 헤더가 부착되며, 에러 응답은 이 id 를 본문에도 포함.
+app.add_middleware(RequestIDMiddleware)
+
+# 통합 에러 응답 스키마 (PRD §1.3 / Tier 1.7).
+register_exception_handlers(app)
 
 # 라우터 등록 (ML 분석 도메인만)
 app.include_router(stocks.router,    prefix=API_PREFIX)
@@ -93,6 +103,8 @@ app.include_router(chart.router,     prefix=API_PREFIX)
 app.include_router(finance.router,   prefix=API_PREFIX)
 app.include_router(screener.router,  prefix=API_PREFIX)
 app.include_router(compare.router,   prefix=API_PREFIX)
+app.include_router(transparency.router, prefix=API_PREFIX)  # Tier 1.5 — holdout 박제 read-only
+app.include_router(playground.router,   prefix=API_PREFIX)  # Tier 2.5 — 정책 grid playground
 
 # 실시간 시세 WebSocket (no /api/v1 prefix — wss:// 표준 경로)
 app.include_router(realtime.router)

@@ -10,6 +10,15 @@ const api = axios.create({
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+// SHAP 기여 피처 한 건 (Tier 1.3 / 차별화 §2.3).
+export interface TopFactor {
+  feature: string                       // 원본 피처명 (한글 우선)
+  contribution: number                  // SHAP 기여도 (음수 가능)
+  direction: 'positive' | 'negative'
+  label: string                         // 자연어 한 줄 설명
+  display: string                       // 사람이 읽는 피처 이름
+}
+
 export interface StockScore {
   ticker: string
   name?: string
@@ -22,6 +31,24 @@ export interface StockScore {
   lgbm_prob?: number
   xgb_prob?: number
   cat_prob?: number
+
+  // 신뢰구간 (Tier 1.4)
+  prob_std?: number
+  score_std?: number
+  model_disagreement?: boolean
+
+  // 추천 이유 (Tier 1.3)
+  top_factors?: TopFactor[]
+}
+
+// Tier 1.7 (Phase 1.2) 메타 봉투 — 모든 ML 응답 공통.
+export interface ResponseMeta {
+  model_version?: string
+  as_of_date?: string
+  generated_at: string
+  cache_hit: boolean
+  is_stub: boolean
+  request_id?: string
 }
 
 export interface StockScoreList {
@@ -29,6 +56,7 @@ export interface StockScoreList {
   model_version: string
   total: number
   items: StockScore[]
+  meta?: ResponseMeta
 }
 
 export interface StockHistoryItem {

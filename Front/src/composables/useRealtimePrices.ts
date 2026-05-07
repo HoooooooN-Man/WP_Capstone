@@ -5,17 +5,23 @@
  *
  * 사용 예 (Vue 컴포넌트):
  *
- *   const { prices, status, subscribe, unsubscribe } = useRealtimePrices(['005930'])
- *   watchEffect(() => console.log(prices.value['005930']))
+ *   const { prices, status, isSimulation } = useRealtimePrices(['005930'])
+ *   // isSimulation.value === true → "시뮬레이션" 배지 노출
  *
  * 자동 재연결, 백오프, 가시성 변경 시 일시정지 포함.
+ *
+ * Tier 1.7 (PRD §1.1): 페이로드의 `source` 필드로 시뮬레이션 여부를 판별.
  */
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+
+export type PriceSource = 'simulation' | 'live'
 
 export interface PriceTick {
   ticker: string
   price: number
   ts: string
+  source?: PriceSource    // 백엔드 PRICE_PROVIDER 값. 없으면 보수적으로 simulation 가정.
+  delay_ms?: number
   snapshot?: boolean
 }
 
@@ -27,6 +33,12 @@ const WS_URL = (() => {
 export function useRealtimePrices(initialTickers: string[] = []) {
   const prices = ref<Record<string, PriceTick>>({})
   const status = ref<'idle' | 'connecting' | 'open' | 'closed'>('idle')
+
+  // 가장 최근 수신한 페이로드의 source. 한 번이라도 'live' 가 오면 그 이후로 live 로 본다
+  // (서로 다른 ticker 가 다른 source 일 수 있는 어댑터에 대비해 보수적으로 마지막 값을 유지).
+  const lastSource = ref<PriceSource | undefined>(undefined)
+  // 페이로드에 source 필드가 없거나 'simulation' 이면 true. 화면 배지의 신호.
+  const isSimulation = computed(() => lastSource.value !== 'live')
 
   let ws: WebSocket | null = null
   let backoffMs = 1000
@@ -53,9 +65,13 @@ export function useRealtimePrices(initialTickers: string[] = []) {
         if (msg.error) return
         if (msg.ticker && typeof msg.price === 'number') {
           prices.value = { ...prices.value, [msg.ticker]: msg }
+          if (msg.source === 'simulation' || msg.source === 'live') {
+            lastSource.value = msg.source
+          }
         }
-      } catch {
-        // ignore malformed
+      } catch (e) {
+        // 침묵 실패 금지 (Tier 1.7) — 콘솔에 남김.
+        console.error('[useRealtimePrices] malformed message', e)
       }
     }
 
@@ -98,5 +114,5 @@ export function useRealtimePrices(initialTickers: string[] = []) {
     ws = null
   })
 
-  return { prices, status, subscribe, unsubscribe }
+  return { prices, status, isSimulation, lastSource, subscribe, unsubscribe }
 }

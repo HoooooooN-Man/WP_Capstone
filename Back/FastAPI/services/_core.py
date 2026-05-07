@@ -223,6 +223,19 @@ def resolve_version(model_version: str) -> str:
     return row[0]
 
 
+def get_latest_date(model_version: str) -> str | None:
+    """scores 테이블의 가장 최신 거래일 (YYYY-MM-DD 문자열).
+
+    리팩토링 전 7곳에서 인라인으로 반복되던 쿼리를 단일 함수로 통합 (캡스톤 정리).
+    호출자는 *resolved* model_version 을 넘겨야 한다 ('latest' 직접 사용 금지).
+    """
+    row = con().execute(
+        "SELECT MAX(CAST(date AS VARCHAR)) FROM scores WHERE model_version=?",
+        [model_version],
+    ).fetchone()
+    return row[0] if row else None
+
+
 def get_available_dates(model_version: str = "latest") -> list[str]:
     """scores 테이블의 날짜 목록(오름차순)."""
     ver = resolve_version(model_version)

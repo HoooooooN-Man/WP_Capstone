@@ -15,6 +15,10 @@ const routes: RouteRecordRaw[] = [
   { path: '/ranking',        name: 'Ranking',     component: () => import('@/views/RankingView.vue') },
   { path: '/news',           name: 'News',        component: () => import('@/views/NewsView.vue') },
   { path: '/backtest',       name: 'Backtest',    component: () => import('@/views/BacktestView.vue') },
+  // Tier 1.5 (PRD §3.5 / 차별화 §2.2) — Holdout·Model Card 정직성 페이지.
+  { path: '/transparency',   name: 'Transparency', component: () => import('@/views/TransparencyView.vue') },
+  // Tier 2.5 (차별화 §2.4) — 정책 슬라이더 playground.
+  { path: '/playground',     name: 'Playground',   component: () => import('@/views/PlaygroundView.vue') },
   { path: '/user/:nickname', name: 'UserProfile', component: () => import('@/views/UserProfileView.vue') },
   { path: '/my',             name: 'MyPage',         component: () => import('@/views/MyPageView.vue'),           meta: { requiresAuth: true } },
   { path: '/login',          name: 'Login',          component: () => import('@/page/auth/Login.vue') },

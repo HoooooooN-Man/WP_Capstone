@@ -1,0 +1,402 @@
+[
+  {
+    "close": 1777.0,
+    "date": "2026-04-29",
+    "mid_sector": "소프트웨어와서비스",
+    "model_version": "v9",
+    "name": "신시웨이",
+    "prob_cat": 0.624885,
+    "prob_ensemble": 0.4005,
+    "prob_lgbm": 0.740798,
+    "prob_xgb": 0.817565,
+    "rank_in_date": 1,
+    "score": 100.0,
+    "sector": "IT",
+    "ticker": "290560",
+    "tier": "A",
+    "top_factors": [
+      {
+        "contribution": -0.466189,
+        "direction": "negative",
+        "display": "미국 10년물 국채금리",
+        "feature": "US_10Y",
+        "label": "미국 10년물 금리 부담"
+      },
+      {
+        "contribution": 0.344233,
+        "direction": "positive",
+        "display": "VIX 변동성 지수",
+        "feature": "VIX",
+        "label": "VIX(시장 공포지수) 환경에서도 상대적 강세 신호"
+      },
+      {
+        "contribution": 0.309637,
+        "direction": "positive",
+        "display": "Disparity_60",
+        "feature": "Disparity_60",
+        "label": "Disparity_60 가 점수에 양의 방향으로 기여"
+      }
+    ],
+    "total_in_date": 2339
+  },
+  {
+    "close": 2720.0,
+    "date": "2026-04-29",
+    "mid_sector": "미디어와엔터테인먼트",
+    "model_version": "v9",
+    "name": "덱스터",
+    "prob_cat": 0.579449,
+    "prob_ensemble": 0.383965,
+    "prob_lgbm": 0.729422,
+    "prob_xgb": 0.75359,
+    "rank_in_date": 2,
+    "score": 99.7,
+    "sector": "커뮤니케이션서비스",
+    "ticker": "206560",
+    "tier": "A",
+    "top_factors": [
+      {
+        "contribution": -0.453857,
+        "direction": "negative",
+        "display": "미국 10년물 국채금리",
+        "feature": "US_10Y",
+        "label": "미국 10년물 금리 부담"
+      },
+      {
+        "contribution": 0.337674,
+        "direction": "positive",
+        "display": "VIX 변동성 지수",
+        "feature": "VIX",
+        "label": "VIX(시장 공포지수) 환경에서도 상대적 강세 신호"
+      },
+      {
+        "contribution": 0.315784,
+        "direction": "positive",
+        "display": "Disparity_60",
+        "feature": "Disparity_60",
+        "label": "Disparity_60 가 점수에 양의 방향으로 기여"
+      }
+    ],
+    "total_in_date": 2339
+  },
+  {
+    "close": 322000.0,
+    "date": "2026-04-29",
+    "mid_sector": "건강관리장비와서비스",
+    "model_version": "v9",
+    "name": "파마리서치",
+    "prob_cat": 0.591497,
+    "prob_ensemble": 0.383965,
+    "prob_lgbm": 0.682289,
+    "prob_xgb": 0.770858,
+    "rank_in_date": 2,
+    "score": 99.7,
+    "sector": "건강관리",
+    "ticker": "214450",
+    "tier": "A",
+    "top_factors": [
+      {
+        "contribution": -0.456473,
+        "direction": "negative",
+        "display": "미국 10년물 국채금리",
+        "feature": "US_10Y",
+        "label": "미국 10년물 금리 부담"
+      },
+      {
+        "contribution": 0.333071,
+        "direction": "positive",
+        "display": "VIX 변동성 지수",
+        "feature": "VIX",
+        "label": "VIX(시장 공포지수) 환경에서도 상대적 강세 신호"
+      },
+      {
+        "contribution": 0.27824,
+        "direction": "positive",
+        "display": "Disparity_60",
+        "feature": "Disparity_60",
+        "label": "Disparity_60 가 점수에 양의 방향으로 기여"
+      }
+    ],
+    "total_in_date": 2339
+  },
+  {
+    "close": 8130.0,
+    "date": "2026-04-29",
+    "mid_sector": "건강관리장비와서비스",
+    "model_version": "v9",
+    "name": "피앤에스로보틱스",
+    "prob_cat": 0.579396,
+    "prob_ensemble": 0.383965,
+    "prob_lgbm": 0.73588,
+    "prob_xgb": 0.761993,
+    "rank_in_date": 2,
+    "score": 99.7,
+    "sector": "건강관리",
+    "ticker": "460940",
+    "tier": "A",
+    "top_factors": [
+      {
+        "contribution": -0.459719,
+        "direction": "negative",
+        "display": "미국 10년물 국채금리",
+        "feature": "US_10Y",
+        "label": "미국 10년물 금리 부담"
+      },
+      {
+        "contribution": 0.388374,
+        "direction": "positive",
+        "display": "VIX 변동성 지수",
+        "feature": "VIX",
+        "label": "VIX(시장 공포지수) 환경에서도 상대적 강세 신호"
+      },
+      {
+        "contribution": 0.282109,
+        "direction": "positive",
+        "display": "Disparity_60",
+        "feature": "Disparity_60",
+        "label": "Disparity_60 가 점수에 양의 방향으로 기여"
+      }
+    ],
+    "total_in_date": 2339
+  },
+  {
+    "close": 3205.0,
+    "date": "2026-04-29",
+    "mid_sector": "소프트웨어와서비스",
+    "model_version": "v9",
+    "name": "엠아이큐브솔루션",
+    "prob_cat": 0.60413,
+    "prob_ensemble": 0.383965,
+    "prob_lgbm": 0.724057,
+    "prob_xgb": 0.757971,
+    "rank_in_date": 2,
+    "score": 99.7,
+    "sector": "IT",
+    "ticker": "373170",
+    "tier": "A",
+    "top_factors": [
+      {
+        "contribution": -0.457886,
+        "direction": "negative",
+        "display": "미국 10년물 국채금리",
+        "feature": "US_10Y",
+        "label": "미국 10년물 금리 부담"
+      },
+      {
+        "contribution": 0.337746,
+        "direction": "positive",
+        "display": "VIX 변동성 지수",
+        "feature": "VIX",
+        "label": "VIX(시장 공포지수) 환경에서도 상대적 강세 신호"
+      },
+      {
+        "contribution": 0.308644,
+        "direction": "positive",
+        "display": "Disparity_60",
+        "feature": "Disparity_60",
+        "label": "Disparity_60 가 점수에 양의 방향으로 기여"
+      }
+    ],
+    "total_in_date": 2339
+  },
+  {
+    "close": 986.0,
+    "date": "2026-04-29",
+    "mid_sector": "내구소비재와의류",
+    "model_version": "v9",
+    "name": "형지글로벌",
+    "prob_cat": 0.602175,
+    "prob_ensemble": 0.383965,
+    "prob_lgbm": 0.716203,
+    "prob_xgb": 0.797805,
+    "rank_in_date": 2,
+    "score": 99.7,
+    "sector": "경기관련소비재",
+    "ticker": "308100",
+    "tier": "A",
+    "top_factors": [
+      {
+        "contribution": -0.480087,
+        "direction": "negative",
+        "display": "미국 10년물 국채금리",
+        "feature": "US_10Y",
+        "label": "미국 10년물 금리 부담"
+      },
+      {
+        "contribution": 0.335972,
+        "direction": "positive",
+        "display": "VIX 변동성 지수",
+        "feature": "VIX",
+        "label": "VIX(시장 공포지수) 환경에서도 상대적 강세 신호"
+      },
+      {
+        "contribution": 0.326471,
+        "direction": "positive",
+        "display": "Disparity_60",
+        "feature": "Disparity_60",
+        "label": "Disparity_60 가 점수에 양의 방향으로 기여"
+      }
+    ],
+    "total_in_date": 2339
+  },
+  {
+    "close": 2525.0,
+    "date": "2026-04-29",
+    "mid_sector": "미디어와엔터테인먼트",
+    "model_version": "v9",
+    "name": "모비릭스",
+    "prob_cat": 0.60188,
+    "prob_ensemble": 0.383965,
+    "prob_lgbm": 0.718632,
+    "prob_xgb": 0.749175,
+    "rank_in_date": 2,
+    "score": 99.7,
+    "sector": "커뮤니케이션서비스",
+    "ticker": "348030",
+    "tier": "A",
+    "top_factors": [
+      {
+        "contribution": -0.461478,
+        "direction": "negative",
+        "display": "미국 10년물 국채금리",
+        "feature": "US_10Y",
+        "label": "미국 10년물 금리 부담"
+      },
+      {
+        "contribution": 0.327648,
+        "direction": "positive",
+        "display": "VIX 변동성 지수",
+        "feature": "VIX",
+        "label": "VIX(시장 공포지수) 환경에서도 상대적 강세 신호"
+      },
+      {
+        "contribution": 0.321134,
+        "direction": "positive",
+        "display": "Disparity_60",
+        "feature": "Disparity_60",
+        "label": "Disparity_60 가 점수에 양의 방향으로 기여"
+      }
+    ],
+    "total_in_date": 2339
+  },
+  {
+    "close": 418.0,
+    "date": "2026-04-29",
+    "mid_sector": "소매(유통)",
+    "model_version": "v9",
+    "name": "소노스퀘어",
+    "prob_cat": 0.580194,
+    "prob_ensemble": 0.383965,
+    "prob_lgbm": 0.70826,
+    "prob_xgb": 0.760499,
+    "rank_in_date": 2,
+    "score": 99.7,
+    "sector": "경기관련소비재",
+    "ticker": "007720",
+    "tier": "A",
+    "top_factors": [
+      {
+        "contribution": -0.477051,
+        "direction": "negative",
+        "display": "미국 10년물 국채금리",
+        "feature": "US_10Y",
+        "label": "미국 10년물 금리 부담"
+      },
+      {
+        "contribution": 0.362258,
+        "direction": "positive",
+        "display": "VIX 변동성 지수",
+        "feature": "VIX",
+        "label": "VIX(시장 공포지수) 환경에서도 상대적 강세 신호"
+      },
+      {
+        "contribution": 0.336515,
+        "direction": "positive",
+        "display": "Disparity_60",
+        "feature": "Disparity_60",
+        "label": "Disparity_60 가 점수에 양의 방향으로 기여"
+      }
+    ],
+    "total_in_date": 2339
+  },
+  {
+    "close": 4825.0,
+    "date": "2026-04-29",
+    "mid_sector": "운송",
+    "model_version": "v9",
+    "name": "STX그린로지스",
+    "prob_cat": 0.599817,
+    "prob_ensemble": 0.383965,
+    "prob_lgbm": 0.71294,
+    "prob_xgb": 0.72572,
+    "rank_in_date": 2,
+    "score": 99.7,
+    "sector": "산업재",
+    "ticker": "465770",
+    "tier": "A",
+    "top_factors": [
+      {
+        "contribution": -0.488195,
+        "direction": "negative",
+        "display": "미국 10년물 국채금리",
+        "feature": "US_10Y",
+        "label": "미국 10년물 금리 부담"
+      },
+      {
+        "contribution": 0.351893,
+        "direction": "positive",
+        "display": "VIX 변동성 지수",
+        "feature": "VIX",
+        "label": "VIX(시장 공포지수) 환경에서도 상대적 강세 신호"
+      },
+      {
+        "contribution": 0.299777,
+        "direction": "positive",
+        "display": "Disparity_60",
+        "feature": "Disparity_60",
+        "label": "Disparity_60 가 점수에 양의 방향으로 기여"
+      }
+    ],
+    "total_in_date": 2339
+  },
+  {
+    "close": 973.0,
+    "date": "2026-04-29",
+    "mid_sector": "소재",
+    "model_version": "v9",
+    "name": "삼보산업",
+    "prob_cat": 0.602565,
+    "prob_ensemble": 0.383965,
+    "prob_lgbm": 0.717874,
+    "prob_xgb": 0.779424,
+    "rank_in_date": 2,
+    "score": 99.7,
+    "sector": "소재",
+    "ticker": "009620",
+    "tier": "A",
+    "top_factors": [
+      {
+        "contribution": -0.46462,
+        "direction": "negative",
+        "display": "미국 10년물 국채금리",
+        "feature": "US_10Y",
+        "label": "미국 10년물 금리 부담"
+      },
+      {
+        "contribution": 0.359728,
+        "direction": "positive",
+        "display": "VIX 변동성 지수",
+        "feature": "VIX",
+        "label": "VIX(시장 공포지수) 환경에서도 상대적 강세 신호"
+      },
+      {
+        "contribution": 0.314102,
+        "direction": "positive",
+        "display": "Disparity_60",
+        "feature": "Disparity_60",
+        "label": "Disparity_60 가 점수에 양의 방향으로 기여"
+      }
+    ],
+    "total_in_date": 2339
+  }
+]

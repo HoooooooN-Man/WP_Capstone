@@ -19,6 +19,8 @@ from typing import Optional
 import duckdb
 import os
 
+from .._security import escape_like
+
 router = APIRouter(prefix="/api/v1/news", tags=["news"])
 
 # 뉴스 전용 DuckDB. internal_router.py 가 쓰기, 본 라우터가 읽기.
@@ -244,8 +246,9 @@ def get_news_feed(
             params.append(sentiment)
 
         if ticker:
-            where.append("(query_text LIKE ? OR title LIKE ?)")
-            t = f"%{ticker}%"
+            # Tier 1B 4.4: 와일드카드(`%`, `_`) 입력으로 전수 조회되는 것을 방지.
+            where.append("(query_text LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\')")
+            t = f"%{escape_like(ticker)}%"
             params.extend([t, t])
 
         where_sql = " AND ".join(where)

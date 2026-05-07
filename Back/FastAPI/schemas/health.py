@@ -49,7 +49,7 @@ class DailyScoreMetrics(BaseModel):
 
 
 class MetricsSummary(BaseModel):
-    """드리프트 감지 요약 + 신호 품질."""
+    """드리프트 감지 요약 + 신호 품질 + 캘리브레이션 (Tier 1B 4.1)."""
     mean_of_means:   Optional[float] = None
     stddev_of_means: Optional[float] = None
     latest_mean:     Optional[float] = None
@@ -57,6 +57,12 @@ class MetricsSummary(BaseModel):
     # 신호 품질 (prob_std < 0.03 이면 모델 클러스터링 경고)
     avg_prob_std:    Optional[float] = Field(None, description="기간 평균 prob_std")
     prob_signal_ok:  Optional[bool]  = Field(None, description="avg_prob_std > 0.03 이면 True")
+    # 캘리브레이션 (Tier 1B 4.1) — holdout 박제 결과를 그대로 노출.
+    # 라이브 추론 데이터에는 forward 라벨이 없으므로, 박제된 holdout 분석 결과를
+    # 참조한다. 박제된 결과가 없으면 None.
+    ece_holdout:     Optional[float] = Field(None, description="holdout 박제 ECE (10-bin)")
+    brier_holdout:   Optional[float] = Field(None, description="holdout 박제 Brier score")
+    holdout_sealed_at: Optional[str] = Field(None, description="holdout 박제 시각 (ISO8601)")
 
 
 class MetricsResponse(BaseModel):
