@@ -16,12 +16,26 @@
         <FeedView      v-else-if="activeCard === 'feed'" />
         <CompanyView   v-else-if="activeCard === 'company'"
           :replace-mode="replaceMode"
+          :replace-stock="replaceStock"
+          :view-ticker="viewTicker"
           @select-company="handleCompanySelect"
+          @add-company="handleCompanyAdd"
+          @back="handleCompanyBack"
+          @sell-replace="handleSellReplace"
         />
         <PortfolioView v-else-if="activeCard === 'portfolio'"
-          :portfolios="portfolios"
+          :portfolio-groups="portfolioGroups"
+          :active-group-id="activeGroupId"
           @liquidate="handleLiquidate"
           @replace="handleReplace"
+          @add-group="handleAddGroup"
+          @remove-group="handleRemoveGroup"
+          @rename-group="handleRenameGroup"
+          @switch-group="handleSwitchGroup"
+          @view-company="handleViewCompany"
+          @toggle-auto-trade="handleToggleAutoTrade"
+          :auto-trade-state="autoTradeState"
+          :trade-log="tradeLog"
         />
         <div v-else class="text-center animate-fade-in-delayed">
           <h2 class="text-4xl font-black italic tracking-tighter text-white uppercase opacity-20">{{ activeCard }} MODULE STANDBY</h2>
@@ -31,7 +45,7 @@
 
     <!-- 지갑 바 -->
     <div
-      class="wallet-bar relative z-10 w-full max-w-[1100px] rounded-t-[2.5rem] shadow-[0_-30px_80px_rgba(0,0,0,0.95)] border-t border-x border-white/5 flex animate-slide-up-wallet overflow-visible"
+      class="wallet-bar relative z-10 w-full max-w-[1100px] rounded-t-[2.5rem] border-t border-x border-white/5 flex animate-slide-up-wallet overflow-visible"
     >
       <!-- 가죽 질감 -->
       <div class="absolute inset-0 opacity-60 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')] rounded-t-[2.5rem] pointer-events-none"></div>
@@ -128,50 +142,161 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { LucideUser, LucideSparkles, LucideBuilding2, LucideFolder } from 'lucide-vue-next';
 import ProfileView   from './ProfileView.vue';
 import FeedView      from './FeedView.vue';
 import CompanyView   from './CompanyView.vue';
 import PortfolioView from './PortfolioView.vue';
+// TODO: 아래 mock import를 실제 API 호출(pinia store 등)로 교체
+import { MOCK_PORTFOLIOS, MOCK_COMPANIES } from '@/mock/data.js';
 
 const props = defineProps({
   user: { type: Object, required: true, default: () => ({ name: '', style: '', totalAsset: '' }) }
 });
 
 const emit = defineEmits(['toggle-wallet', 'toggle-portfolio']);
-const activeCard = ref('profile');
+const activeCard  = ref('profile');
+const viewTicker  = ref(null);
 
-// 포트폴리오 데이터
-const portfolios = ref([
-  { id: 1, company: '삼성전자',       ticker: '005930', sector: '반도체', shares: 50, avgPrice: 68000,  currentPrice: 72400,  change:  6.47, color: '#1428A0', weight: 32 },
-  { id: 2, company: 'SK하이닉스',    ticker: '000660', sector: '반도체', shares: 20, avgPrice: 145000, currentPrice: 158000, change:  8.97, color: '#BE0000', weight: 28 },
-  { id: 3, company: 'NAVER',          ticker: '035420', sector: '인터넷', shares: 10, avgPrice: 180000, currentPrice: 172000, change: -4.44, color: '#03C75A', weight: 15 },
-  { id: 4, company: 'LG에너지솔루션', ticker: '373220', sector: '배터리', shares:  5, avgPrice: 420000, currentPrice: 380000, change: -9.52, color: '#A50034', weight: 17 },
-  { id: 5, company: 'Kakao',          ticker: '035720', sector: '인터넷', shares: 30, avgPrice: 52000,  currentPrice: 48500,  change: -6.73, color: '#3A1D1D', weight:  8 },
+// TODO: [API] GET /api/portfolio/groups 로 교체
+const portfolioGroups = ref([
+  { id: 1, name: '포트폴리오1', stocks: [...MOCK_PORTFOLIOS] }
 ]);
+const activeGroupId = ref(1);
+const activeGroup   = computed(() => portfolioGroups.value.find(g => g.id === activeGroupId.value));
 
 // 교체 모드 상태
 const replaceMode  = ref(false);
 const replaceIndex = ref(-1);
+const replaceStock = ref(null);
 
+// ── 포트폴리오 그룹 관리 ───────────────────────
+const getNextGroupName = () => {
+  const used = portfolioGroups.value
+    .map(g => parseInt(g.name.replace('포트폴리오', '')))
+    .filter(n => !isNaN(n));
+  for (let n = 1; ; n++) { if (!used.includes(n)) return `포트폴리오${n}`; }
+};
+
+const handleAddGroup = () => {
+  const id = Date.now();
+  portfolioGroups.value.push({ id, name: getNextGroupName(), stocks: [] });
+  activeGroupId.value = id;
+};
+
+const handleRemoveGroup = (id) => {
+  const idx = portfolioGroups.value.findIndex(g => g.id === id);
+  if (idx < 0 || portfolioGroups.value.length <= 1) return;
+  portfolioGroups.value.splice(idx, 1);
+  if (activeGroupId.value === id)
+    activeGroupId.value = portfolioGroups.value[Math.max(0, idx - 1)].id;
+};
+
+const handleRenameGroup = (id, name) => {
+  const g = portfolioGroups.value.find(g => g.id === id);
+  if (g) g.name = name;
+};
+
+const handleSwitchGroup = (id) => { activeGroupId.value = id; };
+
+// ── 종목 관리 ──────────────────────────────────
 const handleLiquidate = (index) => {
-  portfolios.value.splice(index, 1);
+  activeGroup.value?.stocks.splice(index, 1);
 };
 
 const handleReplace = (index) => {
   replaceIndex.value = index;
+  replaceStock.value = activeGroup.value?.stocks[index] ?? null;
   replaceMode.value  = true;
   activeCard.value   = 'company';
 };
 
 const handleCompanySelect = (company) => {
-  if (replaceIndex.value >= 0) {
-    portfolios.value.splice(replaceIndex.value, 1, company);
-  }
+  if (replaceIndex.value >= 0 && activeGroup.value)
+    activeGroup.value.stocks.splice(replaceIndex.value, 1, company);
   replaceMode.value  = false;
   replaceIndex.value = -1;
+  replaceStock.value = null;
   activeCard.value   = 'portfolio';
+};
+
+const handleCompanyAdd = (company) => {
+  activeGroup.value?.stocks.push(company);
+};
+
+const handleSellReplace = () => {
+  if (replaceIndex.value >= 0 && activeGroup.value)
+    activeGroup.value.stocks.splice(replaceIndex.value, 1);
+  replaceMode.value  = false;
+  replaceIndex.value = -1;
+  replaceStock.value = null;
+  activeCard.value   = 'portfolio';
+};
+
+const handleViewCompany = (ticker) => {
+  viewTicker.value  = ticker;
+  activeCard.value  = 'company';
+};
+
+const handleCompanyBack = () => {
+  viewTicker.value = null;
+  activeCard.value = 'portfolio';
+};
+
+// ── 자동매매 ───────────────────────────────────
+const BUY_THRESHOLD  = 70;  // 퀀트스코어 ≥ 70 → 매수
+const SELL_THRESHOLD = 45;  // 퀀트스코어 < 45 → 청산
+
+const autoTradeState = ref('off'); // 'off' | 'analyzing' | 'on'
+const tradeLog       = ref(null);
+
+const runAutoTrade = () => {
+  const stocks = activeGroup.value?.stocks;
+  if (!stocks) return;
+
+  const bought = [];
+  const sold   = [];
+
+  // 낮은 점수 종목 청산
+  for (let i = stocks.length - 1; i >= 0; i--) {
+    if ((stocks[i].quantScore ?? 50) < SELL_THRESHOLD) {
+      sold.push(stocks[i].company);
+      stocks.splice(i, 1);
+    }
+  }
+
+  // 높은 점수 미보유 종목 매수
+  const currentTickers = new Set(stocks.map(s => s.ticker));
+  for (const c of MOCK_COMPANIES) {
+    if (c.quantScore >= BUY_THRESHOLD && !currentTickers.has(c.ticker)) {
+      bought.push(c.name);
+      stocks.push({
+        id: Date.now() + c.id,
+        company: c.name, ticker: c.ticker, sector: c.sector,
+        shares: 10, avgPrice: c.price, currentPrice: c.price,
+        change: c.change, color: c.color, weight: 10,
+        quantScore: c.quantScore,
+      });
+    }
+  }
+
+  if (bought.length || sold.length) {
+    tradeLog.value = { bought, sold };
+    setTimeout(() => { tradeLog.value = null; }, 5000);
+  }
+};
+
+const handleToggleAutoTrade = () => {
+  if (autoTradeState.value !== 'off') {
+    autoTradeState.value = 'off';
+    return;
+  }
+  autoTradeState.value = 'analyzing';
+  setTimeout(() => {
+    runAutoTrade();
+    autoTradeState.value = 'on';
+  }, 1400);
 };
 </script>
 

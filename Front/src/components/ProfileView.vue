@@ -41,12 +41,12 @@
           <div class="flex flex-col gap-2">
             <p class="text-sm lg:text-base text-gray-400 font-bold uppercase tracking-widest">Status</p>
             <p class="text-3xl lg:text-4xl font-extrabold text-green-600 flex items-center gap-3">
-              <span class="w-4 h-4 lg:w-5 lg:h-5 rounded-full bg-green-500 animate-pulse"></span> ACTIVE
+              <span class="w-4 h-4 lg:w-5 lg:h-5 rounded-full bg-green-500 animate-pulse"></span> {{ status }}
             </p>
           </div>
           <div class="flex flex-col gap-2 lg:col-span-1 col-span-2">
             <p class="text-sm lg:text-base text-gray-400 font-bold uppercase tracking-widest">Issue Date</p>
-            <p class="text-3xl lg:text-4xl font-extrabold text-gray-800">2026. 04. 14</p>
+            <p class="text-3xl lg:text-4xl font-extrabold text-gray-800">{{ issueDate }}</p>
           </div>
           <div class="flex flex-col gap-2 col-span-2 lg:col-span-3">
             <p class="text-sm lg:text-base text-gray-400 font-bold uppercase tracking-widest">Total Registered Assets</p>
@@ -60,6 +60,8 @@
 
 <script setup>
 import { LucideUser } from 'lucide-vue-next';
+// TODO: 아래 mock import를 실제 API 호출(pinia store 등)로 교체
+import { MOCK_USER } from '@/mock/data.js';
 
 defineProps({
   user: {
@@ -68,6 +70,10 @@ defineProps({
     default: () => ({ name: '', style: '', totalAsset: '' })
   }
 });
+
+// TODO: [API] GET /api/user/profile 에서 issueDate, status 가져오기
+const issueDate = MOCK_USER.issueDate;
+const status    = MOCK_USER.status;
 </script>
 
 <style scoped>
