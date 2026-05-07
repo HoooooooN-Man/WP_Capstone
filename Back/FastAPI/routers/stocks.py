@@ -7,11 +7,22 @@ routers/stocks.py
 
 from __future__ import annotations
 
+import os
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from ..services import data as svc
+from ..services.ab_split import resolve_variant
 from ..services.confidence import annotate_confidence
+from ..services.coverage import filter_insufficient_coverage, load_ticker_days
+from ..services.diversify import (
+    make_correlation_sim,
+    make_embedding_sim,
+    make_sector_sim,
+    mmr_rerank,
+    normalize_diversify,
+)
+from ..services.market_events import detect_market_regime
 from ..services.personalization import rerank_for_cohort
 from ..schemas.meta import attach_meta
 from ..schemas.stocks import (
@@ -70,6 +81,7 @@ def get_recommendations(
     min_score:     float           = Query(0.0,       ge=0, le=100, description="최소 점수 필터"),
     strategy:      str             = Query("base",    description="선별 전략: base(기본) | s3(v9 S3: prob Top-150 + 레짐 신호)"),
     cohort:        Optional[str]   = Query(None,      description="W2 — conservative/balanced/growth/dividend/value (기본 None=balanced)"),
+    diversify:     Optional[str]   = Query(None,      description="W3 — none(default)/correlation(권장)/sector/embedding"),
 ):
     """
     날짜·섹터·점수 필터로 추천 종목을 내림차순으로 반환합니다.
@@ -84,14 +96,26 @@ def get_recommendations(
     if strategy not in ("base", "s3"):
         strategy = "base"
 
+    # W7B: model_version="latest" 일 때 user/session hash 로 A/B 분기.
+    # env AB_SPLIT 미설정 시 default "latest:100" — 분배 OFF, 기존 동작 유지.
+    split = resolve_variant(
+        user_id=request.headers.get("x-user-id"),
+        session_id=request.headers.get("x-session-id"),
+        override=model_version,
+    )
+    effective_version = split.variant
+
     # W2: cohort 명시 시 reranking 후 일부가 필터링 될 수 있어 더 큰 풀로 가져온 뒤 자름.
-    # cohort=None 일 때는 기존 동작 그대로 (캐시 키 호환성 유지 — CLAUDE.md §반드시 지킬 것 2번).
-    fetch_top_k = max(top_k * 3, 100) if (top_k > 0 and cohort) else top_k
+    # W3: diversify 활성 시 MMR 후보 풀이 커야 다양성 효과 — 동일 패턴.
+    # cohort·diversify None 일 때는 기존 동작 그대로 (캐시 키 호환성 — CLAUDE.md §반드시 지킬 것 2번).
+    diversify_mode = normalize_diversify(diversify)
+    needs_pool = bool(cohort) or (diversify_mode != "none")
+    fetch_top_k = max(top_k * 3, 100) if (top_k > 0 and needs_pool) else top_k
 
     try:
         rows = svc.get_recommendations(
             date=date,
-            model_version=model_version,
+            model_version=effective_version,
             sector=sector,
             top_k=fetch_top_k,
             min_score=min_score,
@@ -105,17 +129,54 @@ def get_recommendations(
 
     rows = annotate_confidence(rows)
 
+    # W8 신규 상장 60일 룰. ticker_days 조회 → 미달 종목 제외.
+    coverage_excluded = 0
+    if rows:
+        from ..core.config import DUCKDB_PATH as _DDB_W8
+        ref_date = rows[0].get("date") or date
+        try:
+            tdays = load_ticker_days(
+                str(_DDB_W8), [r["ticker"] for r in rows], as_of_date=ref_date,
+            )
+            rows, coverage_excluded = filter_insufficient_coverage(rows, tdays)
+        except Exception:
+            # 데이터 부재 등 — graceful no-op (기존 동작 유지).
+            coverage_excluded = 0
+
     # W2 cohort 후처리. 컬럼 부재 시 graceful no-op (현 응답엔 finance/volatility 없음).
-    rows = rerank_for_cohort(rows, cohort, top_k=top_k)
+    # cohort 와 diversify 가 같이 명시되면 cohort 가 더 큰 풀에서 자르지 않게 *cohort 자르기 보류*.
+    cohort_top_k = 0 if (diversify_mode != "none" and top_k > 0) else top_k
+    rows = rerank_for_cohort(rows, cohort, top_k=cohort_top_k)
 
     if not rows:
         raise HTTPException(
             status_code=404, detail="선택한 정렬 조건에 맞는 종목이 없습니다.",
         )
 
+    # W3 MMR 다양성 후처리. 권장 활성 모드 = correlation (sanity 검증된 유일 sim).
+    if diversify_mode != "none" and len(rows) > 1:
+        if diversify_mode == "sector":
+            sim_func = make_sector_sim(rows)
+        elif diversify_mode == "correlation":
+            from ..core.config import DUCKDB_PATH as _DDB
+            tickers = [r["ticker"] for r in rows]
+            sim_func = make_correlation_sim(tickers, duckdb_path=str(_DDB))
+        elif diversify_mode == "embedding":
+            from ..core.config import DUCKDB_PATH as _DDB
+            tickers = [r["ticker"] for r in rows]
+            ckpt = os.environ.get("EMB_CHECKPOINT",
+                                  r"E:\Capstone Data\project_data\models\emb_v1.pt")
+            sim_func = make_embedding_sim(tickers, checkpoint_path=ckpt, duckdb_path=str(_DDB))
+        else:
+            sim_func = None
+        if sim_func is not None:
+            rows = mmr_rerank(rows, sim=sim_func, top_k=top_k or len(rows))
+
     items = [StockScore(**r) for r in rows]
     resolved_date = items[0].date if items else (date or "")
-    resolved_ver  = items[0].model_version if items else model_version
+    # W7B: 응답 메타의 model_version 은 *실제 점수 출처* (items[0]) 우선.
+    # items 가 비면 split.variant 그대로 (분배 결과 알리기).
+    resolved_ver  = items[0].model_version if items else effective_version
 
     payload = StockScoreList(
         date=resolved_date,
@@ -123,7 +184,16 @@ def get_recommendations(
         total=len(items),
         items=items,
     )
-    # W1C: impression_id 자동. W2: cohort 메타에 echo (사용자가 명시한 라벨 그대로).
+    # W8 시장 레짐 (KOSPI 직전 변화율). graceful — 데이터 부재 시 normal.
+    try:
+        from ..core.config import DUCKDB_PATH as _DDB_W8R
+        regime = detect_market_regime(
+            duckdb_path=str(_DDB_W8R), as_of_date=resolved_date or None,
+        )
+    except Exception:
+        regime = "normal"
+
+    # W1C: impression_id 자동. W2: cohort. W7B: ab_*. W3: diversify. W8: coverage·regime.
     return attach_meta(
         payload,
         request,
@@ -131,6 +201,11 @@ def get_recommendations(
         as_of_date=resolved_date,
         is_impression=True,
         cohort=cohort or None,
+        diversify=diversify_mode if diversify_mode != "none" else None,
+        ab_bucket=split.bucket,
+        ab_via=split.via,
+        coverage_excluded=coverage_excluded if coverage_excluded > 0 else None,
+        market_regime=regime,
     )
 
 

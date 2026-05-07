@@ -57,6 +57,10 @@ class ResponseMeta(BaseModel):
     cohort:            Optional[str] = None  # W2 이후 채워짐
     target_label:      Optional[str] = None  # W6 멀티라벨 (기본은 "y_abs_20d"), W6 전엔 None
     diversify:         Optional[str] = None  # W3 — "embedding"/"correlation"/"sector"/"none"
+    ab_bucket:         Optional[int] = None  # W7B — 0~99 hash bucket (override 시 -1)
+    ab_via:            Optional[str] = None  # W7B — "override" | "hash" | "fallback"
+    coverage_excluded: Optional[int] = None  # W8 — 60일 룰 제외 종목 수
+    market_regime:     Optional[str] = None  # W8 — "normal" | "extreme_volatility"
 
 
 class WithMeta(BaseModel):
@@ -83,6 +87,10 @@ def make_meta(
     cohort:            Optional[str] = None,
     target_label:      Optional[str] = None,
     diversify:         Optional[str] = None,
+    ab_bucket:         Optional[int] = None,
+    ab_via:            Optional[str] = None,
+    coverage_excluded: Optional[int] = None,
+    market_regime:     Optional[str] = None,
 ) -> ResponseMeta:
     """미들웨어가 채워둔 request_id 를 끌어와 메타를 만든다.
 
@@ -104,6 +112,10 @@ def make_meta(
         cohort=cohort,
         target_label=target_label,
         diversify=diversify,
+        ab_bucket=ab_bucket,
+        ab_via=ab_via,
+        coverage_excluded=coverage_excluded,
+        market_regime=market_regime,
     )
 
 
@@ -120,6 +132,10 @@ def attach_meta(
     cohort:            Optional[str] = None,
     target_label:      Optional[str] = None,
     diversify:         Optional[str] = None,
+    ab_bucket:         Optional[int] = None,
+    ab_via:            Optional[str] = None,
+    coverage_excluded: Optional[int] = None,
+    market_regime:     Optional[str] = None,
 ) -> T:
     """응답 모델 인스턴스에 meta 를 부착해 그대로 반환."""
     payload.meta = make_meta(
@@ -133,5 +149,9 @@ def attach_meta(
         cohort=cohort,
         target_label=target_label,
         diversify=diversify,
+        ab_bucket=ab_bucket,
+        ab_via=ab_via,
+        coverage_excluded=coverage_excluded,
+        market_regime=market_regime,
     )
     return payload
