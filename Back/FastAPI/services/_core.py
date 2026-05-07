@@ -193,7 +193,21 @@ def news_con() -> duckdb.DuckDBPyConnection | None:
 
 
 def resolve_version(model_version: str) -> str:
-    """'latest' → 실제 버전 문자열."""
+    """'latest' → 실제 버전 문자열.
+
+    **차기 사이클 종료 시점 박제** — latest 의 자동 전환 동작:
+      scores 테이블의 inserted_at 가장 최신 레코드 → 그 model_version.
+      *새 모델을 precompute_scores 로 적재하면 latest 가 자동으로 그 모델로 전환됨.*
+      예: v9 운영 중 v11a_prime 적재 → 다음 추천 호출부터 latest=v11a_prime.
+
+    이게 *의도된 동작* (최신 모델로 자동 운영) 이지만 명시 결정 박제 없이 변경되므로:
+      - W7B AB_SPLIT 으로 단계적 전환 권장 (canary 10% → 50/50 → 100%).
+      - 차차기 사이클에서 트래픽 늘면 `DEFAULT_MODEL_VERSION` 환경변수 도입 검토.
+        그 후 latest 는 명시적 default 의 alias 가 되도록.
+
+    rollback: `DELETE FROM scores WHERE model_version='<new>'` 또는
+    inserted_at 을 과거로 갱신해 이전 버전이 latest 되도록.
+    """
     mv = (model_version or "").strip()
     if mv and mv.lower() != "latest":
         return mv

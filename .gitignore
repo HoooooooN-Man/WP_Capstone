@@ -35,6 +35,10 @@ Back/go/go-news-kospi200-pipeline/.venv/
 *.exe
 *.out
 
+# 학습·추론 로그 (W5+ 차기 사이클)
+logs/
+**/logs/
+
 # Learning
 Learning/.venv/
 Learning/__pycache__/
