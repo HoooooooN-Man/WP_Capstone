@@ -1,5 +1,10 @@
 <template>
-  <div class="w-full h-full bg-gradient-to-br from-[#1f3756] to-[#14253a] rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-drop-in border border-white/10 text-white relative">
+  <!-- 카드 루트 -->
+  <div class="w-full h-full bg-gradient-to-br from-[#1f3756] to-[#14253a] rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] overflow-hidden border border-white/10 text-white relative animate-drop-in">
+
+      <!-- ── 앞면 ── -->
+      <div class="absolute inset-0 flex flex-col fin-face"
+           :class="showFinancial ? 'fin-face--hide' : 'fin-face--show'">
 
     <!-- 헤더 -->
     <div class="px-6 pt-5 pb-3 border-b border-white/15 flex-shrink-0">
@@ -17,6 +22,13 @@
         <div v-if="replaceMode && !detailCompany" class="px-2.5 py-1 bg-emerald-500/25 rounded-full border border-emerald-500/40">
           <span class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">교체 선택 중</span>
         </div>
+        <!-- 재무제표 버튼: 상세 뷰 + 일반 모드에서만 -->
+        <button v-if="detailCompany && !replaceMode"
+                @click="showFinancial = true"
+                class="ml-auto px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/15 text-[10px] text-white/55 hover:bg-white/14 hover:text-white/80 transition-all font-bold tracking-wide flex-shrink-0 flex items-center gap-1">
+          <LucideBarChart2 class="w-3 h-3" />
+          재무제표
+        </button>
       </div>
       <p v-if="replaceMode && !detailCompany" class="text-[10px] text-white/35 mt-1">교체할 종목을 선택하세요</p>
     </div>
@@ -33,7 +45,39 @@
           {{ detailCompany.change >= 0 ? '+' : '' }}{{ detailCompany.change }}%
         </div>
       </div>
-      <div class="h-1 rounded-full" :style="{ background: detailCompany.color }"></div>
+      <div class="h-px rounded-full opacity-50" :style="{ background: detailCompany.color }"></div>
+
+      <!-- ── 개요 주가 차트 (클릭 → 상세 차트 모달) ── -->
+      <!-- [API] 실제 주가 데이터 연동 후 generateMockOHLC 제거 -->
+      <div @click="showChart = true"
+           class="relative rounded-xl overflow-hidden cursor-pointer group border border-white/8 hover:border-white/18 transition-all bg-black/25">
+        <svg class="w-full" viewBox="0 0 300 72" preserveAspectRatio="none" style="height:68px; display:block;">
+          <defs>
+            <linearGradient :id="`og-${detailCompany.ticker}`" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   :stop-color="detailCompany.color" stop-opacity="0.50" />
+              <stop offset="100%" :stop-color="detailCompany.color" stop-opacity="0.02" />
+            </linearGradient>
+          </defs>
+          <path :d="overviewPaths.area" :fill="`url(#og-${detailCompany.ticker})`" />
+          <path :d="overviewPaths.line" fill="none"
+                :stroke="detailCompany.color" stroke-width="1.6" stroke-linejoin="round" opacity="0.95" />
+        </svg>
+        <!-- 호버 오버레이 -->
+        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/35">
+          <span class="text-[10px] text-white/80 bg-black/55 px-3 py-1.5 rounded-full border border-white/15 font-semibold tracking-wide">
+            상세 차트 보기 →
+          </span>
+        </div>
+        <!-- 기간 레이블 -->
+        <div class="absolute top-1.5 left-2.5">
+          <span class="text-[7px] text-white/25 font-mono">3M</span>
+        </div>
+        <!-- 임시 데이터 표시 -->
+        <div class="absolute top-1.5 right-2.5">
+          <span class="text-[7px] text-white/20">임시</span>
+        </div>
+      </div>
+
       <div class="bg-white/5 rounded-xl p-3 border border-white/8">
         <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1.5">기업 소개</p>
         <p class="text-sm text-white/80 leading-relaxed">{{ detailCompany.description }}</p>
@@ -124,6 +168,16 @@
         </div>
       </div>
     </div>
+
+    <!-- 상세 주가 차트 모달 -->
+    <transition name="order-modal">
+      <StockChartModal
+        v-if="showChart && detailCompany"
+        :company="detailCompany"
+        :all-data="detailChartData"
+        @close="showChart = false"
+      />
+    </transition>
 
     <!-- 교체 비교 모달 -->
     <transition name="order-modal">
@@ -399,14 +453,185 @@
       </div>
     </transition>
 
-  </div>
+      </div><!-- /앞면 -->
+
+      <!-- ── 뒷면: 재무제표 ── -->
+      <div class="absolute inset-0 bg-gradient-to-br from-[#111c2c] to-[#090f1a] flex flex-col overflow-hidden fin-face"
+           :class="showFinancial ? 'fin-face--show' : 'fin-face--hide'">
+
+        <!-- 헤더 -->
+        <div class="px-5 pt-4 pb-3 border-b border-white/12 flex-shrink-0">
+          <div class="flex items-center gap-2.5">
+            <button @click="showFinancial = false"
+                    class="flex items-center gap-1 text-white/50 hover:text-white/85 transition-colors flex-shrink-0">
+              <LucideChevronLeft class="w-5 h-5" />
+            </button>
+            <div class="flex-1 min-w-0">
+              <p class="text-[8px] text-white/30 font-mono uppercase tracking-[0.2em]">Financial Statements</p>
+              <h2 class="text-xl font-black tracking-tight leading-tight truncate">{{ detailCompany?.name }}</h2>
+            </div>
+            <!-- [API] 실제 재무 데이터 연동 후 제거 -->
+            <span class="text-[7px] text-white/18 flex-shrink-0">임시 데이터</span>
+          </div>
+        </div>
+
+        <!-- 탭 -->
+        <div class="flex px-4 gap-1 pt-2.5 pb-0 flex-shrink-0">
+          <button v-for="tab in FIN_TABS" :key="tab.key"
+                  @click="finTab = tab.key"
+                  class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all text-center"
+                  :class="finTab === tab.key ? 'bg-white/14 text-white' : 'text-white/30 hover:text-white/60'">
+            {{ tab.label }}
+          </button>
+        </div>
+
+        <!-- 단위 레이블 -->
+        <div class="px-5 pt-2 pb-0.5 flex-shrink-0 flex items-center justify-between">
+          <span class="text-[8px] text-white/25">(단위: 억원)</span>
+          <span class="text-[8px] text-white/25 font-mono" v-if="finData">{{ detailCompany?.ticker }}</span>
+        </div>
+
+        <!-- 재무 데이터 본문 -->
+        <div class="flex-1 overflow-y-auto px-4 pb-4 pt-1">
+
+          <!-- ─── 손익계산서 ─── -->
+          <template v-if="finTab === 'income' && finData">
+            <!-- 연도 헤더 -->
+            <div class="grid grid-cols-4 gap-1 pb-1.5 mb-0.5 border-b border-white/10">
+              <span></span>
+              <span v-for="y in finData.years" :key="y"
+                    class="text-[9px] text-white/40 font-mono text-right font-bold">{{ y }}</span>
+            </div>
+            <!-- 데이터 행 -->
+            <div v-for="row in incomeRows" :key="row.key"
+                 class="grid grid-cols-4 gap-1 py-2 border-b border-white/6 last:border-0"
+                 :class="row.hl ? 'bg-white/5 -mx-1 px-1 rounded-lg border-0 my-0.5' : ''">
+              <span class="text-[9px] text-white/45 leading-tight">{{ row.label }}</span>
+              <span v-for="(val, i) in row.values" :key="i"
+                    class="text-[9px] text-right font-bold tabular-nums"
+                    :class="row.color ? (val >= 0 ? 'text-green-300' : 'text-red-300') : 'text-white/82'">
+                {{ row.pct ? val + '%' : val.toLocaleString() }}
+              </span>
+            </div>
+            <!-- 매출액 미니 바 차트 -->
+            <div class="mt-4">
+              <p class="text-[8px] text-white/25 uppercase tracking-widest mb-2">매출액 추이</p>
+              <div class="flex items-end gap-2 h-14">
+                <div v-for="(d, i) in finData.income" :key="i"
+                     class="flex-1 flex flex-col items-center gap-1.5">
+                  <div class="w-full rounded-t-sm transition-all"
+                       :style="{ height: (d.revenue / maxRevenue * 46) + 'px',
+                                 background: detailCompany?.color ?? '#60a5fa',
+                                 opacity: 0.55 + i * 0.2 }">
+                  </div>
+                  <span class="text-[7px] text-white/28 font-mono">{{ d.year }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- ─── 재무상태표 ─── -->
+          <template v-else-if="finTab === 'balance' && finData">
+            <p class="text-[8px] text-white/28 mb-3">기준: {{ finData.years[2] }}년</p>
+            <!-- 자산 / 부채 / 자본 -->
+            <div v-for="row in balanceRows" :key="row.key"
+                 class="flex items-center justify-between py-2.5 border-b border-white/6 last:border-0"
+                 :class="row.hl ? 'bg-white/5 -mx-1 px-1 rounded-lg border-0 my-0.5' : ''">
+              <span class="text-[10px] text-white/45">{{ row.label }}</span>
+              <span class="text-[11px] font-black tabular-nums"
+                    :class="row.hl ? 'text-white' : 'text-white/72'">
+                {{ row.val.toLocaleString() }}
+              </span>
+            </div>
+            <!-- 부채비율 게이지 -->
+            <div class="mt-4">
+              <div class="flex justify-between mb-1.5">
+                <span class="text-[9px] text-white/40">부채비율</span>
+                <span class="text-[10px] font-black"
+                      :class="finData.balance.debtRatio < 100 ? 'text-green-300' : finData.balance.debtRatio < 200 ? 'text-yellow-300' : 'text-red-300'">
+                  {{ finData.balance.debtRatio }}%
+                </span>
+              </div>
+              <div class="h-2 bg-white/8 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-700"
+                     :class="finData.balance.debtRatio < 100 ? 'bg-green-500/65' : finData.balance.debtRatio < 200 ? 'bg-yellow-500/65' : 'bg-red-500/65'"
+                     :style="{ width: Math.min(finData.balance.debtRatio / 3, 100) + '%' }">
+                </div>
+              </div>
+              <div class="flex justify-between mt-0.5">
+                <span class="text-[7px] text-white/18">0%</span>
+                <span class="text-[7px] text-white/18">300%</span>
+              </div>
+            </div>
+            <!-- 자본 구성 도넛 -->
+            <div class="mt-4 flex items-center gap-4">
+              <svg viewBox="0 0 60 60" class="w-14 h-14 flex-shrink-0">
+                <circle cx="30" cy="30" r="20" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10" />
+                <circle cx="30" cy="30" r="20" fill="none"
+                        :stroke="detailCompany?.color ?? '#60a5fa'"
+                        stroke-width="10" stroke-linecap="round"
+                        :stroke-dasharray="`${equityRatio * 125.6} 125.6`"
+                        transform="rotate(-90 30 30)" opacity="0.72" />
+              </svg>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                       :style="{ background: detailCompany?.color ?? '#60a5fa', opacity: 0.72 }"></div>
+                  <span class="text-[9px] text-white/55">자본 {{ (equityRatio * 100).toFixed(1) }}%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-sm bg-white/12 flex-shrink-0"></div>
+                  <span class="text-[9px] text-white/55">부채 {{ ((1 - equityRatio) * 100).toFixed(1) }}%</span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- ─── 현금흐름표 ─── -->
+          <template v-else-if="finTab === 'cashflow' && finData">
+            <div class="grid grid-cols-4 gap-1 pb-1.5 mb-0.5 border-b border-white/10">
+              <span></span>
+              <span v-for="y in finData.years" :key="y"
+                    class="text-[9px] text-white/40 font-mono text-right font-bold">{{ y }}</span>
+            </div>
+            <div v-for="row in cashflowRows" :key="row.key"
+                 class="grid grid-cols-4 gap-1 py-2 border-b border-white/6 last:border-0"
+                 :class="row.key === 'net' ? 'bg-white/5 -mx-1 px-1 rounded-lg border-0 mt-0.5' : ''">
+              <span class="text-[9px] text-white/45">{{ row.label }}</span>
+              <span v-for="(val, i) in row.values" :key="i"
+                    class="text-[9px] text-right font-bold tabular-nums"
+                    :class="val >= 0 ? 'text-green-300' : 'text-red-300'">
+                {{ (val >= 0 ? '+' : '') + val.toLocaleString() }}
+              </span>
+            </div>
+            <!-- 영업활동 현금흐름 미니 바차트 -->
+            <div class="mt-4">
+              <p class="text-[8px] text-white/25 uppercase tracking-widest mb-2">영업활동 현금흐름</p>
+              <div class="flex items-end gap-2 h-14">
+                <div v-for="(d, i) in finData.cashflow" :key="i"
+                     class="flex-1 flex flex-col items-center gap-1.5">
+                  <div class="w-full rounded-t-sm"
+                       :style="{ height: (d.operating / maxOperating * 46) + 'px',
+                                 background: '#4ade80', opacity: 0.5 + i * 0.2 }">
+                  </div>
+                  <span class="text-[7px] text-white/28 font-mono">{{ d.year }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+        </div><!-- /재무 본문 -->
+      </div><!-- /뒷면 -->
+
+  </div><!-- /카드 루트 -->
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { LucidePlus, LucideCheck, LucideChevronRight, LucideChevronLeft } from 'lucide-vue-next';
+import { LucidePlus, LucideCheck, LucideChevronRight, LucideChevronLeft, LucideBarChart2 } from 'lucide-vue-next';
 // TODO: 아래 mock import를 실제 API 호출(pinia store 등)로 교체
-import { MOCK_COMPANIES } from '@/mock/data.js';
+import { MOCK_COMPANIES, generateMockOHLC } from '@/mock/data.js';
+import StockChartModal from './StockChartModal.vue';
 
 const props = defineProps({
   replaceMode:  { type: Boolean, default: false },
@@ -471,14 +696,49 @@ const confirmCompareOrder = () => {
   compareAction.value    = null;
 };
 
+// ── 상세 차트 ─────────────────────────────────
+// [API] detailChartData → GET /api/stocks/{ticker}/ohlcv 로 교체
+const showChart = ref(false);
+const detailChartData = computed(() => {
+  if (!detailCompany.value) return [];
+  return generateMockOHLC(detailCompany.value.ticker, detailCompany.value.price);
+});
+
+// 개요 스파크라인용: 마지막 60일 종가
+const overviewPrices = computed(() => detailChartData.value.slice(-60).map(d => d.close));
+
+const overviewPaths = computed(() => {
+  const prices = overviewPrices.value;
+  if (prices.length < 2) return { area: '', line: '' };
+  const W = 300, H = 72, PH = 10, PV = 8;
+  const uw = W - PH * 2, uh = H - PV * 2;
+  const minP = Math.min(...prices), maxP = Math.max(...prices);
+  const range = maxP - minP || 1;
+  const pts = prices.map((p, i) => {
+    const x = PH + (i / (prices.length - 1)) * uw;
+    const y = PV + (1 - (p - minP) / range) * uh;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const line = `M ${pts[0]} L ${pts.slice(1).join(' L ')}`;
+  const area = `${line} L ${(PH + uw).toFixed(1)},${H} L ${PH},${H} Z`;
+  return { area, line };
+});
+
 // ── 상세 뷰 ────────────────────────────────────
 watch(() => props.viewTicker, (ticker) => {
   if (ticker) detailCompany.value = companies.find(c => c.ticker === ticker) ?? null;
 }, { immediate: true });
 
-const openDetail  = (company) => { detailCompany.value = company; };
+const openDetail  = (company) => {
+  detailCompany.value = company;
+  showChart.value     = false;
+  showFinancial.value = false;
+  finTab.value        = 'income';
+};
 const closeDetail = () => {
   detailCompany.value = null;
+  showChart.value     = false;
+  showFinancial.value = false;
   if (props.viewTicker) emit('back');
 };
 
@@ -532,9 +792,133 @@ const buildPortfolioItem = (company) => ({
 const selectCompany = (company) => {
   emit('select-company', buildPortfolioItem(company));
 };
+
+// ── 재무제표 ─────────────────────────────────
+// [API] GET /api/financials/{ticker}/annual 로 교체
+const showFinancial = ref(false);
+const finTab        = ref('income');
+
+const FIN_TABS = [
+  { key: 'income',   label: '손익계산서' },
+  { key: 'balance',  label: '재무상태표' },
+  { key: 'cashflow', label: '현금흐름표' },
+];
+
+const finData = computed(() => {
+  const co = detailCompany.value;
+  if (!co) return null;
+  // marketCap 파싱: "443조" → 4430000억
+  const mcMatch = co.marketCap?.match(/(\d+)조/);
+  const mcBil   = mcMatch ? parseInt(mcMatch[1]) * 10000 : 10000;
+  // ticker 기반 결정론적 시드
+  let seed = co.ticker.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 1);
+  const rng = () => { seed = (seed * 1664525 + 1013904223) & 0x7fffffff; return seed / 0x7fffffff; };
+
+  const baseRev = mcBil * (0.28 + rng() * 0.44);
+  const years   = [2022, 2023, 2024];
+
+  const income = years.map(() => {
+    const rev  = Math.round(baseRev * (0.80 + rng() * 0.40));
+    const opM  = 0.04 + rng() * 0.18;
+    const netM = opM * (0.42 + rng() * 0.42);
+    return {
+      revenue:         rev,
+      operatingProfit: Math.round(rev * opM),
+      operatingMargin: +(opM  * 100).toFixed(1),
+      netIncome:       Math.round(rev * netM),
+      netMargin:       +(netM * 100).toFixed(1),
+    };
+  });
+
+  const assetBase        = mcBil * (0.65 + rng() * 1.0);
+  const liabRatio        = 0.25 + rng() * 0.42;
+  const totalAssets      = Math.round(assetBase);
+  const totalLiabilities = Math.round(assetBase * liabRatio);
+  const totalEquity      = totalAssets - totalLiabilities;
+
+  const cashflow = years.map(() => {
+    const op = Math.round(baseRev * (0.05 + rng() * 0.14));
+    return {
+      operating:  op,
+      investing: -Math.round(op * (0.22 + rng() * 0.48)),
+      financing: -Math.round(op * (0.07 + rng() * 0.28)),
+    };
+  });
+
+  return {
+    years,
+    income,
+    balance: { totalAssets, totalLiabilities, totalEquity,
+               debtRatio: Math.round((totalLiabilities / (totalEquity || 1)) * 100) },
+    cashflow,
+  };
+});
+
+const incomeRows = computed(() => {
+  if (!finData.value) return [];
+  const { income } = finData.value;
+  return [
+    { key: 'rev',  label: '매출액',     values: income.map(d => d.revenue),          color: false },
+    { key: 'op',   label: '영업이익',   values: income.map(d => d.operatingProfit),  color: true, hl: true },
+    { key: 'opM',  label: '영업이익률', values: income.map(d => d.operatingMargin),  color: true, pct: true },
+    { key: 'net',  label: '당기순이익', values: income.map(d => d.netIncome),        color: true },
+    { key: 'netM', label: '순이익률',   values: income.map(d => d.netMargin),        color: true, pct: true },
+  ];
+});
+
+const maxRevenue = computed(() =>
+  finData.value ? Math.max(...finData.value.income.map(d => d.revenue)) : 1
+);
+
+const balanceRows = computed(() => {
+  if (!finData.value) return [];
+  const { balance } = finData.value;
+  return [
+    { key: 'asset', label: '자산총계', val: balance.totalAssets,      hl: true  },
+    { key: 'liab',  label: '부채총계', val: balance.totalLiabilities, hl: false },
+    { key: 'eq',    label: '자본총계', val: balance.totalEquity,       hl: false },
+  ];
+});
+
+const equityRatio = computed(() => {
+  if (!finData.value) return 0.5;
+  return finData.value.balance.totalEquity / (finData.value.balance.totalAssets || 1);
+});
+
+const cashflowRows = computed(() => {
+  if (!finData.value) return [];
+  const { cashflow } = finData.value;
+  return [
+    { key: 'op',  label: '영업활동', values: cashflow.map(d => d.operating) },
+    { key: 'inv', label: '투자활동', values: cashflow.map(d => d.investing) },
+    { key: 'fin', label: '재무활동', values: cashflow.map(d => d.financing) },
+    { key: 'net', label: '순현금',   values: cashflow.map(d => d.operating + d.investing + d.financing) },
+  ];
+});
+
+const maxOperating = computed(() =>
+  finData.value ? Math.max(...finData.value.cashflow.map(d => d.operating)) : 1
+);
 </script>
 
 <style scoped>
+/* 재무제표 플립 */
+.fin-face {
+  transition: opacity 0.18s ease, transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center center;
+  pointer-events: auto;
+}
+.fin-face--show {
+  opacity: 1;
+  transform: perspective(1200px) rotateY(0deg);
+  pointer-events: auto;
+}
+.fin-face--hide {
+  opacity: 0;
+  transform: perspective(1200px) rotateY(90deg);
+  pointer-events: none;
+}
+
 .animate-drop-in { animation: drop-in 0.7s var(--ease-wallet) forwards; }
 
 .order-modal-enter-active { transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease; }

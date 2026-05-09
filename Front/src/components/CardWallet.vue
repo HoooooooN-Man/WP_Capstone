@@ -1,20 +1,34 @@
 <template>
-  <div class="card-wallet w-full min-h-screen flex flex-col items-center justify-end relative font-sans text-white overflow-hidden pb-0">
+  <div class="card-wallet w-full min-h-screen flex flex-col items-center justify-end relative font-sans overflow-hidden pb-0 transition-colors duration-300"
+       :class="darkMode ? 'text-white' : 'text-gray-900'">
 
-    <!-- 배경: AuthWallet과 동일 -->
-    <div class="fixed inset-0 z-[-1] overflow-hidden bg-gradient-to-br from-[#0a0804] via-[#060402] to-[#0d0a05]">
-      <div class="absolute w-[140vw] h-[80vh] bg-[#2a1e08] rounded-full blur-[160px] -top-[20vh] left-0 opacity-25"></div>
-      <div class="absolute w-[100vw] h-[60vh] bg-[#1a1208] rounded-full blur-[120px] -bottom-[10vh] right-0 opacity-20"></div>
-      <div class="absolute w-[60vw] h-[60vh] bg-[#3a2a0a] rounded-full blur-[100px] top-[20vh] right-[10vw] opacity-10"></div>
-      <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30"></div>
+    <!-- 배경 -->
+    <div class="fixed inset-0 z-[-1] overflow-hidden transition-colors duration-500"
+         :class="darkMode ? 'bg-gradient-to-br from-[#0a0804] via-[#060402] to-[#0d0a05]' : 'bg-gradient-to-br from-[#f0ebe0] via-[#e8e0d0] to-[#ede6d8]'">
+      <template v-if="darkMode">
+        <div class="absolute w-[140vw] h-[80vh] bg-[#2a1e08] rounded-full blur-[160px] -top-[20vh] left-0 opacity-25"></div>
+        <div class="absolute w-[100vw] h-[60vh] bg-[#1a1208] rounded-full blur-[120px] -bottom-[10vh] right-0 opacity-20"></div>
+        <div class="absolute w-[60vw] h-[60vh] bg-[#3a2a0a] rounded-full blur-[100px] top-[20vh] right-[10vw] opacity-10"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30"></div>
+      </template>
+      <template v-else>
+        <div class="absolute w-[140vw] h-[80vh] bg-[#e8d5b0] rounded-full blur-[160px] -top-[20vh] left-0 opacity-50"></div>
+        <div class="absolute w-[100vw] h-[60vh] bg-[#d4c090] rounded-full blur-[120px] -bottom-[10vh] right-0 opacity-30"></div>
+        <div class="absolute w-[60vw] h-[60vh] bg-[#f0e0c0] rounded-full blur-[100px] top-[20vh] right-[10vw] opacity-25"></div>
+      </template>
     </div>
 
     <!-- 메인 컨텐츠 -->
-    <div class="absolute top-[4%] bottom-[100px] left-[2%] right-[2%] flex justify-center items-center z-0">
-      <transition name="fade-scale" mode="out-in">
-        <ProfileView   v-if="activeCard === 'profile'"   :user="user" />
-        <FeedView      v-else-if="activeCard === 'feed'" />
-        <CompanyView   v-else-if="activeCard === 'company'"
+    <!-- absolute 래퍼 안에 각 뷰가 absolute inset-0으로 겹침 → mode 없이 동시 fade 가능 -->
+    <div class="absolute top-[4%] bottom-[100px] left-[2%] right-[2%] z-0">
+      <transition name="fade-scale">
+        <ProfileView   v-if="activeCard === 'profile'"   key="profile"
+          class="absolute inset-0"
+          :user="user" :dark-mode="darkMode" @toggle-dark-mode="darkMode = !darkMode" />
+        <FeedView      v-else-if="activeCard === 'feed'" key="feed"
+          class="absolute inset-0" />
+        <CompanyView   v-else-if="activeCard === 'company'" key="company"
+          class="absolute inset-0"
           :replace-mode="replaceMode"
           :replace-stock="replaceStock"
           :view-ticker="viewTicker"
@@ -23,7 +37,8 @@
           @back="handleCompanyBack"
           @sell-replace="handleSellReplace"
         />
-        <PortfolioView v-else-if="activeCard === 'portfolio'"
+        <PortfolioView v-else-if="activeCard === 'portfolio'" key="portfolio"
+          class="absolute inset-0"
           :portfolio-groups="portfolioGroups"
           :active-group-id="activeGroupId"
           @liquidate="handleLiquidate"
@@ -37,15 +52,16 @@
           :auto-trade-state="autoTradeState"
           :trade-log="tradeLog"
         />
-        <div v-else class="text-center animate-fade-in-delayed">
+        <div v-else key="standby" class="absolute inset-0 flex items-center justify-center animate-fade-in-delayed">
           <h2 class="text-4xl font-black italic tracking-tighter text-white uppercase opacity-20">{{ activeCard }} MODULE STANDBY</h2>
         </div>
       </transition>
     </div>
 
     <!-- 지갑 바 -->
+    <!-- ↓ [양쪽 여백 조정] max-w-[???px] 값을 바꾸면 지갑 전체 너비가 변합니다. 현재 860px -->
     <div
-      class="wallet-bar relative z-10 w-full max-w-[1100px] rounded-t-[2.5rem] border-t border-x border-white/5 flex animate-slide-up-wallet overflow-visible"
+      class="wallet-bar relative z-10 w-full max-w-[860px] rounded-t-[2.5rem] border-t border-x border-white/5 flex animate-slide-up-wallet overflow-visible"
     >
       <!-- 가죽 질감 -->
       <div class="absolute inset-0 opacity-60 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')] rounded-t-[2.5rem] pointer-events-none"></div>
@@ -54,6 +70,7 @@
       <div class="absolute top-3 left-4 right-4 bottom-0 border-t-2 border-l-2 border-r-2 border-dashed border-[#c9a227]/20 rounded-t-[2rem] pointer-events-none z-[2]"></div>
 
       <!-- 중앙 분리선 -->
+      <!-- ↓ [중간 그림자 조정] w-[??] 값을 바꾸면 중앙 분리선 양쪽 그림자 폭이 변합니다. 현재 w-6 -->
       <div class="absolute left-1/2 top-0 bottom-0 w-12 -translate-x-1/2 bg-gradient-to-r from-black/50 via-transparent to-black/50 pointer-events-none z-30"></div>
       <div class="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-black/70 pointer-events-none z-30"></div>
       <div class="absolute left-1/2 top-0 bottom-0 w-px ml-px -translate-x-1/2 bg-white/5 pointer-events-none z-30"></div>
@@ -66,6 +83,7 @@
 
           <!-- 슬롯 1: Profile (위 카드)
                홈 라인은 z-index 없음 → DOM 순서상 슬롯2 카드가 자연스럽게 위에 올라옴 -->
+          <!-- ↓ [카드 가로 폭 조정] w-[??%] 값을 바꾸면 각 열 안에서 카드 너비가 변합니다. 현재 74% -->
           <div class="w-[74%] flex-1 relative">
             <div
               @click="activeCard = 'profile'"
@@ -158,6 +176,7 @@ const props = defineProps({
 const emit = defineEmits(['toggle-wallet', 'toggle-portfolio']);
 const activeCard  = ref('profile');
 const viewTicker  = ref(null);
+const darkMode    = ref(true);
 
 // TODO: [API] GET /api/portfolio/groups 로 교체
 const portfolioGroups = ref([
