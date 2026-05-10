@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import threading
 import time as _time
 from typing import Any, Callable
@@ -192,25 +193,50 @@ def news_con() -> duckdb.DuckDBPyConnection | None:
     return _news_con_obj
 
 
+DEFAULT_MODEL_VERSION_ENV = "DEFAULT_MODEL_VERSION"
+
+
+def _model_version_exists(version: str) -> bool:
+    """scores 테이블에 해당 model_version 행이 있는지 빠른 EXISTS 체크."""
+    try:
+        row = con().execute(
+            "SELECT 1 FROM scores WHERE model_version=? LIMIT 1", [version],
+        ).fetchone()
+    except Exception:
+        return False
+    return row is not None
+
+
 def resolve_version(model_version: str) -> str:
     """'latest' → 실제 버전 문자열.
 
-    **차기 사이클 종료 시점 박제** — latest 의 자동 전환 동작:
-      scores 테이블의 inserted_at 가장 최신 레코드 → 그 model_version.
-      *새 모델을 precompute_scores 로 적재하면 latest 가 자동으로 그 모델로 전환됨.*
-      예: v9 운영 중 v11a_prime 적재 → 다음 추천 호출부터 latest=v11a_prime.
+    **결정 흐름** (차차기 W1 — DEFAULT_MODEL_VERSION 명시화):
 
-    이게 *의도된 동작* (최신 모델로 자동 운영) 이지만 명시 결정 박제 없이 변경되므로:
-      - W7B AB_SPLIT 으로 단계적 전환 권장 (canary 10% → 50/50 → 100%).
-      - 차차기 사이클에서 트래픽 늘면 `DEFAULT_MODEL_VERSION` 환경변수 도입 검토.
-        그 후 latest 는 명시적 default 의 alias 가 되도록.
+    1. 호출자가 명시 버전 (예: "v9", "v11a_prime") 을 넘기면 그대로.
+    2. "latest" / 빈 값 / None 인 경우:
+       a. `DEFAULT_MODEL_VERSION` env var 가 설정돼있고 그 값이 scores 테이블에
+          존재하면 → env var 값. *명시적 default*.
+       b. env var 미설정 또는 그 값이 scores 에 부재 → inserted_at 가장 최신
+          (차기 사이클 동작 보존, fallback).
+       c. scores 비어있음 → RuntimeError.
 
-    rollback: `DELETE FROM scores WHERE model_version='<new>'` 또는
-    inserted_at 을 과거로 갱신해 이전 버전이 latest 되도록.
+    rollback (운영 default 변경 회피):
+      - 즉시: `unset DEFAULT_MODEL_VERSION` 또는 이전 버전으로 변경.
+      - 항구: scores 테이블에서 새 모델 DELETE 또는 inserted_at 과거화.
+
+    캐시: resolve_version() 결과가 캐시 키 (cache_key model_version 인자) 의 일부.
+    명시 default 가 바뀌면 새 키 → 기존 캐시는 자연 만료 (별도 invalidate 불필요).
     """
     mv = (model_version or "").strip()
     if mv and mv.lower() != "latest":
         return mv
+
+    # 차차기 W1 — env var 명시 default 우선.
+    env_default = (os.getenv(DEFAULT_MODEL_VERSION_ENV) or "").strip()
+    if env_default and _model_version_exists(env_default):
+        return env_default
+    # env var 부재 또는 부정합 → fallback (차기 동작 보존).
+
     # inserted_at 미기입(NULL) 레코드만 있어도 동작하도록 이중 폴백
     row = con().execute(
         """
