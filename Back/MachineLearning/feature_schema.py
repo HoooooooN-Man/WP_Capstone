@@ -54,6 +54,28 @@ FEATURE_NAMES_V11: tuple[str, ...] = _load_feature_names()
 FEATURE_CATEGORY_V11: dict[str, str] = {n: "numeric" for n in FEATURE_NAMES_V11}
 
 
+# ── 차차기 W5D — DART features schema (옵션 입력) ──────────────────────────
+
+# W5C dart_features.feature_column_names() 와 *반드시 일치*. test_dart_features
+# 가 교차 검증. 새 카테고리 추가·lookback 변경 시 양쪽 동시 갱신 필요.
+FEATURE_NAMES_V11_DART: tuple[str, ...] = (
+    "dart_buyback_30d_count",
+    "dart_buyback_30d_binary",
+    "dart_capital_increase_30d_count",
+    "dart_capital_increase_30d_binary",
+    "dart_earnings_report_30d_count",
+    "dart_earnings_report_30d_binary",
+)
+
+FEATURE_CATEGORY_V11_DART: dict[str, str] = {n: "numeric" for n in FEATURE_NAMES_V11_DART}
+
+# Full schema = base 67 + dart 6 = 73. v11 후속 모델 (W5E·차차차기) 가 사용.
+FEATURE_NAMES_V11_FULL: tuple[str, ...] = FEATURE_NAMES_V11 + FEATURE_NAMES_V11_DART
+FEATURE_CATEGORY_V11_FULL: dict[str, str] = {
+    **FEATURE_CATEGORY_V11, **FEATURE_CATEGORY_V11_DART,
+}
+
+
 # ── 검증 결과 자료구조 ─────────────────────────────────────────────────────
 
 @dataclass(frozen=True)

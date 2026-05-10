@@ -152,3 +152,35 @@ def test_schema_matches_real_allowlist():
     repo_root = Path(__file__).resolve().parents[1]
     allowlist = load_allowlist_json(repo_root / "v11a_prime_allowlist.json")
     assert allowlist == list(FEATURE_NAMES_V11)
+
+
+# ── 차차기 W5D — DART schema ───────────────────────────────────────────────
+
+def test_dart_schema_has_6_features():
+    from feature_schema import FEATURE_NAMES_V11_DART
+    assert len(FEATURE_NAMES_V11_DART) == 6
+
+
+def test_dart_schema_all_numeric():
+    from feature_schema import FEATURE_CATEGORY_V11_DART
+    assert all(cat == "numeric" for cat in FEATURE_CATEGORY_V11_DART.values())
+
+
+def test_dart_schema_matches_dart_features_module():
+    """W5D 핵심 — schema 와 dart_features.feature_column_names() 가 *정확히 일치*."""
+    from feature_schema import FEATURE_NAMES_V11_DART
+    from dart_features import feature_column_names
+    assert list(FEATURE_NAMES_V11_DART) == feature_column_names()
+
+
+def test_full_schema_is_base_plus_dart():
+    from feature_schema import (
+        FEATURE_NAMES_V11, FEATURE_NAMES_V11_DART, FEATURE_NAMES_V11_FULL,
+    )
+    assert len(FEATURE_NAMES_V11_FULL) == 73
+    assert FEATURE_NAMES_V11_FULL == FEATURE_NAMES_V11 + FEATURE_NAMES_V11_DART
+
+
+def test_full_schema_no_overlap():
+    from feature_schema import FEATURE_NAMES_V11, FEATURE_NAMES_V11_DART
+    assert not (set(FEATURE_NAMES_V11) & set(FEATURE_NAMES_V11_DART))

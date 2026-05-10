@@ -94,6 +94,7 @@ def build_features_table(
     *,
     categories: dict[str, tuple[str, ...]] = CATEGORY_TO_DETAIL_TY,
     lookback_days: int = DEFAULT_LOOKBACK_DAYS,
+    validate_against_schema: bool = True,
 ) -> pd.DataFrame:
     """
     전체 ticker 에 대해 features 일괄. 반환: ticker, date + 각 카테고리 count/binary.
@@ -121,9 +122,18 @@ def build_features_table(
         )
         feats.insert(0, "ticker", ticker)
         out_frames.append(feats)
-    return pd.concat(out_frames, ignore_index=True) if out_frames else pd.DataFrame(
+    out = pd.concat(out_frames, ignore_index=True) if out_frames else pd.DataFrame(
         columns=["ticker", "date"]
     )
+    # 차차기 W5D — 출력이 W4 schema 와 일치하는지 자체 검증 (default category 사용 시).
+    if (validate_against_schema and not out.empty
+            and categories is CATEGORY_TO_DETAIL_TY
+            and lookback_days == DEFAULT_LOOKBACK_DAYS):
+        from feature_schema import FEATURE_CATEGORY_V11_DART, assert_aligned
+        assert_aligned(out, where="dart_features.build_features_table",
+                       schema=FEATURE_CATEGORY_V11_DART,
+                       required=list(FEATURE_CATEGORY_V11_DART.keys()))
+    return out
 
 
 # ── DuckDB 어댑터 ──────────────────────────────────────────────────────────

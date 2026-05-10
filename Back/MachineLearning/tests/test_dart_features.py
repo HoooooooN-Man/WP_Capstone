@@ -183,3 +183,42 @@ def test_table_empty_target_returns_empty_with_schema():
     expected_cols = ["ticker", "date"] + feature_column_names()
     assert list(out.columns) == expected_cols
     assert len(out) == 0
+
+
+# ── W5D — schema 통과 검증 ─────────────────────────────────────────────────
+
+def test_build_features_table_passes_dart_schema():
+    """build_features_table 출력이 W4 feature_schema.FEATURE_CATEGORY_V11_DART 통과."""
+    from feature_schema import FEATURE_CATEGORY_V11_DART, assert_aligned
+    disc = pd.DataFrame([
+        {"stock_code": "005930", "rcept_dt": "20260420", "pblntf_detail_ty": "E001"},
+    ])
+    target = pd.DataFrame([{"ticker": "005930", "date": "2026-04-29"}])
+    out = build_features_table(disc, target)
+    # raise X — schema 통과
+    assert_aligned(out, where="test",
+                   schema=FEATURE_CATEGORY_V11_DART,
+                   required=list(FEATURE_CATEGORY_V11_DART.keys()))
+
+
+def test_build_features_table_self_validates_by_default():
+    """build_features_table 가 자체적으로 schema 검증 (validate_against_schema=True default).
+    정상 데이터 → 통과. (실패 케이스는 만들기 어려움 — 모든 path 가 numeric 보장.)"""
+    disc = pd.DataFrame([
+        {"stock_code": "005930", "rcept_dt": "20260420", "pblntf_detail_ty": "E001"},
+    ])
+    target = pd.DataFrame([{"ticker": "005930", "date": "2026-04-29"}])
+    # validate_against_schema 기본 True — assertion 안 raise 면 통과.
+    out = build_features_table(disc, target)
+    assert len(out) == 1
+
+
+def test_build_features_table_skip_validation():
+    """validate_against_schema=False — 검증 우회 (custom categories 사용 시)."""
+    disc = pd.DataFrame()
+    target = pd.DataFrame([{"ticker": "X", "date": "2026-04-29"}])
+    custom = {"foo": ("E001",)}
+    out = build_features_table(disc, target, categories=custom,
+                                validate_against_schema=False)
+    # custom category 컬럼명. schema 와 다르지만 검증 우회.
+    assert "dart_foo_30d_count" in out.columns
