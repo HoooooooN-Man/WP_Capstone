@@ -20,12 +20,12 @@
 
     <!-- 메인 컨텐츠 -->
     <!-- absolute 래퍼 안에 각 뷰가 absolute inset-0으로 겹침 → mode 없이 동시 fade 가능 -->
-    <div class="absolute top-[4%] bottom-[100px] left-[2%] right-[2%] z-0">
+    <div class="absolute top-[4%] bottom-[100px] left-[2%] right-[2%] z-0 overflow-hidden rounded-[2rem]">
       <transition name="fade-scale">
         <ProfileView   v-if="activeCard === 'profile'"   key="profile"
           class="absolute inset-0"
           :user="user" :dark-mode="darkMode" @toggle-dark-mode="darkMode = !darkMode" />
-        <FeedView      v-else-if="activeCard === 'feed'" key="feed"
+        <FlashCardView v-else-if="activeCard === 'feed'" key="feed"
           class="absolute inset-0" />
         <CompanyView   v-else-if="activeCard === 'company'" key="company"
           class="absolute inset-0"
@@ -163,7 +163,7 @@
 import { ref, computed } from 'vue';
 import { LucideUser, LucideSparkles, LucideBuilding2, LucideFolder } from 'lucide-vue-next';
 import ProfileView   from './ProfileView.vue';
-import FeedView      from './FeedView.vue';
+import FlashCardView from './FlashCardView.vue';
 import CompanyView   from './CompanyView.vue';
 import PortfolioView from './PortfolioView.vue';
 // TODO: 아래 mock import를 실제 API 호출(pinia store 등)로 교체

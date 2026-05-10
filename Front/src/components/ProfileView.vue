@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-full h-full rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] flex flex-col relative overflow-hidden animate-drop-in border transition-colors duration-300"
+    class="w-full h-full rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] flex flex-col relative overflow-hidden border transition-colors duration-300"
     :class="darkMode ? 'bg-[#181410] border-white/10 text-gray-100' : 'bg-[#fcfbf7] border-black/10 text-gray-800'"
   >
     <div class="absolute -right-32 -bottom-32 opacity-[0.02] pointer-events-none z-0">
@@ -301,9 +301,6 @@ const appInfo = [
 </script>
 
 <style scoped>
-.animate-drop-in {
-  animation: drop-in 0.7s var(--ease-wallet) forwards;
-}
 .animate-scan {
   animation: scan 3s linear infinite;
 }

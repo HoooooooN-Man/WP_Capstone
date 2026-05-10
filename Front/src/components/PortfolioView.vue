@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-full rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden animate-drop-in border border-white/10 text-white"
+  <div class="w-full h-full rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden border border-white/10 text-white"
     style="background: linear-gradient(160deg, #0f0c08 0%, #1a1408 100%)">
 
     <!-- 크롬 탭 바 -->
@@ -417,8 +417,6 @@ const endDragIfActive = () => { if (isDragging.value) endDrag(); };
 </script>
 
 <style scoped>
-.animate-drop-in { animation: drop-in 0.7s var(--ease-wallet) forwards; }
-
 .card-switch-enter-active,
 .card-switch-leave-active { transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
 .card-switch-enter-from  { opacity: 0; transform: translateX(12px) scale(0.97); }

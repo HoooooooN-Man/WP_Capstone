@@ -1,6 +1,6 @@
 <template>
   <!-- 카드 루트 -->
-  <div class="w-full h-full bg-gradient-to-br from-[#1f3756] to-[#14253a] rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] overflow-hidden border border-white/10 text-white relative animate-drop-in">
+  <div class="w-full h-full bg-gradient-to-br from-[#1f3756] to-[#14253a] rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] overflow-hidden border border-white/10 text-white relative">
 
       <!-- ── 앞면 ── -->
       <div class="absolute inset-0 flex flex-col fin-face"
@@ -33,90 +33,144 @@
       <p v-if="replaceMode && !detailCompany" class="text-[10px] text-white/35 mt-1">교체할 종목을 선택하세요</p>
     </div>
 
-    <!-- 기업 상세 뷰 -->
-    <div v-if="detailCompany" class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-      <div class="flex items-end justify-between">
-        <div>
-          <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1">{{ detailCompany.sector }}</p>
-          <p class="text-3xl font-black">₩{{ detailCompany.price.toLocaleString() }}</p>
-        </div>
-        <div class="px-3 py-1.5 rounded-xl text-sm font-bold"
-          :class="detailCompany.change >= 0 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'">
-          {{ detailCompany.change >= 0 ? '+' : '' }}{{ detailCompany.change }}%
-        </div>
-      </div>
-      <div class="h-px rounded-full opacity-50" :style="{ background: detailCompany.color }"></div>
+    <!-- 기업 상세 뷰 — 좌우 분할 레이아웃 -->
+    <div v-if="detailCompany" class="flex-1 flex flex-row overflow-hidden">
 
-      <!-- ── 개요 주가 차트 (클릭 → 상세 차트 모달) ── -->
-      <!-- [API] 실제 주가 데이터 연동 후 generateMockOHLC 제거 -->
-      <div @click="showChart = true"
-           class="relative rounded-xl overflow-hidden cursor-pointer group border border-white/8 hover:border-white/18 transition-all bg-black/25">
-        <svg class="w-full" viewBox="0 0 300 72" preserveAspectRatio="none" style="height:68px; display:block;">
-          <defs>
-            <linearGradient :id="`og-${detailCompany.ticker}`" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   :stop-color="detailCompany.color" stop-opacity="0.50" />
-              <stop offset="100%" :stop-color="detailCompany.color" stop-opacity="0.02" />
-            </linearGradient>
-          </defs>
-          <path :d="overviewPaths.area" :fill="`url(#og-${detailCompany.ticker})`" />
-          <path :d="overviewPaths.line" fill="none"
-                :stroke="detailCompany.color" stroke-width="1.6" stroke-linejoin="round" opacity="0.95" />
-        </svg>
-        <!-- 호버 오버레이 -->
-        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/35">
-          <span class="text-[10px] text-white/80 bg-black/55 px-3 py-1.5 rounded-full border border-white/15 font-semibold tracking-wide">
-            상세 차트 보기 →
+      <!-- ── 왼쪽: 주가 차트 (3/5) ── -->
+      <div class="flex-[3] flex flex-col border-r border-white/10 overflow-hidden min-w-0">
+
+        <!-- 기간 탭 -->
+        <div class="flex gap-0.5 px-3 pt-3 pb-1 flex-shrink-0">
+          <button v-for="p in ['1M','3M','6M','1Y']" :key="p"
+                  @click="chartPeriod = p"
+                  class="px-2 py-0.5 rounded text-[9px] font-bold transition-all duration-150"
+                  :class="chartPeriod === p ? 'bg-white/15 text-white' : 'text-white/30 hover:text-white/55'">
+            {{ p }}
+          </button>
+        </div>
+
+        <!-- 최고가 -->
+        <div class="px-3 flex-shrink-0">
+          <span class="text-[7.5px] font-mono" style="color:rgba(255,255,255,0.22)">
+            ₩{{ chartPriceRange.max.toLocaleString() }}
           </span>
         </div>
-        <!-- 기간 레이블 -->
-        <div class="absolute top-1.5 left-2.5">
-          <span class="text-[7px] text-white/25 font-mono">3M</span>
+
+        <!-- SVG 차트 -->
+        <div class="flex-1 px-2 cursor-pointer group" @click="showChart = true">
+          <svg class="w-full h-full" viewBox="0 0 300 200" preserveAspectRatio="none">
+            <defs>
+              <linearGradient :id="`dp-${detailCompany.ticker}`" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   :stop-color="detailCompany.color" stop-opacity="0.42" />
+                <stop offset="100%" :stop-color="detailCompany.color" stop-opacity="0.02" />
+              </linearGradient>
+            </defs>
+            <path :d="detailPaths.area" :fill="`url(#dp-${detailCompany.ticker})`" />
+            <path :d="detailPaths.line" fill="none"
+                  :stroke="detailCompany.color" stroke-width="1.8" stroke-linejoin="round" opacity="0.92" />
+          </svg>
         </div>
-        <!-- 임시 데이터 표시 -->
-        <div class="absolute top-1.5 right-2.5">
-          <span class="text-[7px] text-white/20">임시</span>
+
+        <!-- 최저가 + 시작 레이블 -->
+        <div class="px-3 pb-3 flex-shrink-0 flex justify-between items-end">
+          <span class="text-[7.5px] font-mono" style="color:rgba(255,255,255,0.22)">
+            ₩{{ chartPriceRange.min.toLocaleString() }}
+          </span>
+          <span class="text-[7.5px] font-mono" style="color:rgba(255,255,255,0.22)">{{ chartStartLabel }}</span>
         </div>
       </div>
 
-      <div class="bg-white/5 rounded-xl p-3 border border-white/8">
-        <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1.5">기업 소개</p>
-        <p class="text-sm text-white/80 leading-relaxed">{{ detailCompany.description }}</p>
+      <!-- ── 오른쪽: 정보 패널 (2/5) ── -->
+      <div class="flex-[2] flex flex-col overflow-hidden min-w-0">
+
+        <!-- 스크롤 영역 -->
+        <div class="flex-1 overflow-y-auto px-3 py-3 space-y-2.5">
+
+          <!-- 가격 + 등락 -->
+          <div>
+            <p class="text-[8px] uppercase tracking-widest mb-0.5" style="color:rgba(255,255,255,0.35)">
+              {{ detailCompany.sector }}
+            </p>
+            <p class="text-xl font-black leading-tight">₩{{ detailCompany.price.toLocaleString() }}</p>
+            <span class="inline-block mt-0.5 px-2 py-0.5 rounded-lg text-[10px] font-bold"
+                  :class="detailCompany.change >= 0 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'">
+              {{ detailCompany.change >= 0 ? '+' : '' }}{{ detailCompany.change }}%
+            </span>
+          </div>
+
+          <!-- 종목 컬러 구분선 -->
+          <div class="h-px rounded-full" :style="{ background: detailCompany.color, opacity: 0.45 }"></div>
+
+          <!-- 재무 지표 -->
+          <div class="space-y-1.5">
+            <div v-for="m in detailMetrics" :key="m.label" class="flex justify-between items-center">
+              <span class="text-[8.5px]" style="color:rgba(255,255,255,0.38)">{{ m.label }}</span>
+              <span class="text-[10px] font-bold">{{ m.value }}</span>
+            </div>
+          </div>
+
+          <!-- 구분선 -->
+          <div class="h-px" style="background:rgba(255,255,255,0.08)"></div>
+
+          <!-- 포트폴리오 보유 현황 -->
+          <div>
+            <p class="text-[7.5px] uppercase tracking-widest mb-1.5" style="color:rgba(255,255,255,0.3)">보유 현황</p>
+            <template v-if="mockHoldings.length > 0">
+              <div v-for="h in mockHoldings" :key="h.portfolio"
+                   class="rounded-lg p-2 mb-1.5 space-y-1"
+                   style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)">
+                <div class="flex justify-between items-center">
+                  <span class="text-[9px] font-bold" style="color:rgba(255,255,255,0.72)">{{ h.portfolio }}</span>
+                  <span class="text-[9px] font-mono" style="color:rgba(255,255,255,0.5)">{{ h.shares }}주</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[8px]" style="color:rgba(255,255,255,0.32)">매수단가</span>
+                  <span class="text-[8.5px] font-mono">₩{{ h.avgPrice.toLocaleString() }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[8px]" style="color:rgba(255,255,255,0.32)">평가금액</span>
+                  <span class="text-[8.5px] font-bold"
+                        :class="detailCompany.price >= h.avgPrice ? 'text-green-300' : 'text-red-300'">
+                    ₩{{ (detailCompany.price * h.shares).toLocaleString() }}
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[8px]" style="color:rgba(255,255,255,0.32)">수익률</span>
+                  <span class="text-[8.5px] font-bold"
+                        :class="detailCompany.price >= h.avgPrice ? 'text-green-400' : 'text-red-400'">
+                    {{ ((detailCompany.price - h.avgPrice) / h.avgPrice * 100 >= 0 ? '+' : '') }}{{ ((detailCompany.price - h.avgPrice) / h.avgPrice * 100).toFixed(1) }}%
+                  </span>
+                </div>
+              </div>
+            </template>
+            <p v-else class="text-[9px]" style="color:rgba(255,255,255,0.22)">보유 없음</p>
+          </div>
+        </div>
+
+        <!-- 매수 / 매도 버튼 (하단 고정) -->
+        <div class="px-3 pb-3 pt-2 flex gap-1.5 flex-shrink-0 border-t border-white/8">
+          <template v-if="replaceMode">
+            <button @click="openCompare(detailCompany)"
+              class="flex-1 py-2 rounded-xl text-xs font-bold transition-colors
+                     bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30">
+              교체 비교
+            </button>
+          </template>
+          <template v-else>
+            <button @click="openOrderModal(detailCompany, 'buy')"
+              class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200
+                     bg-blue-500/20 border border-blue-500/40 text-blue-200 hover:bg-blue-500/35">
+              매수
+            </button>
+            <button @click="openOrderModal(detailCompany, 'sell')"
+              class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200
+                     bg-red-500/20 border border-red-500/40 text-red-200 hover:bg-red-500/35">
+              매도
+            </button>
+          </template>
+        </div>
       </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div class="bg-white/5 rounded-xl p-3 border border-white/8">
-          <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1">시가총액</p>
-          <p class="text-base font-bold">{{ detailCompany.marketCap }}</p>
-        </div>
-        <div class="bg-white/5 rounded-xl p-3 border border-white/8">
-          <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1">PER</p>
-          <p class="text-base font-bold">{{ detailCompany.per }}x</p>
-        </div>
-        <div class="bg-white/5 rounded-xl p-3 border border-white/8">
-          <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1">PBR</p>
-          <p class="text-base font-bold">{{ detailCompany.pbr }}x</p>
-        </div>
-        <div class="bg-white/5 rounded-xl p-3 border border-white/8">
-          <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1">배당수익률</p>
-          <p class="text-base font-bold">{{ detailCompany.dividend }}%</p>
-        </div>
-      </div>
-      <div class="flex gap-2 pt-1">
-        <button
-          v-if="replaceMode"
-          @click="openCompare(detailCompany)"
-          class="flex-1 py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-sm font-bold hover:bg-emerald-500/30 transition-colors"
-        >교체 비교하기</button>
-        <template v-else>
-          <button
-            @click="openOrderModal(detailCompany, 'buy')"
-            class="flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 bg-blue-500/20 border-blue-500/40 text-blue-200 hover:bg-blue-500/35"
-          >매수</button>
-          <button
-            @click="openOrderModal(detailCompany, 'sell')"
-            class="flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 bg-red-500/20 border-red-500/40 text-red-200 hover:bg-red-500/35"
-          >매도</button>
-        </template>
-      </div>
+
     </div>
 
     <!-- 기업 리스트 뷰 -->
@@ -724,6 +778,71 @@ const overviewPaths = computed(() => {
   return { area, line };
 });
 
+// ── 상세 차트 (기간별) ────────────────────────────
+const chartPeriod = ref('3M');
+const periodSlice = { '1M': 20, '3M': 60, '6M': 120, '1Y': 252 };
+
+const detailPrices = computed(() => {
+  const n = periodSlice[chartPeriod.value] ?? 60;
+  return detailChartData.value.slice(-n).map(d => d.close);
+});
+
+const detailPaths = computed(() => {
+  const prices = detailPrices.value;
+  if (prices.length < 2) return { area: '', line: '' };
+  const W = 300, H = 200, PH = 6, PV = 8;
+  const uw = W - PH * 2, uh = H - PV * 2;
+  const minP = Math.min(...prices), maxP = Math.max(...prices);
+  const range = maxP - minP || 1;
+  const pts = prices.map((p, i) => {
+    const x = PH + (i / (prices.length - 1)) * uw;
+    const y = PV + (1 - (p - minP) / range) * uh;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const line = `M ${pts[0]} L ${pts.slice(1).join(' L ')}`;
+  const area = `${line} L ${(PH + uw).toFixed(1)},${H} L ${PH},${H} Z`;
+  return { area, line };
+});
+
+const chartPriceRange = computed(() => {
+  const prices = detailPrices.value;
+  if (!prices.length) return { min: 0, max: 0 };
+  return { min: Math.round(Math.min(...prices)), max: Math.round(Math.max(...prices)) };
+});
+
+const chartStartLabel = computed(() => ({
+  '1M': '1개월 전', '3M': '3개월 전', '6M': '6개월 전', '1Y': '1년 전',
+}[chartPeriod.value] ?? ''));
+
+// ── 재무 지표 (우측 패널) ────────────────────────
+const detailMetrics = computed(() => {
+  if (!detailCompany.value) return [];
+  return [
+    { label: '시가총액',   value: detailCompany.value.marketCap },
+    { label: 'PER',        value: detailCompany.value.per + 'x' },
+    { label: 'PBR',        value: detailCompany.value.pbr + 'x' },
+    { label: '배당수익률', value: detailCompany.value.dividend + '%' },
+  ];
+});
+
+// ── 보유 현황 (임시 데이터) ──────────────────────
+const mockHoldings = computed(() => {
+  if (!detailCompany.value) return [];
+  const t = detailCompany.value.ticker;
+  let seed = t.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  if (seed % 3 === 0) return [];
+  const n = (seed % 2) + 1;
+  const pfNames = ['포트폴리오 A', '포트폴리오 B', '포트폴리오 C'];
+  return Array.from({ length: n }, (_, i) => {
+    const adj = ((seed + i * 13) % 30) - 10;
+    return {
+      portfolio: pfNames[i],
+      shares:    5 + (seed + i * 7) % 20,
+      avgPrice:  Math.round(detailCompany.value.price * (1 + adj / 100)),
+    };
+  });
+});
+
 // ── 상세 뷰 ────────────────────────────────────
 watch(() => props.viewTicker, (ticker) => {
   if (ticker) detailCompany.value = companies.find(c => c.ticker === ticker) ?? null;
@@ -902,24 +1021,18 @@ const maxOperating = computed(() =>
 </script>
 
 <style scoped>
-/* 재무제표 플립 */
+/* 재무제표 앞/뒷면 전환 — opacity만 사용 */
 .fin-face {
-  transition: opacity 0.18s ease, transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: center center;
-  pointer-events: auto;
+  transition: opacity 0.25s ease;
 }
 .fin-face--show {
   opacity: 1;
-  transform: perspective(1200px) rotateY(0deg);
   pointer-events: auto;
 }
 .fin-face--hide {
   opacity: 0;
-  transform: perspective(1200px) rotateY(90deg);
   pointer-events: none;
 }
-
-.animate-drop-in { animation: drop-in 0.7s var(--ease-wallet) forwards; }
 
 .order-modal-enter-active { transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease; }
 .order-modal-leave-active { transition: transform 0.25s ease-in, opacity 0.2s ease; }

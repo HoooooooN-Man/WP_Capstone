@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-full bg-gradient-to-br from-[#1a1f1a] to-[#0e120e] rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden animate-drop-in border border-white/10 text-white">
+  <div class="w-full h-full bg-gradient-to-br from-[#1a1f1a] to-[#0e120e] rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden border border-white/10 text-white">
 
     <!-- 헤더 -->
     <div class="px-6 pt-5 pb-3 border-b border-white/10 flex-shrink-0 flex items-center justify-between">
@@ -53,5 +53,4 @@ const categoryColor = (cat) => ({
 </script>
 
 <style scoped>
-.animate-drop-in { animation: drop-in 0.7s var(--ease-wallet) forwards; }
 </style>
