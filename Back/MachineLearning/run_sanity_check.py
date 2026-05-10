@@ -35,7 +35,8 @@ import numpy as np
 
 CAPSTONE_ROOT = Path(os.getenv("CAPSTONE_ROOT", r"E:\Capstone Data\project_data"))
 DUCKDB_PATH   = Path(os.getenv("DUCKDB_PATH", str(CAPSTONE_ROOT / "db" / "market_data.duckdb")))
-ARCHIVE_DIR   = Path(r"E:\Capstone Data\_archive\embeddings_v1")
+# 차차기 W3 — version 기반 동적 박제 디렉터리. embeddings_v1 봉인 유지, emb_v2+ 별도.
+_ARCHIVE_ROOT = Path(r"E:\Capstone Data\_archive")
 
 PG_URL = os.getenv(
     "EVENTS_PG_URL",
@@ -276,8 +277,12 @@ def main() -> int:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0
 
-    ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = ARCHIVE_DIR / "sanity_check.json"
+    # 차차기 W3 — version 기반 디렉터리 (embeddings_v1 봉인, emb_v2+ 별도).
+    # version="emb_v2" → "embeddings_v2".
+    short = version.replace("emb_", "") if version.startswith("emb_") else version
+    archive_dir = _ARCHIVE_ROOT / f"embeddings_{short}"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    out_path = archive_dir / "sanity_check.json"
     if out_path.exists() and not args.force:
         log(f"[REFUSED] 이미 박제: {out_path}. --force 명시 시 덮어쓰기.")
         return 3

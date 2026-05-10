@@ -179,7 +179,8 @@ def attach_embeddings(df: pd.DataFrame, *,
     rows = _embeddings_from_pg()
     if not rows:
         if checkpoint_path is None:
-            checkpoint_path = MODELS_ROOT / "emb_v1.pt"
+            # 차차기 W3 — emb_v2 가 운영 default. 차차차기 ablation 재실행 시 변수.
+            checkpoint_path = MODELS_ROOT / "emb_v2.pt"
         if not checkpoint_path.exists():
             raise FileNotFoundError(
                 f"PG 비어있음 + checkpoint 없음: {checkpoint_path}. "

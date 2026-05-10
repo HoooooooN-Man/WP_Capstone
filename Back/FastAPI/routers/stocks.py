@@ -164,8 +164,9 @@ def get_recommendations(
         elif diversify_mode == "embedding":
             from ..core.config import DUCKDB_PATH as _DDB
             tickers = [r["ticker"] for r in rows]
+            # 차차기 W3 — emb_v2 가 운영 default (분포 내 추론, correlation 신호 강화).
             ckpt = os.environ.get("EMB_CHECKPOINT",
-                                  r"E:\Capstone Data\project_data\models\emb_v1.pt")
+                                  r"E:\Capstone Data\project_data\models\emb_v2.pt")
             sim_func = make_embedding_sim(tickers, checkpoint_path=ckpt, duckdb_path=str(_DDB))
         else:
             sim_func = None
