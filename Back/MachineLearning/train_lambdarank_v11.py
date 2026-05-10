@@ -436,6 +436,12 @@ def main() -> int:
     feature_cols = select_feature_cols(df, extra_cols=extra_feat, allowlist=allowlist)
     log(f"  n_features: {len(feature_cols)}")
 
+    # 차차기 W4 — schema 카테고리 검증 (학습 시작 전 차단). v11a_prime allowlist
+    # 사용 시 67 schema 와 정확히 일치, 그 외엔 feature_cols 가 numeric 인지만 검증.
+    from feature_schema import assert_aligned
+    assert_aligned(df, where=f"train_lambdarank_v11 (variant={args.variant})",
+                   required=feature_cols)
+
     # 4. 학습.
     booster, n_train, n_valid = train_lambdarank(
         df, feature_cols,

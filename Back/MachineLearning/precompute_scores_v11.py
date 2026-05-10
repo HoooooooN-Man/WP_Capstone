@@ -43,6 +43,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from feature_schema import assert_aligned
 from train_lambdarank_v11 import sanitize_feature_names
 
 
@@ -178,9 +179,9 @@ def main() -> int:
     df["date"] = pd.to_datetime(df["date"]).dt.date
     log(f"  inference rows: {len(df):,}")
 
-    missing = [c for c in feature_cols if c not in df.columns]
-    if missing:
-        raise ValueError(f"holdout features 에 {len(missing)} columns 누락: {missing[:3]}...")
+    # 차차기 W4 — schema 카테고리 일치 검증 (numeric 기대 컬럼이 numeric 인지).
+    # 이전 missing 검사는 schema 가 흡수.
+    assert_aligned(df, where="precompute_scores_v11", required=feature_cols)
 
     X = df[feature_cols].astype(np.float32).fillna(0.0).to_numpy()
     df["raw_score"] = booster.predict(X, num_iteration=booster.best_iteration)
