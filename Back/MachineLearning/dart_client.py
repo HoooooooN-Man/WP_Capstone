@@ -133,6 +133,7 @@ def list_disclosures(
     end_de:    str,
     corp_code: Optional[str] = None,      # 명시 시 한 회사만
     pblntf_ty: Optional[str] = None,      # 공시 유형 1차 (A/B/C/D/E/F/G/H/I/J)
+    pblntf_detail_ty: Optional[str] = None,  # 2차 (예: A001 사업보고서, E001 자기주식취득)
     page_no:   int = 1,
     page_count: int = PAGE_SIZE_MAX,
     session:   Optional[requests.Session] = None,
@@ -148,12 +149,18 @@ def list_disclosures(
         params["corp_code"] = corp_code
     if pblntf_ty:
         params["pblntf_ty"] = pblntf_ty
+    if pblntf_detail_ty:
+        params["pblntf_detail_ty"] = pblntf_detail_ty
     payload = _get("list.json", params, config, session=session)
-    # DART list.json 응답에는 pblntf_ty 가 없고 *검색 파라미터로만* 존재.
-    # caller 가 유형 한정 호출했으면 응답 row 에 주입해 caller 편의.
-    if pblntf_ty:
-        for row in payload.get("list", []):
+    # DART list.json 응답에는 pblntf_ty / pblntf_detail_ty 가 없고 *검색 파라미터로만* 존재.
+    # caller 가 유형 한정 호출했으면 응답 row 에 setdefault 주입.
+    for row in payload.get("list", []):
+        if pblntf_ty:
             row.setdefault("pblntf_ty", pblntf_ty)
+        if pblntf_detail_ty:
+            row.setdefault("pblntf_detail_ty", pblntf_detail_ty)
+            # detail_ty 가 명시됐으면 1차 유형도 그 첫 글자로 주입 (A001 → A).
+            row.setdefault("pblntf_ty", pblntf_detail_ty[:1])
     return payload
 
 
@@ -163,6 +170,7 @@ def iter_disclosures(
     bgn_de: str,
     end_de: str,
     pblntf_ty: Optional[str] = None,
+    pblntf_detail_ty: Optional[str] = None,
     session:    Optional[requests.Session] = None,
 ) -> Iterator[dict]:
     """공시검색 전체 페이지를 순회. 행 단위 yield.
@@ -174,7 +182,8 @@ def iter_disclosures(
     while page_no <= total_page:
         payload = list_disclosures(
             config=config, bgn_de=bgn_de, end_de=end_de,
-            pblntf_ty=pblntf_ty, page_no=page_no, session=sess,
+            pblntf_ty=pblntf_ty, pblntf_detail_ty=pblntf_detail_ty,
+            page_no=page_no, session=sess,
         )
         for row in payload.get("list", []):
             yield row

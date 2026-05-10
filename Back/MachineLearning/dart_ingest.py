@@ -162,6 +162,8 @@ def main() -> int:
     parser.add_argument("--start",     required=True, help="YYYY-MM-DD")
     parser.add_argument("--end",       required=True)
     parser.add_argument("--pblntf-ty", default=None,  help="공시유형 1차 (A~J). 미명시면 전체.")
+    parser.add_argument("--pblntf-detail-ty", default=None,
+                        help="공시유형 2차 (예: A001 사업보고서, E001 자기주식취득결정).")
     parser.add_argument("--listed-only", action="store_true",
                         help="KRX 상장 종목만 (stock_code 6자리). default: 전체.")
     parser.add_argument("--dry-run",   action="store_true")
@@ -201,6 +203,7 @@ def main() -> int:
                 stream = iter_disclosures(
                     config=config, bgn_de=ymd, end_de=ymd,
                     pblntf_ty=args.pblntf_ty,
+                    pblntf_detail_ty=args.pblntf_detail_ty,
                 )
                 for row in stream:
                     total_seen += 1
