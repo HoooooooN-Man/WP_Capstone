@@ -150,3 +150,67 @@ def test_create_table_sql_contains_required_columns():
                 "error_class", "error_message", "rows_affected", "duration_sec"}
     for col in required:
         assert col in CREATE_TABLE_SQL, f"{col} missing in cron_runs schema"
+
+
+# ── W6C — no_change 상태 ───────────────────────────────────────────────────
+
+def test_no_change_status_no_sentinel(tmp_path):
+    """mark_no_change → sentinel 미생성, 로그 NO_CHANGE 라인."""
+    db = tmp_path / "t.duckdb"
+    with cron_run("step_nc", log_dir=tmp_path, duckdb_path=db) as ctx:
+        ctx.mark_no_change("data unchanged")
+    log = (tmp_path / "cron_status.log").read_text(encoding="utf-8")
+    assert "NO_CHANGE" in log
+    assert "data unchanged" in log
+    assert not list(tmp_path.glob("FAIL_*.flag"))
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        status = con.execute("SELECT status FROM cron_runs").fetchone()[0]
+    finally:
+        con.close()
+    assert status == "no_change"
+
+
+def test_no_change_not_overwritten_by_auto_success(tmp_path):
+    """mark_no_change 호출 후 context exit 정상 종료 → mark_success 가 덮어쓰지 않음."""
+    db = tmp_path / "t.duckdb"
+    with cron_run("step_nc", log_dir=tmp_path, duckdb_path=db) as ctx:
+        ctx.mark_no_change()
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        status = con.execute("SELECT status FROM cron_runs").fetchone()[0]
+    finally:
+        con.close()
+    assert status == "no_change"   # 'ok' 로 덮어쓰지 않음
+
+
+def test_explicit_success_still_works(tmp_path):
+    """변화 있는 정상 run — context 가 자동 mark_success 호출 (기존 동작)."""
+    db = tmp_path / "t.duckdb"
+    with cron_run("step_ok", log_dir=tmp_path, duckdb_path=db):
+        pass
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        status = con.execute("SELECT status FROM cron_runs").fetchone()[0]
+    finally:
+        con.close()
+    assert status == "ok"
+
+
+def test_no_change_then_failure(tmp_path):
+    """no_change 상태에서 예외 → failure 가 덮어씀 (예외 우선)."""
+    db = tmp_path / "t.duckdb"
+    with pytest.raises(RuntimeError):
+        with cron_run("step_x", log_dir=tmp_path, duckdb_path=db) as ctx:
+            ctx.mark_no_change("hmm")
+            raise RuntimeError("then crashed")
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        row = con.execute(
+            "SELECT status, error_class FROM cron_runs"
+        ).fetchone()
+    finally:
+        con.close()
+    assert row == ("failed", "RuntimeError")
+    # 실패 sentinel 도 생성됨.
+    assert list(tmp_path.glob("FAIL_step_x_*.flag"))

@@ -165,6 +165,15 @@ class CronContext:
         self._append_log(f"OK rows={self.rows_affected if self.rows_affected is not None else ''}")
         self._db_update_end()
 
+    def mark_no_change(self, reason: str = "") -> None:
+        """변화 없음 — cron 살아있는 신호 + 불필요한 적재 회피 (W6C 권고).
+        sentinel 생성 안 함. status='no_change'. 호출 후 context exit 시 mark_success
+        가 *덮어쓰지 않음* (context manager 가 status != 'running' 확인)."""
+        self._status = "no_change"
+        suffix = f" reason={reason}" if reason else ""
+        self._append_log(f"NO_CHANGE{suffix}")
+        self._db_update_end()
+
     def mark_failure(self, exc: BaseException) -> None:
         self._status = "failed"
         self._error  = exc
@@ -217,4 +226,7 @@ def cron_run(
         ctx.mark_failure(e)
         raise
     else:
-        ctx.mark_success()
+        # 명시적 상태 전이 (mark_no_change 등) 가 있었으면 그대로 유지.
+        # 'running' 인 경우만 자동 success.
+        if ctx._status == "running":
+            ctx.mark_success()
