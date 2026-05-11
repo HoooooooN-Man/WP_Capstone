@@ -386,6 +386,9 @@ def main() -> int:
                         help="JSON 파일 경로. 명시한 컬럼만 사용 (W7A holdout 호환용).")
     parser.add_argument("--variant-suffix", default="",
                         help="모델 박제 디렉터리 접미사 (예: '_prime' → v11a_prime).")
+    parser.add_argument("--with-dart-features", action="store_true",
+                        help="W5E — DART 6 features (FULL schema 73) 추가. "
+                             "DuckDB disclosures + dart_features.build_features_table.")
     parser.add_argument("--max-rows",   type=int, default=0)
     parser.add_argument("--n-estimators", type=int, default=500)
     parser.add_argument("--lr",         type=float, default=0.05)
@@ -426,6 +429,24 @@ def main() -> int:
         ckpt = Path(args.emb_checkpoint) if args.emb_checkpoint else None
         df, extra_feat = attach_embeddings(df, checkpoint_path=ckpt)
         log(f"    embedding cols: {len(extra_feat)}")
+
+    # 차차기 W5E — DART features (학습 ablation 한정 실험).
+    if args.with_dart_features:
+        log("  attaching DART features …")
+        from dart_features import (
+            CATEGORY_TO_DETAIL_TY, build_features_table,
+            feature_column_names, load_disclosures_from_duckdb,
+        )
+        disc = load_disclosures_from_duckdb(str(DUCKDB_PATH))
+        log(f"    disclosures rows: {len(disc):,}")
+        target_dt = df[["ticker", "date"]].copy()
+        feats = build_features_table(disc, target_dt)
+        df = df.merge(feats, on=["ticker", "date"], how="left")
+        dart_cols = feature_column_names()
+        df[dart_cols] = df[dart_cols].fillna(0).astype("int32")
+        extra_feat.extend(dart_cols)
+        log(f"    dart cols: {len(dart_cols)} (nonzero rows: "
+            f"{(df[dart_cols].sum(axis=1) > 0).sum():,}/{len(df):,})")
 
     # 3. feature 선택.
     allowlist = None

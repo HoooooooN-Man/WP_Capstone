@@ -80,6 +80,17 @@ def predict_holdout(booster, feature_cols: list[str]) -> pd.DataFrame:
     df["date"] = pd.to_datetime(df["date"])
     log(f"  inference rows: {len(df):,}  date {df['date'].min().date()}~{df['date'].max().date()}")
 
+    # 차차기 W5E — feature_cols 에 dart_* 가 있으면 DuckDB disclosures 에서 build·join.
+    dart_needed = [c for c in feature_cols if c.startswith("dart_")]
+    if dart_needed:
+        log(f"  attaching DART features ({len(dart_needed)}) for holdout …")
+        from dart_features import build_features_table, load_disclosures_from_duckdb
+        disc = load_disclosures_from_duckdb(str(DUCKDB_PATH))
+        target_dt = df[["ticker", "date"]].copy()
+        feats = build_features_table(disc, target_dt)
+        df = df.merge(feats, on=["ticker", "date"], how="left")
+        df[dart_needed] = df[dart_needed].fillna(0).astype("int32")
+
     missing = [c for c in feature_cols if c not in df.columns]
     if missing:
         raise ValueError(f"holdout features 에 {len(missing)} columns 누락: {missing[:5]}...")
