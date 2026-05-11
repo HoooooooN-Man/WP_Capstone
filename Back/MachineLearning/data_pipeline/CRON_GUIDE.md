@@ -88,15 +88,33 @@ jobs:
    ORDER BY started_at DESC;
    ```
 
-## W6D Roll-back Trigger 정책 (다음 sub-step)
+## W6D Roll-back 알림 정책 (구현 완료 — rollback_monitor.py)
 
-`cron_runs` 의 *최근 N runs 가 `failed`* 면:
-1. 알림 강화 (sentinel 의 의미 격상).
-2. `DEFAULT_MODEL_VERSION` env var 을 *이전 안정 버전* 으로 자동 swap.
-   - 단 사용자가 *명시 환경변수 설정* 한 경우는 회피 (사용자 명시 우선).
-3. 사용자 확인 후 *수동 재가동*.
+**트리거 조건:**
+- 같은 step 의 *최근 3 연속 `failed`* (no_change·running 제외, status NOT IN 으로 필터).
+- 다른 step 의 실패는 별개 trigger (precompute_scores 실패 ≠ collect_and_build 실패).
 
-세부 임계·동작은 W6D 작업.
+**동작 (사용자 권고 — 자동 swap 없음):**
+- env 자동 변경 X (실패 원인 미해결 상태 자동 복귀 위험).
+- 대신 3 채널 동시 알림:
+  - `logs/ROLLBACK_<step>_<ts>.flag` sentinel — 복귀 절차 본문 박제.
+  - `cron_status.log` 의 `ROLLBACK_ALERT` 한 줄.
+  - DuckDB `rollback_events` 테이블 (event_id·step·triggered_at·threshold·reason
+    ·resolved_at).
+
+**Schedule (`rollback_check_cron.py`):**
+```
+Program:    py.exe
+Arguments:  Back\MachineLearning\data_pipeline\rollback_check_cron.py
+Schedule:   매 시간 정각 (수집·점수 cron 정시 후 빠른 인지)
+```
+
+**복귀 절차 (manual, sentinel 본문 명시):**
+1. `logs/cron_status.log` + `logs/FAIL_<step>_*.flag` 로 실패 원인 점검.
+2. 코드·데이터·환경 수정.
+3. 정상 1회 run 으로 cron_runs.status='ok' 추가 (다음 trigger 평가 시 *failed 누적 끊김*).
+4. (선택) `DEFAULT_MODEL_VERSION` env 수정 — resolve_version 이 새 default 사용.
+5. ROLLBACK sentinel manual 삭제 + `rollback_events.resolved_at` UPDATE.
 
 ## 자격 관리 (보안)
 
