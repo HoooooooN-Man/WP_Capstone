@@ -1,0 +1,91 @@
+/*
+ * design-tokens.css — UX 사이클 W1 시드
+ *
+ * 본 파일은 *플레이스홀더* 만 포함. 실제 색·typography·간격 값은
+ * 사용자 디자인 결정 후 별도 commit 에서 박제 (CLAUDE.md §디자인 결정 박제 위치).
+ *
+ * 12주 고정 정책 (UX_사이클.md §반드시 지킬 것 1):
+ *   본 토큰은 W1 결정 후 12주 내내 *변경 없이* 유지.
+ *   PrimeVue 커스텀 테마와 Tailwind 모두 본 토큰을 single source 로 사용.
+ *
+ * 사용 패턴 (값 채워진 후):
+ *   .recommend-card { background: var(--color-surface); padding: var(--space-4); }
+ *   Tailwind 4 의 @theme 와 동일 변수명 정합 권장 — globals.css 에서 import.
+ */
+
+:root {
+  /* ── 색 (사용자 결정 대기 — 토스 벤치마크) ────────────────────────────── */
+  --color-primary:        /* TBD */ initial;
+  --color-primary-hover:  /* TBD */ initial;
+  --color-primary-active: /* TBD */ initial;
+  --color-bg:             /* TBD */ initial;
+  --color-surface:        /* TBD */ initial;
+  --color-surface-alt:    /* TBD */ initial;
+  --color-text:           /* TBD */ initial;
+  --color-text-muted:     /* TBD */ initial;
+  --color-text-inverse:   /* TBD */ initial;
+  --color-border:         /* TBD */ initial;
+  --color-border-subtle:  /* TBD */ initial;
+  --color-success:        /* TBD */ initial;
+  --color-danger:         /* TBD */ initial;
+  --color-warning:        /* TBD */ initial;
+  --color-info:           /* TBD */ initial;
+
+  /* ── Typography ─────────────────────────────────────────────────────── */
+  --font-family-sans:     /* TBD — Pretendard? Spoqa? */ initial;
+  --font-family-mono:     /* TBD */ initial;
+  --font-size-xs:         /* TBD */ initial;
+  --font-size-sm:         /* TBD */ initial;
+  --font-size-base:       /* TBD */ initial;
+  --font-size-lg:         /* TBD */ initial;
+  --font-size-xl:         /* TBD */ initial;
+  --font-size-2xl:        /* TBD */ initial;
+  --font-size-3xl:        /* TBD */ initial;
+  --font-weight-normal:   /* TBD */ initial;
+  --font-weight-medium:   /* TBD */ initial;
+  --font-weight-semibold: /* TBD */ initial;
+  --font-weight-bold:     /* TBD */ initial;
+  --line-height-tight:    /* TBD */ initial;
+  --line-height-normal:   /* TBD */ initial;
+  --line-height-relaxed:  /* TBD */ initial;
+  --letter-spacing-tight: /* TBD */ initial;
+  --letter-spacing-normal: /* TBD */ initial;
+
+  /* ── Spacing (4px or 8px scale 사용자 결정) ─────────────────────────── */
+  --space-1:              /* TBD */ initial;
+  --space-2:              /* TBD */ initial;
+  --space-3:              /* TBD */ initial;
+  --space-4:              /* TBD */ initial;
+  --space-5:              /* TBD */ initial;
+  --space-6:              /* TBD */ initial;
+  --space-8:              /* TBD */ initial;
+  --space-10:             /* TBD */ initial;
+  --space-12:             /* TBD */ initial;
+  --space-16:             /* TBD */ initial;
+
+  /* ── Border radius ──────────────────────────────────────────────────── */
+  --radius-sm:            /* TBD */ initial;
+  --radius-md:            /* TBD */ initial;
+  --radius-lg:            /* TBD */ initial;
+  --radius-xl:            /* TBD */ initial;
+  --radius-full:          /* TBD */ initial;
+
+  /* ── Shadow (depth) ─────────────────────────────────────────────────── */
+  --shadow-sm:            /* TBD */ initial;
+  --shadow-md:            /* TBD */ initial;
+  --shadow-lg:            /* TBD */ initial;
+  --shadow-xl:            /* TBD */ initial;
+
+  /* ── 추천·금융 도메인 (의미적 토큰) ─────────────────────────────────── */
+  --color-tier-s:         /* TBD — 최상위 추천 */ initial;
+  --color-tier-a:         /* TBD */ initial;
+  --color-tier-b:         /* TBD */ initial;
+  --color-tier-c:         /* TBD */ initial;
+  --color-tier-d:         /* TBD — 최하위 */ initial;
+  --color-regime-normal:  /* TBD */ initial;
+  --color-regime-volatile:/* TBD — 폭락장 배너 */ initial;
+  --color-rise:           /* TBD — 상승 (한국 관례: 빨강) */ initial;
+  --color-fall:           /* TBD — 하락 (한국 관례: 파랑) */ initial;
+}
+
+/* dark mode 토큰은 사용자 결정 후 추가 (.dark 클래스 또는 prefers-color-scheme). */
