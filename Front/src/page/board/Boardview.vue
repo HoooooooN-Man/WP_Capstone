@@ -296,4 +296,14 @@ onMounted(() => loadPosts(1))
   font-size: var(--text-sm);
   display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
 }
+
+/* UX W8D — 태블릿 적응 (≤768px). 모바일 풀 대응은 컷 (W9 박제). */
+@media (max-width: 768px) {
+  .board-wrap { padding: var(--space-4) var(--space-3); }
+  .board-header { flex-wrap: wrap; gap: var(--space-2); padding: var(--space-3); }
+  .board-header__info { flex-wrap: wrap; }
+  .post-item { padding: var(--space-3); }
+  .post-item__meta { flex-wrap: wrap; gap: var(--space-2); }
+  .pagination { gap: var(--space-2); }
+}
 </style>
