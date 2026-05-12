@@ -407,10 +407,15 @@ function resetFilters() {
   color: var(--text-tertiary);
 }
 
-/* 모바일 */
+/* 모바일 — UX W8C 보강 (recon §4 — 기존 부분 대응 + padding·footer 압축). */
 @media (max-width: 768px) {
+  .recommend-view { padding: var(--space-3); }
+  .recommend-view__header { padding: var(--space-4) 0 var(--space-3); }
   .recommend-view__actions { position: static; margin-top: var(--space-2); }
   .recommend-view__title   { font-size: var(--text-2xl); }
-  .footer-cta              { padding: var(--space-6) var(--space-4); }
+  .recommend-view__advanced { padding: var(--space-3); }
+  .advanced-radio { margin-right: var(--space-3); }
+  .footer-cta { padding: var(--space-6) var(--space-4); }
+  .footer-cta h2 { font-size: var(--text-xl); }
 }
 </style>

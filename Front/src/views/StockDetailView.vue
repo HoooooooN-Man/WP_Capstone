@@ -438,6 +438,8 @@ function goSearch() {
   padding: var(--space-4);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   min-height: 200px;
+  /* UX W8C — 재무 표 7컬럼 모바일 가로 스크롤 활성. */
+  overflow-x: auto;
 }
 
 /* Tables · lists */
@@ -504,10 +506,18 @@ function goSearch() {
   100% { background-position: -200% 0; }
 }
 
+/* UX W8C — 모바일 격차 메움 (recon §4 — table 가로 스크롤은 .tab-body 에 적용). */
 @media (max-width: 768px) {
+  .stock-detail { padding: var(--space-3); }
+  .stock-detail__header { padding: var(--space-4) 0 var(--space-3); }
   .stock-detail__name { font-size: var(--text-2xl); }
   .stock-detail__price { font-size: var(--text-3xl); }
+  .stock-detail__price-row { flex-wrap: wrap; gap: var(--space-2); }
+  .stock-detail__score { margin-left: 0; }
+  .stock-detail__chart { padding: var(--space-3); }
   .chart-skeleton, .chart-placeholder, .chart-error { height: 300px; }
-  .finance-table th, .finance-table td { padding: var(--space-1) var(--space-2); font-size: var(--text-xs); }
+  .tab-btn { padding: var(--space-2) var(--space-3); font-size: var(--text-sm); }
+  .stock-detail__tab-body { padding: var(--space-3); }
+  .finance-table th, .finance-table td { padding: var(--space-1) var(--space-2); font-size: var(--text-xs); white-space: nowrap; }
 }
 </style>
