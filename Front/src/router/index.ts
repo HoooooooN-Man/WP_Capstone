@@ -21,6 +21,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/playground',     name: 'Playground',   component: () => import('@/views/PlaygroundView.vue') },
   { path: '/user/:nickname', name: 'UserProfile', component: () => import('@/views/UserProfileView.vue') },
   { path: '/my',             name: 'MyPage',         component: () => import('@/views/MyPageView.vue'),           meta: { requiresAuth: true } },
+  { path: '/watchlist',      name: 'Watchlist',      component: () => import('@/views/WatchlistView.vue'),        meta: { requiresAuth: true } },
   { path: '/login',          name: 'Login',          component: () => import('@/page/auth/Login.vue') },
   { path: '/register',       name: 'Register',       component: () => import('@/page/auth/Register.vue') },
   { path: '/reset-password', name: 'ResetPassword',  component: () => import('@/page/auth/ResetPassword.vue') },

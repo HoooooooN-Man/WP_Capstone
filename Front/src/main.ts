@@ -7,6 +7,7 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
 // UX 사이클 W1 — PrimeVue 통합. WpPreset (Aura 기반, Indigo brand 확정).
 import PrimeVue from 'primevue/config'
+import ToastService from 'primevue/toastservice'
 import { WpPreset } from '@/styles/themes/wp-preset'
 import 'primeicons/primeicons.css'
 // Pretendard Variable self-host (검토 5: npm self-host 확정, CDN 의존 0).
@@ -45,6 +46,8 @@ app.use(PrimeVue, {
     },
   },
 })
+// UX W5 — Toast (Undo) + Dialog (cohort 변경). ToastService 글로벌 등록.
+app.use(ToastService)
 
 // pinia 등록 후 스토어 초기화
 // @ts-ignore

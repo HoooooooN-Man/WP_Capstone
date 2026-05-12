@@ -11,7 +11,8 @@ import { ref } from 'vue'
 import dbapi from '@/api/dbapi'
 
 const STORAGE_KEY = 'cohort_v1'
-const VALID = new Set(['conservative', 'balanced', 'growth', 'dividend', 'value'])
+// UX W5 — 차기 W2 백엔드 정책 (services/cohort.py) 와 일치. 캡스톤 시기 conservative·value 폐기.
+const VALID = new Set(['balanced', 'growth', 'dividend', 'short_term', 'beginner'])
 
 const cohort = ref<string | null>(_loadLocal())
 
