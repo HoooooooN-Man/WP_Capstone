@@ -1,16 +1,13 @@
-/* design-tokens.css — Claude 초안 (본인 검토 대기)
+/* design-tokens.css — UX 사이클 W1 확정 (12주 고정)
  *
- * 출처:
- * - 색 palette: Radix Colors slate + blue (토스 톤 차용)
- * - typography: Pretendard (한국어 최적화) + 16px base
- * - 간격: 4px base (Tailwind 표준)
- * - tier 색: 단일 brand color 강도 차이 (안내 옵션 α)
- *
- * 검토 시 짚을 점:
- * 1. brand color = blue 600 (#3b82f6 계열). 토스 brand는 더 진한 indigo·violet 쪽. 본인 취향 확인 필요.
- * 2. tier 색 단일 brand 강도 차이 — A 진한 brand·B 중간·C 옅음. 본인 결정사항.
- * 3. 다크 모드 토큰 미포함. 다음 사이클 후보로 둠. 검토에서 *지금 포함해야 함* 의견 있으면 추가.
- * 4. 폰트 Pretendard CDN 가정. self-host 필요하면 별도 결정.
+ * 사용자 검토 결과 (design-system-guide.md 7 항목 모두 권고 수용):
+ *   1. Primary brand        : Radix Indigo (#4f46e5) — 토스 정합
+ *   2. 상승/하락 색         : 한국 관례 빨강/파랑
+ *   3. Tier 색              : (α) 단일 brand 강도 차이
+ *   4. 다크 모드            : 미포함 (다음 사이클)
+ *   5. Pretendard           : npm self-host (외부 CDN 의존 0)
+ *   6. Typography scale     : 1.125 minor third (7단계 xs~4xl)
+ *   7. Layout max-width     : 1280px
  */
 
 :root {
@@ -18,17 +15,17 @@
    * 1. 색 — Brand & Semantic
    * ============================================================ */
 
-  /* Primary (brand) — Radix Blue 영감. 토스 차용 */
-  --color-primary-50:  #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;  /* 메인 brand */
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
+  /* Primary (brand) — Radix Indigo. 토스 정합 (검토 1: Indigo 교체 확정) */
+  --color-primary-50:  #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;  /* 메인 brand */
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
 
   /* Neutral — Radix Slate. 글자·배경·테두리 기본 */
   --color-neutral-50:  #f8fafc;
@@ -168,7 +165,7 @@
   --shadow-md:  0 4px 6px -1px rgba(15, 23, 42, 0.10), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
   --shadow-lg:  0 10px 15px -3px rgba(15, 23, 42, 0.10), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
   --shadow-xl:  0 20px 25px -5px rgba(15, 23, 42, 0.10), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
-  --shadow-focus: 0 0 0 3px rgba(2, 132, 199, 0.40);   /* primary 600 + alpha */
+  --shadow-focus: 0 0 0 3px rgba(79, 70, 229, 0.40);   /* indigo 600 + alpha */
 
   /* ============================================================
    * 10. Motion — transition·duration·easing

@@ -1,12 +1,8 @@
-// themes/wp-preset.ts — Claude 초안 (본인 검토 대기)
+// themes/wp-preset.ts — UX 사이클 W1 확정
 //
-// PrimeVue 4.4.1 Aura preset 위에 wp 프로젝트 색 덮어쓰기.
-// design-tokens.css의 --color-primary-* 와 일치.
-//
-// 검토 시 짚을 점:
-// 1. semantic.primary.500 이 #0ea5e9 — design-tokens.css 와 동기. 변경 시 양쪽 다.
-// 2. colorScheme.light.surface.50~950 은 neutral 토큰 매핑. 다크모드 토큰 미작성 (다음 사이클).
-// 3. components.button.colorScheme.* 등 컴포넌트별 세부는 기본 Aura 유지. 필요 시 추가.
+// PrimeVue 4.4.1 Aura preset 위 wp 프로젝트 색 덮어쓰기.
+// design-tokens.css 의 --color-primary-* 와 일치 (Radix Indigo).
+// 검토 결과 (design-system-guide.md): Indigo 교체, 다크 미포함, Aura 기본 컴포넌트 유지.
 
 import { definePreset } from '@primevue/themes';
 import Aura from '@primevue/themes/aura';
@@ -14,17 +10,17 @@ import Aura from '@primevue/themes/aura';
 export const WpPreset = definePreset(Aura, {
   semantic: {
     primary: {
-      50:  '#f0f9ff',
-      100: '#e0f2fe',
-      200: '#bae6fd',
-      300: '#7dd3fc',
-      400: '#38bdf8',
-      500: '#0ea5e9',
-      600: '#0284c7',
-      700: '#0369a1',
-      800: '#075985',
-      900: '#0c4a6e',
-      950: '#082f49',
+      50:  '#eef2ff',
+      100: '#e0e7ff',
+      200: '#c7d2fe',
+      300: '#a5b4fc',
+      400: '#818cf8',
+      500: '#6366f1',
+      600: '#4f46e5',
+      700: '#4338ca',
+      800: '#3730a3',
+      900: '#312e81',
+      950: '#1e1b4b',
     },
     colorScheme: {
       light: {
