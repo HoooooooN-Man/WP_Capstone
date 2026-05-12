@@ -5,9 +5,9 @@ import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import VueVirtualScroller from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
-// UX 사이클 W1 — PrimeVue 통합 (Aura preset 시드, 토큰 결정 후 커스텀 preset 교체).
+// UX 사이클 W1 — PrimeVue 통합. WpPreset (Aura 기반 커스텀, 초안 적용 후 본인 검토 단계).
 import PrimeVue from 'primevue/config'
-import Aura from '@primevue/themes/aura'
+import { WpPreset } from '@/styles/themes/wp-preset'
 import 'primeicons/primeicons.css'
 
 import App from './App.vue'
@@ -32,11 +32,10 @@ app.use(pinia)
 app.use(VueQueryPlugin, { queryClient })
 app.use(VueVirtualScroller)
 
-// PrimeVue — Aura preset (W1 시드). cssLayer 활성화로 Tailwind v4 우선순위 충돌 회피.
-// 토큰 결정 후 themes/<custom>-preset.ts 로 교체 (themes/README.md 참조).
+// PrimeVue — WpPreset (Aura 기반 커스텀, Claude 초안). cssLayer 로 Tailwind v4 정합.
 app.use(PrimeVue, {
   theme: {
-    preset: Aura,
+    preset: WpPreset,
     options: {
       prefix: 'p',
       darkModeSelector: '.dark',

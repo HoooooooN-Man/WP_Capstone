@@ -1,91 +1,235 @@
-/*
- * design-tokens.css — UX 사이클 W1 시드
+/* design-tokens.css — Claude 초안 (본인 검토 대기)
  *
- * 본 파일은 *플레이스홀더* 만 포함. 실제 색·typography·간격 값은
- * 사용자 디자인 결정 후 별도 commit 에서 박제 (CLAUDE.md §디자인 결정 박제 위치).
+ * 출처:
+ * - 색 palette: Radix Colors slate + blue (토스 톤 차용)
+ * - typography: Pretendard (한국어 최적화) + 16px base
+ * - 간격: 4px base (Tailwind 표준)
+ * - tier 색: 단일 brand color 강도 차이 (안내 옵션 α)
  *
- * 12주 고정 정책 (UX_사이클.md §반드시 지킬 것 1):
- *   본 토큰은 W1 결정 후 12주 내내 *변경 없이* 유지.
- *   PrimeVue 커스텀 테마와 Tailwind 모두 본 토큰을 single source 로 사용.
- *
- * 사용 패턴 (값 채워진 후):
- *   .recommend-card { background: var(--color-surface); padding: var(--space-4); }
- *   Tailwind 4 의 @theme 와 동일 변수명 정합 권장 — globals.css 에서 import.
+ * 검토 시 짚을 점:
+ * 1. brand color = blue 600 (#3b82f6 계열). 토스 brand는 더 진한 indigo·violet 쪽. 본인 취향 확인 필요.
+ * 2. tier 색 단일 brand 강도 차이 — A 진한 brand·B 중간·C 옅음. 본인 결정사항.
+ * 3. 다크 모드 토큰 미포함. 다음 사이클 후보로 둠. 검토에서 *지금 포함해야 함* 의견 있으면 추가.
+ * 4. 폰트 Pretendard CDN 가정. self-host 필요하면 별도 결정.
  */
 
 :root {
-  /* ── 색 (사용자 결정 대기 — 토스 벤치마크) ────────────────────────────── */
-  --color-primary:        /* TBD */ initial;
-  --color-primary-hover:  /* TBD */ initial;
-  --color-primary-active: /* TBD */ initial;
-  --color-bg:             /* TBD */ initial;
-  --color-surface:        /* TBD */ initial;
-  --color-surface-alt:    /* TBD */ initial;
-  --color-text:           /* TBD */ initial;
-  --color-text-muted:     /* TBD */ initial;
-  --color-text-inverse:   /* TBD */ initial;
-  --color-border:         /* TBD */ initial;
-  --color-border-subtle:  /* TBD */ initial;
-  --color-success:        /* TBD */ initial;
-  --color-danger:         /* TBD */ initial;
-  --color-warning:        /* TBD */ initial;
-  --color-info:           /* TBD */ initial;
+  /* ============================================================
+   * 1. 색 — Brand & Semantic
+   * ============================================================ */
 
-  /* ── Typography ─────────────────────────────────────────────────────── */
-  --font-family-sans:     /* TBD — Pretendard? Spoqa? */ initial;
-  --font-family-mono:     /* TBD */ initial;
-  --font-size-xs:         /* TBD */ initial;
-  --font-size-sm:         /* TBD */ initial;
-  --font-size-base:       /* TBD */ initial;
-  --font-size-lg:         /* TBD */ initial;
-  --font-size-xl:         /* TBD */ initial;
-  --font-size-2xl:        /* TBD */ initial;
-  --font-size-3xl:        /* TBD */ initial;
-  --font-weight-normal:   /* TBD */ initial;
-  --font-weight-medium:   /* TBD */ initial;
-  --font-weight-semibold: /* TBD */ initial;
-  --font-weight-bold:     /* TBD */ initial;
-  --line-height-tight:    /* TBD */ initial;
-  --line-height-normal:   /* TBD */ initial;
-  --line-height-relaxed:  /* TBD */ initial;
-  --letter-spacing-tight: /* TBD */ initial;
-  --letter-spacing-normal: /* TBD */ initial;
+  /* Primary (brand) — Radix Blue 영감. 토스 차용 */
+  --color-primary-50:  #f0f9ff;
+  --color-primary-100: #e0f2fe;
+  --color-primary-200: #bae6fd;
+  --color-primary-300: #7dd3fc;
+  --color-primary-400: #38bdf8;
+  --color-primary-500: #0ea5e9;
+  --color-primary-600: #0284c7;  /* 메인 brand */
+  --color-primary-700: #0369a1;
+  --color-primary-800: #075985;
+  --color-primary-900: #0c4a6e;
 
-  /* ── Spacing (4px or 8px scale 사용자 결정) ─────────────────────────── */
-  --space-1:              /* TBD */ initial;
-  --space-2:              /* TBD */ initial;
-  --space-3:              /* TBD */ initial;
-  --space-4:              /* TBD */ initial;
-  --space-5:              /* TBD */ initial;
-  --space-6:              /* TBD */ initial;
-  --space-8:              /* TBD */ initial;
-  --space-10:             /* TBD */ initial;
-  --space-12:             /* TBD */ initial;
-  --space-16:             /* TBD */ initial;
+  /* Neutral — Radix Slate. 글자·배경·테두리 기본 */
+  --color-neutral-50:  #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
 
-  /* ── Border radius ──────────────────────────────────────────────────── */
-  --radius-sm:            /* TBD */ initial;
-  --radius-md:            /* TBD */ initial;
-  --radius-lg:            /* TBD */ initial;
-  --radius-xl:            /* TBD */ initial;
-  --radius-full:          /* TBD */ initial;
+  /* Semantic */
+  --color-success: #10b981;   /* 상승·긍정 */
+  --color-success-bg: #ecfdf5;
+  --color-warning: #f59e0b;   /* 주의·중립 */
+  --color-warning-bg: #fffbeb;
+  --color-danger:  #ef4444;   /* 하락·위험 */
+  --color-danger-bg:  #fef2f2;
 
-  /* ── Shadow (depth) ─────────────────────────────────────────────────── */
-  --shadow-sm:            /* TBD */ initial;
-  --shadow-md:            /* TBD */ initial;
-  --shadow-lg:            /* TBD */ initial;
-  --shadow-xl:            /* TBD */ initial;
+  /* 시장 상승/하락 (한국 주식 관례: 빨강=상승, 파랑=하락) */
+  --color-up:   #d93640;      /* 빨강 — 상승 */
+  --color-up-bg: #fff1f2;
+  --color-down: #2667d9;      /* 파랑 — 하락 */
+  --color-down-bg: #eff6ff;
 
-  /* ── 추천·금융 도메인 (의미적 토큰) ─────────────────────────────────── */
-  --color-tier-s:         /* TBD — 최상위 추천 */ initial;
-  --color-tier-a:         /* TBD */ initial;
-  --color-tier-b:         /* TBD */ initial;
-  --color-tier-c:         /* TBD */ initial;
-  --color-tier-d:         /* TBD — 최하위 */ initial;
-  --color-regime-normal:  /* TBD */ initial;
-  --color-regime-volatile:/* TBD — 폭락장 배너 */ initial;
-  --color-rise:           /* TBD — 상승 (한국 관례: 빨강) */ initial;
-  --color-fall:           /* TBD — 하락 (한국 관례: 파랑) */ initial;
+  /* ============================================================
+   * 2. Tier 색 — 단일 brand 강도 차이 (옵션 α)
+   * 검토: 본인이 (α) 수용 / (β) 신호등 / (γ) 폐기 결정
+   * ============================================================ */
+  --tier-a-bg:    var(--color-primary-600);
+  --tier-a-text:  #ffffff;
+  --tier-a-ring:  var(--color-primary-700);
+
+  --tier-b-bg:    var(--color-primary-200);
+  --tier-b-text:  var(--color-primary-800);
+  --tier-b-ring:  var(--color-primary-300);
+
+  --tier-c-bg:    var(--color-neutral-100);
+  --tier-c-text:  var(--color-neutral-700);
+  --tier-c-ring:  var(--color-neutral-200);
+
+  /* ============================================================
+   * 3. Surface — 배경·표면 위계
+   * ============================================================ */
+  --surface-canvas:    var(--color-neutral-50);   /* 페이지 배경 */
+  --surface-card:      #ffffff;                   /* 카드 배경 */
+  --surface-elevated:  #ffffff;                   /* 모달·드롭다운 */
+  --surface-muted:     var(--color-neutral-100);  /* 비활성·placeholder */
+  --surface-overlay:   rgba(15, 23, 42, 0.5);     /* 모달 backdrop */
+
+  /* ============================================================
+   * 4. Text — 텍스트 위계
+   * ============================================================ */
+  --text-primary:   var(--color-neutral-900);   /* 본문·제목 */
+  --text-secondary: var(--color-neutral-600);   /* 보조 */
+  --text-tertiary:  var(--color-neutral-400);   /* placeholder·hint */
+  --text-disabled:  var(--color-neutral-300);
+  --text-inverse:   #ffffff;                    /* 진한 배경 위 */
+  --text-link:      var(--color-primary-600);
+
+  /* ============================================================
+   * 5. Border
+   * ============================================================ */
+  --border-subtle:  var(--color-neutral-200);
+  --border-default: var(--color-neutral-300);
+  --border-strong:  var(--color-neutral-400);
+  --border-focus:   var(--color-primary-500);
+
+  /* ============================================================
+   * 6. Typography
+   * 한국어 최적: Pretendard. 영문: system-ui.
+   * ============================================================ */
+  --font-sans:
+    "Pretendard Variable", Pretendard,
+    -apple-system, BlinkMacSystemFont, system-ui,
+    "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-mono:
+    "JetBrains Mono", "D2Coding", ui-monospace,
+    SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Size scale (1.125 minor third) */
+  --text-xs:   0.75rem;    /* 12px — 캡션·메타 배지 */
+  --text-sm:   0.875rem;   /* 14px — 보조 텍스트 */
+  --text-base: 1rem;       /* 16px — 본문 기본 */
+  --text-lg:   1.125rem;   /* 18px — 카드 제목 */
+  --text-xl:   1.25rem;    /* 20px — 섹션 제목 */
+  --text-2xl:  1.5rem;     /* 24px — 페이지 제목 */
+  --text-3xl:  1.875rem;   /* 30px — 랜딩 헤드라인 */
+  --text-4xl:  2.25rem;    /* 36px — 큰 숫자 (점수·수익률) */
+
+  /* Weight */
+  --font-regular:  400;
+  --font-medium:   500;
+  --font-semibold: 600;
+  --font-bold:     700;
+
+  /* Line height */
+  --leading-tight:  1.25;   /* 제목 */
+  --leading-normal: 1.5;    /* 본문 */
+  --leading-relaxed: 1.75;  /* 긴 문단 */
+
+  /* ============================================================
+   * 7. Spacing — 4px base (Tailwind 표준)
+   * ============================================================ */
+  --space-0:   0;
+  --space-1:   0.25rem;   /*  4px */
+  --space-2:   0.5rem;    /*  8px */
+  --space-3:   0.75rem;   /* 12px */
+  --space-4:   1rem;      /* 16px */
+  --space-5:   1.25rem;   /* 20px */
+  --space-6:   1.5rem;    /* 24px */
+  --space-8:   2rem;      /* 32px */
+  --space-10:  2.5rem;    /* 40px */
+  --space-12:  3rem;      /* 48px */
+  --space-16:  4rem;      /* 64px */
+  --space-20:  5rem;      /* 80px */
+  --space-24:  6rem;      /* 96px */
+
+  /* ============================================================
+   * 8. Radius
+   * ============================================================ */
+  --radius-none: 0;
+  --radius-sm:   0.25rem;   /*  4px — 작은 배지 */
+  --radius-md:   0.5rem;    /*  8px — 버튼·input */
+  --radius-lg:   0.75rem;   /* 12px — 카드 */
+  --radius-xl:   1rem;      /* 16px — 큰 카드·모달 */
+  --radius-2xl:  1.5rem;    /* 24px */
+  --radius-full: 9999px;    /* 원형 (avatar·dot) */
+
+  /* ============================================================
+   * 9. Shadow
+   * ============================================================ */
+  --shadow-xs:  0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-sm:  0 1px 3px 0 rgba(15, 23, 42, 0.10), 0 1px 2px 0 rgba(15, 23, 42, 0.06);
+  --shadow-md:  0 4px 6px -1px rgba(15, 23, 42, 0.10), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
+  --shadow-lg:  0 10px 15px -3px rgba(15, 23, 42, 0.10), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+  --shadow-xl:  0 20px 25px -5px rgba(15, 23, 42, 0.10), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  --shadow-focus: 0 0 0 3px rgba(2, 132, 199, 0.40);   /* primary 600 + alpha */
+
+  /* ============================================================
+   * 10. Motion — transition·duration·easing
+   * ============================================================ */
+  --duration-fast:   150ms;
+  --duration-normal: 250ms;
+  --duration-slow:   400ms;
+
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ============================================================
+   * 11. Z-index — 위계 통제
+   * ============================================================ */
+  --z-base:     0;
+  --z-dropdown: 1000;
+  --z-sticky:   1020;
+  --z-fixed:    1030;
+  --z-modal:    1040;
+  --z-popover:  1050;
+  --z-tooltip:  1060;
+
+  /* ============================================================
+   * 12. Layout
+   * ============================================================ */
+  --layout-max-width:    1280px;
+  --layout-content-pad:  var(--space-6);     /* 24px */
+  --layout-section-gap:  var(--space-12);    /* 48px */
+
+  --header-height:  60px;
+  --sidebar-width:  240px;
+
+  /* ============================================================
+   * 13. 도메인 — 추천 시스템 전용
+   * ============================================================ */
+
+  /* 추천 카드 */
+  --card-recommend-padding: var(--space-5);
+  --card-recommend-gap:     var(--space-3);
+
+  /* 점수 표시 */
+  --score-large-size:  var(--text-4xl);   /* 큰 점수 */
+  --score-large-weight: var(--font-bold);
+  --score-medium-size: var(--text-2xl);
+  --score-small-size:  var(--text-lg);
+
+  /* 신뢰구간 (± σ) — 차기 W3.5/W5 자산 */
+  --confidence-color:     var(--color-neutral-500);
+  --confidence-size:      var(--text-sm);
+
+  /* Coverage 배지 — W4 */
+  --coverage-insufficient-bg:   var(--color-warning-bg);
+  --coverage-insufficient-text: var(--color-warning);
+
+  /* Market regime 배너 — W3 */
+  --regime-normal-display:      none;     /* 평소 숨김 */
+  --regime-extreme-bg:          var(--color-danger-bg);
+  --regime-extreme-text:        var(--color-danger);
+  --regime-extreme-border:      var(--color-danger);
+
+  /* AB variant 표시 (debug 화면용) */
+  --ab-bucket-text-size: var(--text-xs);
+  --ab-bucket-color:     var(--text-tertiary);
 }
-
-/* dark mode 토큰은 사용자 결정 후 추가 (.dark 클래스 또는 prefers-color-scheme). */
