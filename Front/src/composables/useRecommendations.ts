@@ -64,7 +64,7 @@ export function useRecommendations(params: UseRecommendationsParams = {}) {
       const div = diversify?.value
       if (div && div !== 'none') queryParams.diversify = div
       if (cohort?.value)         queryParams.cohort    = cohort.value
-      const { data } = await api.get('/api/v1/stocks/recommendations', { params: queryParams })
+      const { data } = await api.get('/stocks/recommendations', { params: queryParams })
       return data as RecommendResponse
     },
     staleTime: FIVE_MIN,

@@ -70,7 +70,7 @@ export function useStockBasic(ticker: Ref<string>) {
   return useQuery({
     queryKey: computed(() => ['stock', 'history', ticker.value]) as any,
     queryFn: async (): Promise<StockHistoryRow[]> => {
-      const { data } = await api.get(`/api/v1/stocks/${ticker.value}/history`)
+      const { data } = await api.get(`/stocks/${ticker.value}/history`)
       // 응답 형식 — items 또는 list 형태 호환
       return (data.items ?? data.history ?? data ?? []) as StockHistoryRow[]
     },
@@ -86,7 +86,7 @@ export function useStockChart(ticker: Ref<string>) {
   return useQuery({
     queryKey: computed(() => ['stock', 'chart', ticker.value]) as any,
     queryFn: async (): Promise<ChartCandle[]> => {
-      const { data } = await api.get(`/api/v1/chart/${ticker.value}`)
+      const { data } = await api.get(`/chart/${ticker.value}`)
       return (data.items ?? data.candles ?? data ?? []) as ChartCandle[]
     },
     enabled: computed(() => !!ticker.value),
@@ -101,7 +101,7 @@ export function useStockFinance(ticker: Ref<string>, enabled: ComputedRef<boolea
   return useQuery({
     queryKey: computed(() => ['stock', 'finance', ticker.value]) as any,
     queryFn: async (): Promise<FinanceRow[]> => {
-      const { data } = await api.get(`/api/v1/finance/${ticker.value}`)
+      const { data } = await api.get(`/finance/${ticker.value}`)
       return (data.items ?? data.history ?? data ?? []) as FinanceRow[]
     },
     enabled: computed(() => !!ticker.value && enabled.value),
