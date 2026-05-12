@@ -59,7 +59,8 @@ function buildDatasets() {
     type: 'candlestick',
     label: props.ticker,
     data: ohlc,
-    color: { up: '#1D9E75', down: '#E24B4A', unchanged: '#888780' },
+    // UX W6B — 한국 관례: 상승 빨강 / 하락 파랑 (W1 토큰 --color-up/down).
+    color: { up: '#d93640', down: '#2667d9', unchanged: '#888780' },
   }]
 
   for (const [maLabel, maKey] of Object.entries(MA_KEYS)) {

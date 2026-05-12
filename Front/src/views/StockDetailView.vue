@@ -18,6 +18,9 @@ import { useRoute, useRouter } from 'vue-router'
 import CoverageBadge from '@/components/CoverageBadge.vue'
 import MarketRegimeBanner from '@/components/MarketRegimeBanner.vue'
 import MetaBadge from '@/components/MetaBadge.vue'
+// UX W6B — 캡스톤 차트 자산 (Chart.js + chartjs-chart-financial) 통합.
+import CandleChart from '@/components/stockDetail/CandleChart.vue'
+import VolumeChart from '@/components/stockDetail/VolumeChart.vue'
 import {
   useStockBasic, useStockChart, useStockFinance, useStockNews, useStockDisclosures,
   formatPrice, formatChange, changeClass, formatFinanceQuarter, pickLatest,
@@ -201,9 +204,10 @@ function goSearch() {
           차트 데이터를 불러오지 못했습니다.
           <button class="stock-detail__retry" @click="chart.refetch()">다시 시도</button>
         </div>
-        <div v-else class="chart-placeholder">
-          <!-- lightweight-charts 통합 자리 — 본 commit 은 데이터·UI 골격만 -->
-          <p>차트: {{ chartSlice.length }} 일 데이터 ({{ chartPeriod }})</p>
+        <div v-else class="chart-stack">
+          <!-- UX W6B — Chart.js 통합 (W4 placeholder 메움) -->
+          <CandleChart :candles="chartSlice" :ticker="ticker" />
+          <VolumeChart :candles="chartSlice" />
         </div>
       </section>
 
@@ -397,10 +401,13 @@ function goSearch() {
   border-radius: var(--radius-md);
   animation: shimmer 1.2s infinite;
 }
-.chart-error, .chart-placeholder {
+.chart-error {
   height: 400px;
   display: flex; align-items: center; justify-content: center;
   color: var(--text-secondary);
+}
+.chart-stack {
+  display: flex; flex-direction: column; gap: var(--space-2);
 }
 
 /* Tabs */

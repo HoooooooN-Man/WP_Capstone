@@ -19,7 +19,8 @@ function buildChart() {
       datasets: [{
         label: '거래량',
         data: props.candles.map(c => ({ x: new Date(c.date).getTime(), y: c.volume })),
-        backgroundColor: props.candles.map(c => c.close >= c.open ? '#1D9E7566' : '#E24B4A66'),
+        // UX W6B — 한국 관례 (상승 빨강·하락 파랑, W1 토큰).
+        backgroundColor: props.candles.map(c => c.close >= c.open ? '#d9364066' : '#2667d966'),
         borderWidth: 0,
       }],
     },
