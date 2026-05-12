@@ -1,132 +1,282 @@
-<script setup>
+<script setup lang="ts">
+// UX W6A — ScreenerTable 다듬기. 토큰 적용, table 구조 유지.
+// PrimeVue DataTable 전면 교체는 회귀 위험 큼 → 차차차차기 후보.
+
 import { useRouter } from 'vue-router'
+// @ts-ignore
 import TierBadge from '@/components/common/TierBadge.vue'
 
-defineProps({
-  items:   { type: Array,   default: () => [] },
-  total:   { type: Number,  default: 0 },
-  loading: { type: Boolean, default: false },
-  error:   { type: String,  default: null },
-})
-defineEmits(['reset-financial'])
+defineProps<{
+  items?:   any[]
+  total?:   number
+  loading?: boolean
+  error?:   string | null
+}>()
+defineEmits<{ (e: 'reset-financial'): void }>()
 
 const router = useRouter()
 
-const TIER_COLORS = { A: '#1D9E75', B: '#378ADD', C: '#EF9F27', D: '#E24B4A' }
-
-function barColor(score) {
-  if (score >= 80) return TIER_COLORS.A
-  if (score >= 60) return TIER_COLORS.B
-  if (score >= 40) return TIER_COLORS.C
-  return TIER_COLORS.D
+// tier 색 — W1 도메인 토큰 사용. inline 으로 CSS 변수 호출.
+const TIER_VAR: Record<string, string> = {
+  A: 'var(--tier-a-bg)',
+  B: 'var(--tier-b-bg)',
+  C: 'var(--tier-c-bg)',
+  D: 'var(--color-neutral-400)',
 }
 
-function fmt(v, suffix = '') {
+function barColor(score: number): string {
+  if (score >= 80) return TIER_VAR.A
+  if (score >= 60) return TIER_VAR.B
+  if (score >= 40) return TIER_VAR.C
+  return TIER_VAR.D
+}
+
+function fmt(v: number | null | undefined, suffix = ''): string {
   return v != null ? v.toFixed(1) + suffix : '-'
 }
 
-function growthClass(v) {
-  if (v == null) return 'text-gray-400'
-  return v > 0 ? 'text-green-600' : v < 0 ? 'text-red-500' : 'text-gray-400'
+function growthClass(v: number | null | undefined): string {
+  if (v == null) return 'screener-table__cell--muted'
+  if (v > 0) return 'screener-table__cell--up'
+  if (v < 0) return 'screener-table__cell--down'
+  return 'screener-table__cell--muted'
 }
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
+  <div class="screener-table">
+    <p class="screener-table__count">
+      총 <b>{{ (total ?? 0).toLocaleString() }}</b>개 종목
+    </p>
 
-    <!-- 헤더 -->
-    <p class="text-sm text-gray-500">총 <b class="text-gray-800">{{ total.toLocaleString() }}</b>개 종목</p>
-
-    <!-- 로딩 -->
-    <div v-if="loading" class="flex items-center justify-center h-48">
-      <div class="w-6 h-6 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
+    <div v-if="loading" class="screener-table__loading" aria-busy="true">
+      <div class="screener-table__spinner" />
     </div>
 
-    <!-- 에러 -->
-    <div v-else-if="error" class="text-center text-gray-500 py-12">
-      데이터를 불러오지 못했습니다
+    <div v-else-if="error" class="screener-table__empty" role="alert">
+      데이터를 불러오지 못했습니다.
     </div>
 
-    <!-- 빈 상태 -->
-    <div v-else-if="!items.length" class="flex flex-col items-center py-12 gap-3">
-      <p class="text-gray-500">조건에 맞는 종목이 없습니다</p>
-      <button
-        class="text-sm text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors"
-        @click="$emit('reset-financial')"
-      >
+    <div v-else-if="!items?.length" class="screener-table__empty">
+      <p>조건에 맞는 종목이 없습니다.</p>
+      <button class="screener-table__reset-btn" @click="$emit('reset-financial')">
         조건 완화하기
       </button>
     </div>
 
-    <!-- 테이블 -->
-    <div v-else class="overflow-auto rounded-xl border border-gray-100 bg-white">
-      <table class="w-full text-sm whitespace-nowrap">
-        <thead class="bg-gray-50 sticky top-0">
+    <div v-else class="screener-table__wrap">
+      <table class="screener-table__tbl">
+        <thead>
           <tr>
-            <th class="text-left text-xs text-gray-500 font-medium px-3 py-2.5">순위</th>
-            <th class="text-left text-xs text-gray-500 font-medium px-3 py-2.5">종목명</th>
-            <th class="text-left text-xs text-gray-500 font-medium px-3 py-2.5">섹터</th>
-            <!-- 복합점수 + 툴팁 -->
-            <th class="text-left text-xs text-gray-500 font-medium px-3 py-2.5">
-              <div class="relative group inline-flex items-center gap-1 cursor-help">
-                복합점수 ⓘ
-                <div class="absolute top-full left-0 mt-1 w-56 bg-gray-800 text-white text-xs rounded-lg p-2 hidden group-hover:block z-50 font-normal whitespace-normal leading-relaxed">
-                  복합점수 = ML점수 × 0.6 + 재무점수 × 0.4<br>
+            <th class="screener-table__th screener-table__th--left">순위</th>
+            <th class="screener-table__th screener-table__th--left">종목명</th>
+            <th class="screener-table__th screener-table__th--left">섹터</th>
+            <th class="screener-table__th screener-table__th--left">
+              <span class="screener-table__tooltip-host">
+                복합점수 <i class="pi pi-info-circle" aria-hidden="true" />
+                <span class="screener-table__tooltip">
+                  복합점수 = ML점수 × 0.6 + 재무점수 × 0.4<br />
                   재무 데이터 없는 종목은 재무점수 50 적용
-                </div>
-              </div>
+                </span>
+              </span>
             </th>
-            <th class="text-right text-xs text-gray-500 font-medium px-3 py-2.5">ML점수</th>
-            <th class="text-right text-xs text-gray-500 font-medium px-3 py-2.5">재무점수</th>
-            <th class="text-right text-xs text-gray-500 font-medium px-3 py-2.5">PER</th>
-            <th class="text-right text-xs text-gray-500 font-medium px-3 py-2.5">PBR</th>
-            <th class="text-right text-xs text-gray-500 font-medium px-3 py-2.5">ROE</th>
-            <th class="text-right text-xs text-gray-500 font-medium px-3 py-2.5">부채비율</th>
-            <th class="text-right text-xs text-gray-500 font-medium px-3 py-2.5">영업이익률</th>
+            <th class="screener-table__th screener-table__th--right">ML점수</th>
+            <th class="screener-table__th screener-table__th--right">재무점수</th>
+            <th class="screener-table__th screener-table__th--right">PER</th>
+            <th class="screener-table__th screener-table__th--right">PBR</th>
+            <th class="screener-table__th screener-table__th--right">ROE</th>
+            <th class="screener-table__th screener-table__th--right">부채비율</th>
+            <th class="screener-table__th screener-table__th--right">영업이익률</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="(item, idx) in items"
             :key="item.ticker"
-            class="border-t border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors"
+            class="screener-table__row"
             @click="router.push('/stocks/' + item.ticker)"
           >
-            <td class="px-3 py-2.5 text-xs text-gray-400">{{ idx + 1 }}</td>
-            <td class="px-3 py-2.5">
-              <div class="font-medium text-gray-900">{{ item.name }}</div>
-              <div class="font-mono text-xs text-gray-400">{{ item.ticker }}</div>
+            <td class="screener-table__cell screener-table__cell--muted">{{ idx + 1 }}</td>
+            <td class="screener-table__cell">
+              <div class="screener-table__name">{{ item.name }}</div>
+              <div class="screener-table__ticker">{{ item.ticker }}</div>
             </td>
-            <td class="px-3 py-2.5">
-              <span class="bg-gray-100 text-gray-500 text-xs rounded-full px-2 py-0.5">{{ item.sector }}</span>
+            <td class="screener-table__cell">
+              <span class="screener-table__sector-chip">{{ item.sector }}</span>
             </td>
-            <!-- 복합점수 -->
-            <td class="px-3 py-2.5">
-              <div class="flex items-center gap-2">
-                <div class="w-16 h-1.5 rounded bg-gray-200 overflow-hidden">
+            <td class="screener-table__cell">
+              <div class="screener-table__composite">
+                <div class="screener-table__bar">
                   <div
-                    class="h-full rounded"
-                    :style="{ width: (item.composite_score ?? 0) + '%', backgroundColor: barColor(item.composite_score ?? 0) }"
+                    class="screener-table__bar-fill"
+                    :style="{ width: (item.composite_score ?? 0) + '%', background: barColor(item.composite_score ?? 0) }"
                   />
                 </div>
-                <span class="text-sm font-medium">{{ Math.round(item.composite_score ?? 0) }}</span>
+                <span class="screener-table__composite-value">
+                  {{ Math.round(item.composite_score ?? 0) }}
+                </span>
                 <TierBadge :tier="item.tier" />
               </div>
             </td>
-            <td class="px-3 py-2.5 text-right">{{ Math.round(item.score ?? 0) }}</td>
-            <td class="px-3 py-2.5 text-right">
-              <template v-if="item.finance_score != null">{{ item.finance_score.toFixed(1) }}</template>
-              <template v-else><span class="text-gray-300">-</span> <span class="text-xs text-gray-300">(재무없음)</span></template>
+            <td class="screener-table__cell screener-table__cell--right">
+              {{ Math.round(item.score ?? 0) }}
             </td>
-            <td class="px-3 py-2.5 text-right text-gray-600">{{ fmt(item.per) }}</td>
-            <td class="px-3 py-2.5 text-right text-gray-600">{{ fmt(item.pbr) }}</td>
-            <td class="px-3 py-2.5 text-right" :class="growthClass(item.roe)">{{ fmt(item.roe, '%') }}</td>
-            <td class="px-3 py-2.5 text-right text-gray-600">{{ fmt(item.debt_ratio, '%') }}</td>
-            <td class="px-3 py-2.5 text-right" :class="growthClass(item.op_margin)">{{ fmt(item.op_margin, '%') }}</td>
+            <td class="screener-table__cell screener-table__cell--right">
+              <template v-if="item.finance_score != null">{{ item.finance_score.toFixed(1) }}</template>
+              <template v-else><span class="screener-table__cell--muted">- (재무없음)</span></template>
+            </td>
+            <td class="screener-table__cell screener-table__cell--right screener-table__cell--soft">{{ fmt(item.per) }}</td>
+            <td class="screener-table__cell screener-table__cell--right screener-table__cell--soft">{{ fmt(item.pbr) }}</td>
+            <td class="screener-table__cell screener-table__cell--right" :class="growthClass(item.roe)">
+              {{ fmt(item.roe, '%') }}
+            </td>
+            <td class="screener-table__cell screener-table__cell--right screener-table__cell--soft">
+              {{ fmt(item.debt_ratio, '%') }}
+            </td>
+            <td class="screener-table__cell screener-table__cell--right" :class="growthClass(item.op_margin)">
+              {{ fmt(item.op_margin, '%') }}
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
-
   </div>
 </template>
+
+<style scoped>
+.screener-table {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+}
+.screener-table__count {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+.screener-table__count b { color: var(--text-primary); }
+
+.screener-table__loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 12rem;
+}
+.screener-table__spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--color-primary-600);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.screener-table__empty {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
+  padding: var(--space-12) var(--space-4);
+  color: var(--text-secondary);
+  text-align: center;
+}
+.screener-table__reset-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  cursor: pointer;
+}
+.screener-table__reset-btn:hover { background: var(--surface-muted); }
+
+.screener-table__wrap {
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+.screener-table__tbl {
+  width: 100%;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  border-collapse: collapse;
+}
+.screener-table__th {
+  background: var(--surface-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  padding: var(--space-2) var(--space-3);
+  position: sticky; top: 0;
+}
+.screener-table__th--left  { text-align: left; }
+.screener-table__th--right { text-align: right; }
+
+.screener-table__tooltip-host {
+  position: relative;
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  cursor: help;
+}
+.screener-table__tooltip {
+  position: absolute; top: 100%; left: 0;
+  margin-top: var(--space-1);
+  width: 14rem;
+  background: var(--color-neutral-800);
+  color: var(--text-inverse);
+  font-size: var(--text-xs);
+  font-weight: var(--font-regular);
+  line-height: var(--leading-normal);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  white-space: normal;
+  z-index: var(--z-tooltip);
+  display: none;
+}
+.screener-table__tooltip-host:hover .screener-table__tooltip,
+.screener-table__tooltip-host:focus-within .screener-table__tooltip {
+  display: block;
+}
+
+.screener-table__row {
+  border-top: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.screener-table__row:hover { background: var(--surface-muted); }
+
+.screener-table__cell {
+  padding: var(--space-2) var(--space-3);
+}
+.screener-table__cell--right { text-align: right; }
+.screener-table__cell--muted { color: var(--text-tertiary); font-size: var(--text-xs); }
+.screener-table__cell--soft  { color: var(--text-secondary); }
+.screener-table__cell--up    { color: var(--color-up); }
+.screener-table__cell--down  { color: var(--color-down); }
+
+.screener-table__name   { font-weight: var(--font-medium); color: var(--text-primary); }
+.screener-table__ticker { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-tertiary); }
+
+.screener-table__sector-chip {
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-full);
+  padding: 2px var(--space-2);
+}
+
+.screener-table__composite {
+  display: flex; align-items: center; gap: var(--space-2);
+}
+.screener-table__bar {
+  width: 64px; height: 6px;
+  background: var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.screener-table__bar-fill {
+  height: 100%;
+  border-radius: var(--radius-sm);
+}
+.screener-table__composite-value {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+</style>
