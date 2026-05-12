@@ -110,4 +110,17 @@ function onRemove(ev: Event) {
 }
 .watchlist-item__remove:hover { color: var(--color-danger); }
 .watchlist-item__remove:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+
+/* UX W8B — 모바일 풀 대응 (≤768px). 우측 영역 압축. */
+@media (max-width: 768px) {
+  .watchlist-item {
+    gap: var(--space-2);
+    padding: var(--space-3);
+    font-size: var(--text-sm);
+  }
+  .watchlist-item__sector { display: none; }
+  .watchlist-item__right { gap: var(--space-2); }
+  .watchlist-item__price { font-size: var(--text-sm); }
+  .watchlist-item__change { font-size: var(--text-xs); }
+}
 </style>

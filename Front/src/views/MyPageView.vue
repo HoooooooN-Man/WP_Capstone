@@ -271,4 +271,31 @@ function goStockDetail(ticker: string) { router.push(`/stock/${ticker}`) }
   border-color: var(--color-neutral-300);
   cursor: not-allowed;
 }
+
+/* UX W8B — 모바일 풀 대응 (≤768px). breakpoint 토큰 --bp-tablet 와 일치. */
+@media (max-width: 768px) {
+  .mypage {
+    padding: var(--space-3);
+  }
+  .mypage__header {
+    gap: var(--space-3);
+    padding: var(--space-4) 0 var(--space-3);
+  }
+  .mypage__avatar {
+    width: 48px; height: 48px;
+    font-size: var(--text-lg);
+  }
+  .mypage__identity h1 {
+    font-size: var(--text-xl);
+  }
+  .mypage__section {
+    padding: var(--space-3) 0;
+  }
+  .mypage__section-head {
+    flex-wrap: wrap; gap: var(--space-2);
+  }
+  .mypage__stats {
+    gap: var(--space-2);
+  }
+}
 </style>

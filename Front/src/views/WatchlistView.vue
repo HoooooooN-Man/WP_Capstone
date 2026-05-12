@@ -216,4 +216,23 @@ function goRecommend() { router.push('/recommend') }
   font-family: inherit;
 }
 .undo-toast__btn:hover { text-decoration: underline; }
+
+/* UX W8B — 모바일 풀 대응 (≤768px). */
+@media (max-width: 768px) {
+  .watchlist-view {
+    padding: var(--space-3);
+  }
+  .watchlist-view__header {
+    padding: var(--space-4) 0 var(--space-3);
+  }
+  .watchlist-view__header h1 {
+    font-size: var(--text-xl);
+  }
+  .watchlist-view__toolbar {
+    flex-wrap: wrap; gap: var(--space-2);
+  }
+  .watchlist-view__empty {
+    padding: var(--space-8) var(--space-3);
+  }
+}
 </style>
