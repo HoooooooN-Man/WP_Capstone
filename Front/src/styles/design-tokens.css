@@ -198,6 +198,16 @@
   --header-height:  60px;
   --sidebar-width:  240px;
 
+  /* ── Breakpoint (UX W8A — W1 시드 누락 보완, 12주 고정 정책 그대로) ──
+   *
+   * 기존 hardcode @media (768px·1024px) 와 일치. *재선언* 으로 단일 source 화.
+   * CSS 스펙 제약: var(--bp-tablet) 은 @media 안에서 동작 안 함 (resolved 시점 차이).
+   *   → CSS @media 는 hardcode 유지 (`@media (max-width: 768px)`), 본 토큰은
+   *     문서·JS측 (@vueuse useBreakpoints) 참조 source 로만 사용.
+   * 두 단계: 모바일 ≤ tablet, 태블릿/데스크톱 ≥ desktop. 2단계 단순. */
+  --bp-tablet:  768px;
+  --bp-desktop: 1024px;
+
   /* ============================================================
    * 13. 도메인 — 추천 시스템 전용
    * ============================================================ */
