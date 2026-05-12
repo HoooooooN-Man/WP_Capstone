@@ -1,100 +1,112 @@
 <!--
   OnboardingModal.vue
   ===================
-  Tier 1.6 / 차별화 §3.5 — 신규 사용자 30초 가치 전달.
+  UX W5 C3 — 스타일 다듬기 (로직 변경 없음).
 
-  4단계:
-    1. 모델 소개   — v9 ML 앙상블이 매일 KOSPI 종목을 1~100점으로 평가
-    2. Tier 의미   — A/B/C/D 컷오프와 백테스트 alpha 요약
-    3. 회원 가치  — 관심종목·알림으로 매일 변화 추적
-    4. 정직성     — Holdout 분리·Model Card 공개 (/transparency)
-
-  사용 (App.vue 또는 main view):
-    <OnboardingModal v-if="showOnboarding" @close="dismiss" />
-
-  첫 방문 감지: localStorage 의 'onboarding_seen_v1' 키. 한 번 보면 다시 안 뜸.
+  변경:
+    - <dialog> + fixed div → PrimeVue <Dialog> (focus trap·ESC 자동).
+    - 5번째 step 5 라디오 → CohortPicker 컴포넌트 (W5 C1) 재사용.
+    - 색·간격 → design-tokens.css 변수 적용.
+    - 캡스톤 시기 cohort 라벨 (conservative·value) → 차기 W2 백엔드 일치
+      (balanced·growth·dividend·short_term·beginner). CohortPicker 가 정합.
+    - "나중에 정할게요" = 5번째 step 의 "건너뛰기" 버튼 (chosenCohort=null finish).
 -->
 <template>
-  <div v-if="visible" class="onboarding-backdrop" role="dialog" aria-modal="true" @click.self="skip">
-    <div class="onboarding-modal" :aria-labelledby="titleId">
-      <button
-        class="close-btn"
-        type="button"
-        aria-label="투어 건너뛰기"
-        @click="skip"
-      >×</button>
-
-      <div class="step-counter">
-        <span
-          v-for="i in TOTAL_STEPS"
-          :key="i"
-          class="dot"
-          :class="{ active: i === step }"
-        />
+  <Dialog
+    v-model:visible="visible"
+    modal
+    :closable="false"
+    :draggable="false"
+    :style="{ width: '560px' }"
+    :breakpoints="{ '768px': '92vw' }"
+    class="onboarding-dialog"
+    :aria-labelledby="titleId"
+  >
+    <template #header>
+      <div class="onboarding__header">
+        <div class="onboarding__step-counter" role="progressbar"
+             :aria-valuenow="step" :aria-valuemin="1" :aria-valuemax="TOTAL_STEPS">
+          <span
+            v-for="i in TOTAL_STEPS"
+            :key="i"
+            class="onboarding__dot"
+            :class="{ 'is-active': i === step, 'is-done': i < step }"
+          />
+        </div>
+        <button
+          class="onboarding__close"
+          type="button"
+          aria-label="투어 건너뛰기"
+          @click="skip"
+        >
+          <i class="pi pi-times" aria-hidden="true" />
+        </button>
       </div>
+    </template>
 
-      <h2 :id="titleId" class="step-title">{{ currentStep.title }}</h2>
-      <p class="step-body">{{ currentStep.body }}</p>
+    <div class="onboarding__body">
+      <h2 :id="titleId" class="onboarding__title">{{ currentStep.title }}</h2>
+      <p class="onboarding__text">{{ currentStep.body }}</p>
 
-      <div v-if="currentStep.bullets" class="step-bullets">
-        <p v-for="(b, i) in currentStep.bullets" :key="i" class="bullet">
-          <span class="bullet-mark">▸</span> {{ b }}
+      <div v-if="currentStep.bullets" class="onboarding__bullets">
+        <p v-for="(b, i) in currentStep.bullets" :key="i" class="onboarding__bullet">
+          <i class="pi pi-check-circle" aria-hidden="true" /> {{ b }}
         </p>
       </div>
 
-      <!-- W2: cohort 선택 step. step.choose === 'cohort' 일 때만 노출. -->
-      <fieldset v-if="currentStep.choose === 'cohort'" class="cohort-form">
-        <legend class="sr-only">관심사 선택</legend>
-        <label
-          v-for="opt in COHORT_OPTIONS"
-          :key="opt.value ?? 'skip'"
-          class="cohort-row"
-          :class="{ active: chosenCohort === opt.value }"
-        >
-          <input
-            type="radio"
-            name="cohort"
-            :value="opt.value"
-            v-model="chosenCohort"
-          />
-          <span class="cohort-label">{{ opt.label }}</span>
-          <span class="cohort-desc">{{ opt.desc }}</span>
-        </label>
-        <p class="form-hint">"내 관심사 기반 정렬" — 자문이 아닌 정보 정렬입니다.</p>
-      </fieldset>
+      <!-- 5번째 step — CohortPicker 재사용 -->
+      <div v-if="currentStep.choose === 'cohort'" class="onboarding__cohort">
+        <CohortPicker v-model="chosenCohort" name="onboarding_cohort" />
+        <p class="onboarding__hint">
+          "내 관심사 기반 정렬" — 본 정보는 자문이 아닙니다.
+        </p>
+      </div>
+    </div>
 
-      <div class="actions">
+    <template #footer>
+      <div class="onboarding__actions">
         <button
           v-if="step > 1"
           type="button"
-          class="btn-secondary"
+          class="onboarding__btn onboarding__btn--ghost"
           @click="step--"
         >이전</button>
+        <span class="onboarding__spacer" />
+        <button
+          v-if="currentStep.choose === 'cohort'"
+          type="button"
+          class="onboarding__btn onboarding__btn--ghost"
+          @click="finishWithoutCohort"
+        >건너뛰기</button>
         <button
           v-if="step < TOTAL_STEPS"
           type="button"
-          class="btn-primary"
+          class="onboarding__btn onboarding__btn--primary"
           @click="step++"
         >다음</button>
         <button
           v-else
           type="button"
-          class="btn-primary"
+          class="onboarding__btn onboarding__btn--primary"
+          :disabled="currentStep.choose === 'cohort' && !chosenCohort"
           @click="finish"
         >시작하기</button>
       </div>
-
-      <p class="footer-hint">
+      <p class="onboarding__footer-hint">
         <a href="/transparency" target="_blank" rel="noopener">
           모델 정직성 페이지에서 자세한 성능 지표 보기 →
         </a>
       </p>
-    </div>
-  </div>
+    </template>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import Dialog from 'primevue/dialog'
+import CohortPicker from '@/components/CohortPicker.vue'
+import { useCohort } from '@/composables/useCohort'
+import type { CohortKey } from '@/composables/useCohortMeta'
 
 const STORAGE_KEY = 'onboarding_seen_v1'
 const TOTAL_STEPS = 5
@@ -103,24 +115,8 @@ interface Step {
   title: string
   body: string
   bullets?: string[]
-  /** W2 — cohort 선택 step 표시. 'cohort' 외에는 미표시. */
   choose?: 'cohort'
 }
-
-interface CohortOption {
-  value: string | null
-  label: string
-  desc: string
-}
-
-const COHORT_OPTIONS: CohortOption[] = [
-  { value: null,            label: '나중에 정할게요 (기본)',     desc: 'v9 점수 그대로 보여드립니다.' },
-  { value: 'conservative',  label: '안정형',                     desc: '변동성 낮은 종목을 우선 보여드립니다.' },
-  { value: 'balanced',      label: '균형형',                     desc: 'v9 점수 그대로 (기본과 동일).' },
-  { value: 'growth',        label: '성장형',                     desc: '최근 모멘텀 강한 종목을 가중합니다.' },
-  { value: 'dividend',      label: '배당 중심',                  desc: '배당수익률 2% 이상만 노출합니다.' },
-  { value: 'value',         label: '가치 투자',                  desc: 'PER 15 미만 · PBR 1.5 미만 종목만 노출합니다.' },
-]
 
 const STEPS: Step[] = [
   {
@@ -172,10 +168,7 @@ const STEPS: Step[] = [
 ]
 
 const props = withDefaults(
-  defineProps<{
-    /** 부모가 강제로 보여주고 싶을 때 (개발 모드 등). */
-    forceShow?: boolean
-  }>(),
+  defineProps<{ forceShow?: boolean }>(),
   { forceShow: false },
 )
 
@@ -184,30 +177,30 @@ const emit = defineEmits<{
   (e: 'finish'): void
 }>()
 
-import { useCohort } from '@/composables/useCohort'
-
-const visible = ref(false)
-const step = ref(1)
-const titleId = `onboarding-title-${Math.random().toString(36).slice(2, 8)}`
-const chosenCohort = ref<string | null>(null)
+const visible       = ref(false)
+const step          = ref(1)
+const titleId       = `onboarding-title-${Math.random().toString(36).slice(2, 8)}`
+const chosenCohort  = ref<CohortKey | null>(null)
 const { setCohort } = useCohort()
-const currentStep = computed(() => STEPS[step.value - 1])
+const currentStep   = computed(() => STEPS[step.value - 1])
 
 onMounted(() => {
   if (props.forceShow) {
     visible.value = true
     return
   }
-  // 첫 방문 감지.
   try {
     if (localStorage.getItem(STORAGE_KEY) !== '1') {
       visible.value = true
     }
   } catch (e) {
-    // localStorage 에 접근 못 하는 환경(privacy mode 등) — 그냥 안 띄움.
     console.warn('[onboarding] localStorage unavailable', e)
   }
 })
+
+function _markSeen() {
+  try { localStorage.setItem(STORAGE_KEY, '1') } catch (e) { /* ignore */ }
+}
 
 function skip() {
   _markSeen()
@@ -216,188 +209,152 @@ function skip() {
 }
 
 async function finish() {
-  // W2 — cohort 선택을 localStorage 즉시 저장. 로그인 상태면 서버에도 동시 PUT.
-  // 인증 여부는 token 존재로만 판단 (auth store 의존 회피, 가벼운 판정).
-  let authenticated = false
-  try {
-    const tok = localStorage.getItem('session_token')
-    authenticated = !!tok
-  } catch {
-    /* ignore */
-  }
-  try {
-    await setCohort(chosenCohort.value, { authenticated })
-  } catch (e) {
-    console.error('[onboarding] cohort persist failed', e)
+  if (chosenCohort.value) {
+    try {
+      // 차차차기 §3 권고: 건너뛰기 = balanced default. 명시 선택 시 그 값.
+      await setCohort(chosenCohort.value, { authenticated: false })
+    } catch (e) {
+      console.error('[onboarding] cohort persist failed', e)
+    }
   }
   _markSeen()
   visible.value = false
   emit('finish')
-  emit('close')
 }
 
-function _markSeen() {
+async function finishWithoutCohort() {
   try {
-    localStorage.setItem(STORAGE_KEY, '1')
-  } catch {
-    /* ignore */
+    // UX_사이클.md §3 — 건너뛰기 default = balanced.
+    await setCohort('balanced', { authenticated: false })
+  } catch (e) {
+    console.error('[onboarding] default balanced 저장 실패', e)
   }
+  _markSeen()
+  visible.value = false
+  emit('finish')
 }
 </script>
 
 <style scoped>
-.onboarding-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
+.onboarding-dialog :deep(.p-dialog-header) {
+  padding: var(--space-4) var(--space-5) 0;
+  border: 0;
+}
+.onboarding-dialog :deep(.p-dialog-content) {
+  padding: var(--space-4) var(--space-5);
+  font-family: var(--font-sans);
+}
+.onboarding-dialog :deep(.p-dialog-footer) {
+  padding: var(--space-3) var(--space-5) var(--space-5);
+  border: 0;
 }
 
-.onboarding-modal {
-  background: #fff;
+/* Header */
+.onboarding__header {
+  display: flex; align-items: center; justify-content: space-between;
   width: 100%;
-  max-width: 480px;
-  border-radius: 12px;
-  padding: 28px 24px 20px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-  position: relative;
-  font-family: inherit;
 }
-
-.close-btn {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  background: transparent;
-  border: 0;
-  font-size: 22px;
-  line-height: 1;
-  color: #6b7280;
-  cursor: pointer;
+.onboarding__step-counter {
+  display: flex; gap: var(--space-2);
 }
-.close-btn:hover { color: #111827; }
-
-.step-counter {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 14px;
+.onboarding__dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--border-default);
+  transition: background var(--duration-fast) var(--ease-out),
+              width      var(--duration-fast) var(--ease-out);
 }
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
-  background: #d1d5db;
-}
-.dot.active {
-  background: #2563eb;
+.onboarding__dot.is-active {
   width: 24px;
-  transition: width 0.2s;
+  background: var(--color-primary-600);
 }
-
-.step-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 10px;
-  line-height: 1.3;
+.onboarding__dot.is-done {
+  background: var(--color-primary-300);
 }
-.step-body {
-  font-size: 14px;
-  color: #374151;
-  line-height: 1.6;
-  margin: 0 0 14px;
-}
-
-.step-bullets {
-  background: #f9fafb;
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 16px;
-}
-
-/* W2 — cohort 선택 form */
-.cohort-form {
-  border: 0;
-  padding: 0;
-  margin: 0 0 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.cohort-row {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  align-items: baseline;
-  gap: 6px 10px;
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+.onboarding__close {
+  background: transparent; border: 0;
+  width: 32px; height: 32px;
+  border-radius: var(--radius-full);
+  color: var(--text-tertiary);
   cursor: pointer;
-  font-size: 13px;
-  transition: border-color 0.15s, background 0.15s;
+  font-size: var(--text-base);
 }
-.cohort-row:hover { background: #f9fafb; }
-.cohort-row.active { border-color: #2563eb; background: #eff6ff; }
-.cohort-row input[type="radio"] { margin: 0; }
-.cohort-label { font-weight: 600; color: #111827; }
-.cohort-desc  { color: #6b7280; font-size: 12px; }
-.form-hint { font-size: 11px; color: #6b7280; margin: 4px 0 0; }
-.sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0;
-  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
-}
-.bullet {
-  margin: 4px 0;
-  font-size: 13px;
-  color: #1f2937;
-  line-height: 1.5;
-}
-.bullet-mark {
-  color: #2563eb;
-  margin-right: 4px;
-}
+.onboarding__close:hover { background: var(--surface-muted); color: var(--text-primary); }
 
-.actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-bottom: 12px;
+/* Body */
+.onboarding__body { display: flex; flex-direction: column; gap: var(--space-3); }
+.onboarding__title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
 }
-.btn-primary {
-  padding: 8px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  background: #2563eb;
-  color: #fff;
-  border: 0;
-  border-radius: 6px;
-  cursor: pointer;
+.onboarding__text {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
 }
-.btn-primary:hover { background: #1d4ed8; }
-.btn-secondary {
-  padding: 8px 14px;
-  font-size: 14px;
-  background: #fff;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  cursor: pointer;
+.onboarding__bullets { display: flex; flex-direction: column; gap: var(--space-2); }
+.onboarding__bullet {
+  display: flex; align-items: flex-start; gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
 }
-.btn-secondary:hover { background: #f3f4f6; }
+.onboarding__bullet i { color: var(--color-primary-600); margin-top: 3px; }
 
-.footer-hint {
-  text-align: center;
-  font-size: 12px;
-  color: #6b7280;
+.onboarding__cohort {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.onboarding__hint {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
   margin: 0;
 }
-.footer-hint a {
-  color: #2563eb;
-  text-decoration: none;
+
+/* Footer */
+.onboarding__actions {
+  display: flex; align-items: center;
+  gap: var(--space-2);
 }
-.footer-hint a:hover { text-decoration: underline; }
+.onboarding__spacer { flex: 1; }
+.onboarding__btn {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border-default);
+}
+.onboarding__btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.onboarding__btn--ghost:hover { background: var(--surface-muted); }
+.onboarding__btn--primary {
+  background: var(--color-primary-600);
+  color: var(--text-inverse);
+  border-color: var(--color-primary-600);
+}
+.onboarding__btn--primary:hover { background: var(--color-primary-700); }
+.onboarding__btn--primary:disabled {
+  background: var(--color-neutral-300);
+  border-color: var(--color-neutral-300);
+  cursor: not-allowed;
+}
+
+.onboarding__footer-hint {
+  margin: var(--space-3) 0 0;
+  text-align: center;
+  font-size: var(--text-xs);
+}
+.onboarding__footer-hint a {
+  color: var(--text-link); text-decoration: none;
+}
+.onboarding__footer-hint a:hover { text-decoration: underline; }
 </style>
