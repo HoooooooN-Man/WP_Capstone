@@ -7,12 +7,12 @@ import { useRouter }             from 'vue-router'
 import { useEventListener }      from '@vueuse/core'
 import GlobalSearch   from '@/components/common/GlobalSearch.vue'
 import OfflineBanner  from '@/components/common/OfflineBanner.vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 
 const auth   = useAuthStore()
 const theme  = useThemeStore()
 const notif  = useNotificationStore()
 const router = useRouter()
-const notiOpen = ref(false)
 
 onMounted(() => {
   if (auth.isLoggedIn) {
@@ -101,45 +101,8 @@ function handleLogout() {
         <!-- 우측 -->
         <div class="ml-auto flex items-center gap-2 shrink-0">
 
-          <!-- 알림 벨 -->
-          <div v-if="auth.isLoggedIn" class="relative">
-            <button
-              class="relative w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-              :class="theme.isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'"
-              @click="notiOpen = !notiOpen; notif.markAllRead()"
-            >
-              🔔
-              <span
-                v-if="notif.unread > 0"
-                class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center bg-red-500 text-white"
-              >{{ Math.min(notif.unread, 9) }}</span>
-            </button>
-
-            <!-- 알림 드롭다운 -->
-            <Transition name="search-fade">
-              <div
-                v-if="notiOpen"
-                class="absolute right-0 top-10 w-72 rounded-xl shadow-xl z-50 overflow-hidden"
-                :class="theme.isDark ? 'bg-[#1A1D27] border border-[#2A2D3A]' : 'bg-white border border-gray-100'"
-              >
-                <div class="px-4 py-3 border-b text-sm font-semibold" :class="theme.isDark ? 'border-[#2A2D3A]' : 'border-gray-100'">알림</div>
-                <div v-if="!notif.list.length" class="px-4 py-6 text-center text-sm" :class="theme.isDark ? 'text-gray-500' : 'text-gray-400'">
-                  새 알림이 없습니다
-                </div>
-                <div v-else class="max-h-60 overflow-y-auto">
-                  <div
-                    v-for="n in notif.list"
-                    :key="n.id"
-                    class="px-4 py-3 border-b text-sm"
-                    :class="theme.isDark ? 'border-[#2A2D3A]' : 'border-gray-50'"
-                  >
-                    <p class="font-medium">{{ n.title ?? n.message }}</p>
-                    <p v-if="n.body" class="text-xs mt-0.5" :class="theme.isDark ? 'text-gray-500' : 'text-gray-400'">{{ n.body }}</p>
-                  </div>
-                </div>
-              </div>
-            </Transition>
-          </div>
+          <!-- UX W7B — 알림 벨 분리. NotificationBell·NotificationDropdown 컴포넌트. -->
+          <NotificationBell v-if="auth.isLoggedIn" />
 
           <!-- 검색 버튼 -->
           <button
