@@ -20,37 +20,51 @@ defineEmits<{ (e: 'close'): void }>()
 </script>
 
 <style scoped>
+/* UX W7A — 토큰 적용. template·script 변경 0. */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
+  position: fixed; inset: 0;
+  background: var(--surface-overlay);
+  display: flex; align-items: center; justify-content: center;
+  z-index: var(--z-modal);
+  font-family: var(--font-sans);
 }
 .modal {
-  background: #fff;
-  border-radius: 10px;
-  padding: 28px 32px;
+  background: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-8);
   text-align: center;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+  box-shadow: var(--shadow-xl);
   min-width: 280px;
 }
-.modal__msg { font-size: 15px; color: #334155; margin: 0 0 20px; }
-.modal__actions { display: flex; justify-content: center; gap: 10px; }
-.btn {
-  padding: 8px 20px;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
+.modal__msg {
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-5);
 }
-.btn--primary { background: #6366f1; color: #fff; }
-.btn--primary:hover { background: #4f46e5; }
-.btn--ghost { background: transparent; color: #475569; border: 1px solid #cbd5e1; }
-.btn--ghost:hover { background: #f1f5f9; }
+.modal__actions {
+  display: flex; justify-content: center; gap: var(--space-2);
+}
+.btn {
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  text-decoration: none;
+  display: inline-flex; align-items: center;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.btn--primary {
+  background: var(--color-primary-600);
+  color: var(--text-inverse);
+  border-color: var(--color-primary-600);
+}
+.btn--primary:hover { background: var(--color-primary-700); }
+.btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-default);
+}
+.btn--ghost:hover { background: var(--surface-muted); }
 </style>

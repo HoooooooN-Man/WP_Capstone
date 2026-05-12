@@ -173,123 +173,127 @@ onMounted(() => loadPosts(1))
 </script>
 
 <style scoped>
-/* 전체 레이아웃 */
+/* UX W7A — BoardView 토큰 적용. template·script 변경 0. */
+
 .board-wrap {
   max-width: 860px;
   margin: 0 auto;
-  padding: 24px 16px;
-  font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+  padding: var(--space-6) var(--layout-content-pad);
+  font-family: var(--font-sans);
+  color: var(--text-primary);
 }
 
-/* 헤더 배너 */
 .board-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 14px 20px;
-  margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-4);
 }
-.board-header__info { display: flex; align-items: center; gap: 10px; }
+.board-header__info { display: flex; align-items: center; gap: var(--space-2); }
 .board-header__ticker {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1e40af;
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-primary-700);
 }
-.board-header__title { font-size: 15px; color: #475569; }
+.board-header__title {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+}
 .board-header__link {
-  font-size: 13px;
-  color: #6366f1;
+  font-size: var(--text-sm);
+  color: var(--color-primary-600);
   text-decoration: none;
 }
 .board-header__link:hover { text-decoration: underline; }
 
-/* 도구 모음 */
 .board-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: var(--space-3);
 }
-.board-toolbar__count { font-size: 13px; color: #64748b; }
+.board-toolbar__count {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
 
-/* 버튼 */
 .btn {
-  padding: 7px 16px;
-  border-radius: 6px;
-  font-size: 13px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: inherit;
   cursor: pointer;
-  border: none;
-  transition: background 0.15s;
+  border: 1px solid transparent;
+  transition: background var(--duration-fast) var(--ease-out);
 }
-.btn--primary { background: #6366f1; color: #fff; }
-.btn--primary:hover { background: #4f46e5; }
+.btn--primary {
+  background: var(--color-primary-600);
+  color: var(--text-inverse);
+  border-color: var(--color-primary-600);
+}
+.btn--primary:hover { background: var(--color-primary-700); }
 .btn--ghost {
   background: transparent;
-  color: #475569;
-  border: 1px solid #cbd5e1;
+  color: var(--text-secondary);
+  border-color: var(--border-default);
 }
-.btn--ghost:hover { background: #f1f5f9; }
+.btn--ghost:hover { background: var(--surface-muted); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* 목록 */
 .post-list { list-style: none; margin: 0; padding: 0; }
 
 .post-item {
-  padding: 14px 16px;
-  border-bottom: 1px solid #f1f5f9;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background var(--duration-fast) var(--ease-out);
 }
-.post-item:hover { background: #f8fafc; }
-
+.post-item:hover { background: var(--surface-muted); }
 .post-item__title {
-  font-size: 15px;
-  font-weight: 500;
-  color: #1e293b;
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
 }
-
 .post-item__meta {
-  display: flex;
-  gap: 14px;
-  margin-top: 6px;
-  font-size: 12px;
-  color: #94a3b8;
+  display: flex; gap: var(--space-3);
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
 }
 
-/* 좋아요 버튼 */
-.post-item__like { display: flex; align-items: center; gap: 3px; cursor: pointer; }
-.heart { color: #cbd5e1; transition: color 0.15s; }
-.heart--filled { color: #ef4444; }
+/* 좋아요 — 한국 관례 빨강 (--color-up). */
+.post-item__like {
+  display: flex; align-items: center; gap: 3px;
+  cursor: pointer;
+}
+.heart {
+  color: var(--border-default);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.heart--filled { color: var(--color-up); }
 
-/* 페이지네이션 */
 .pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  margin-top: 24px;
+  display: flex; justify-content: center; align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
 }
-.pagination__info { font-size: 13px; color: #64748b; }
+.pagination__info {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
 
-/* 로딩 / 에러 / 빈 상태 */
 .board-loading,
 .board-empty {
   text-align: center;
-  padding: 48px 0;
-  color: #94a3b8;
-  font-size: 14px;
+  padding: var(--space-12) 0;
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
 }
 .board-error {
   text-align: center;
-  padding: 32px;
-  color: #ef4444;
-  font-size: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  padding: var(--space-8);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
 }
 </style>
