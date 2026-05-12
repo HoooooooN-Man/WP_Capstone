@@ -14,7 +14,7 @@ import 'primeicons/primeicons.css'
 import 'pretendard/dist/web/variable/PretendardVariable-VF.css'
 
 import App from './App.vue'
-import router from './router/index.js'
+import router from './router/index'
 import '@/styles/design-tokens.css'   // UX 사이클 W1 — 디자인 토큰 (값은 사용자 결정 후 채움)
 import '@/style.css'
 

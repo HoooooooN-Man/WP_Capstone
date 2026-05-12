@@ -5,7 +5,10 @@ import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 
 const routes: RouteRecordRaw[] = [
-  { path: '/',               name: 'Home',        component: () => import('@/views/HomeView.vue') },
+  // UX 사이클 W3 — / 는 RecommendView 로 redirect (사용자 결정: /recommend 직결 + / → /recommend).
+  { path: '/',               redirect: '/recommend' },
+  { path: '/recommend',      name: 'Recommend',   component: () => import('@/views/RecommendView.vue') },
+  { path: '/home',           name: 'Home',        component: () => import('@/views/HomeView.vue') },
   { path: '/stocks',         name: 'Stocks',      component: () => import('@/views/StocksView.vue') },
   { path: '/stocks/:ticker', name: 'StockDetail', component: () => import('@/views/StockDetailView.vue') },
   { path: '/screener',       name: 'Screener',    component: () => import('@/views/ScreenerView.vue') },
@@ -27,7 +30,6 @@ const routes: RouteRecordRaw[] = [
   { path: '/reset-password', name: 'ResetPassword',  component: () => import('@/page/auth/ResetPassword.vue') },
   { path: '/board',          name: 'Board',       component: () => import('@/page/board/Boardview.vue') },
   // 기존 경로 호환
-  { path: '/recommend',      redirect: '/stocks' },
   { path: '/stock/:ticker',  redirect: (to) => `/stocks/${to.params.ticker}` },
 ]
 
