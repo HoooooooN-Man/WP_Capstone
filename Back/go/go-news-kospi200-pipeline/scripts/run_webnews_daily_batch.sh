@@ -50,8 +50,9 @@ mkdir -p "$ROOT_DIR/data/webnews/archive"
     echo "[2/8] prune before batch"
     echo "------------------------------------------------------------"
     ./bin/webnews_prune \
-      --phase before \
-      --display-date "$DISPLAY_DATE"
+        --phase before \
+        --display-date "$DISPLAY_DATE" \
+        --reset-display-date
     echo
 
     echo "------------------------------------------------------------"

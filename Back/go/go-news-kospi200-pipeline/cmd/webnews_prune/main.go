@@ -22,6 +22,7 @@ func main() {
 	displayDateFlag := flag.String("display-date", "", "target display date in YYYY-MM-DD")
 	trimPublishEvents := flag.Int64("trim-publish-events", 30, "max publish events to keep; set 0 to delete publish event stream")
 	deleteCurrentStaging := flag.Bool("delete-current-staging", true, "delete staging directory for the target display date")
+	resetDisplayDate := flag.Bool("reset-display-date", false, "delete rank/item/seen/lock keys for the target display date before running the batch")
 	flag.Parse()
 
 	baseCfg := baseconfig.Load()
@@ -68,6 +69,19 @@ func main() {
 		}
 		result.DeletedTransientKeys = deletedTransientKeys
 
+		if *resetDisplayDate {
+			deletedDisplayDateKeys, err := redisstore.DeleteDateScopedKeys(
+				ctx,
+				client,
+				webCfg.RedisPrefix,
+				displayDate,
+			)
+			if err != nil {
+				log.Fatalf("webnews_prune: reset display date keys failed: %v", err)
+			}
+			result.DeletedDisplayDateKeys = deletedDisplayDateKeys
+		}
+
 		removedStagingDirs, err := cleanupStagingDirs(webCfg.DataDir, displayDate, *deleteCurrentStaging)
 		if err != nil {
 			log.Fatalf("webnews_prune: cleanup staging failed: %v", err)
@@ -109,10 +123,11 @@ func main() {
 	}
 
 	log.Printf(
-		"webnews_prune: done phase=%s display_date=%s deleted_transient_keys=%d deleted_old_date_keys=%d publish_events_len=%d removed_staging_dirs=%d",
+		"webnews_prune: done phase=%s display_date=%s deleted_transient_keys=%d deleted_display_date_keys=%d deleted_old_date_keys=%d publish_events_len=%d removed_staging_dirs=%d",
 		result.Phase,
 		result.DisplayDate,
 		result.DeletedTransientKeys,
+		result.DeletedDisplayDateKeys,
 		result.DeletedOldDateKeys,
 		result.PublishEventsLen,
 		result.RemovedStagingDirs,
@@ -120,12 +135,13 @@ func main() {
 }
 
 type pruneResult struct {
-	Phase                string
-	DisplayDate          string
-	DeletedTransientKeys int
-	DeletedOldDateKeys   int
-	PublishEventsLen     int64
-	RemovedStagingDirs   int
+	Phase                  string
+	DisplayDate            string
+	DeletedTransientKeys   int
+	DeletedDisplayDateKeys int
+	DeletedOldDateKeys     int
+	PublishEventsLen       int64
+	RemovedStagingDirs     int
 }
 
 func cleanupStagingDirs(dataDir string, displayDate string, deleteCurrent bool) (int, error) {
