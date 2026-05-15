@@ -59,12 +59,22 @@ func (c *GoogleRSSClient) FetchByJob(ctx context.Context, job model.CollectJob) 
 		topN = 10
 	}
 
+	windowStart, windowEnd, hasWindow, err := parseJobWindow(job)
+	if err != nil {
+		return nil, err
+	}
+
 	items := make([]model.RawNewsItem, 0, topN)
 	collectedAt := time.Now().Format(time.RFC3339)
+	rank := 0
 
-	for idx, entry := range feed.Items {
-		if idx >= topN {
+	for _, entry := range feed.Items {
+		if len(items) >= topN {
 			break
+		}
+
+		if hasWindow && !isPublishedInWindow(entry, windowStart, windowEnd) {
+			continue
 		}
 
 		publisher := ""
@@ -75,11 +85,13 @@ func (c *GoogleRSSClient) FetchByJob(ctx context.Context, job model.CollectJob) 
 			publishedAt = entry.PublishedParsed.Format(time.RFC3339)
 		}
 
+		rank++
+
 		items = append(items, model.RawNewsItem{
 			DisplayDate:   job.DisplayDate,
 			CategoryID:    job.CategoryID,
 			CategoryLabel: job.CategoryLabel,
-			Rank:          idx + 1,
+			Rank:          rank,
 			Title:         title,
 			Publisher:     publisher,
 			GoogleNewsURL: strings.TrimSpace(entry.Link),
@@ -92,6 +104,54 @@ func (c *GoogleRSSClient) FetchByJob(ctx context.Context, job model.CollectJob) 
 	}
 
 	return items, nil
+}
+
+func parseJobWindow(job model.CollectJob) (time.Time, time.Time, bool, error) {
+	windowStartRaw := strings.TrimSpace(job.WindowStart)
+	windowEndRaw := strings.TrimSpace(job.WindowEnd)
+
+	if windowStartRaw == "" && windowEndRaw == "" {
+		return time.Time{}, time.Time{}, false, nil
+	}
+
+	if windowStartRaw == "" || windowEndRaw == "" {
+		return time.Time{}, time.Time{}, false, fmt.Errorf(
+			"job has incomplete window: category=%s window_start=%q window_end=%q",
+			job.CategoryID,
+			job.WindowStart,
+			job.WindowEnd,
+		)
+	}
+
+	windowStart, err := time.Parse(time.RFC3339, windowStartRaw)
+	if err != nil {
+		return time.Time{}, time.Time{}, false, fmt.Errorf("parse window_start: %w", err)
+	}
+
+	windowEnd, err := time.Parse(time.RFC3339, windowEndRaw)
+	if err != nil {
+		return time.Time{}, time.Time{}, false, fmt.Errorf("parse window_end: %w", err)
+	}
+
+	if windowEnd.Before(windowStart) {
+		return time.Time{}, time.Time{}, false, fmt.Errorf(
+			"invalid job window: category=%s window_start=%s window_end=%s",
+			job.CategoryID,
+			job.WindowStart,
+			job.WindowEnd,
+		)
+	}
+
+	return windowStart, windowEnd, true, nil
+}
+
+func isPublishedInWindow(entry *gofeed.Item, windowStart, windowEnd time.Time) bool {
+	if entry == nil || entry.PublishedParsed == nil {
+		return false
+	}
+
+	published := *entry.PublishedParsed
+	return !published.Before(windowStart) && !published.After(windowEnd)
 }
 
 type roundTripperWithUA struct {

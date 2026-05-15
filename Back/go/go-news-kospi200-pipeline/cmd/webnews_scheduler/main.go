@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"time"
 
@@ -14,8 +15,10 @@ import (
 )
 
 func main() {
-	baseCfg := baseconfig.Load()
+	displayDateFlag := flag.String("display-date", "", "target display date in YYYY-MM-DD")
+	flag.Parse()
 
+	baseCfg := baseconfig.Load()
 	webCfg, err := webconfig.LoadFromEnv()
 	if err != nil {
 		log.Fatalf("webnews_scheduler: load env failed: %v", err)
@@ -45,11 +48,12 @@ func main() {
 	}
 
 	now := time.Now().In(loc)
-	displayDate, windowStart, windowEnd := timewindow.Resolve(
+	displayDate, windowStart, windowEnd := resolveWindow(
 		now,
 		loc,
 		webCfg.MarketOpenHour,
 		webCfg.MarketOpenMinute,
+		*displayDateFlag,
 	)
 
 	log.Printf("webnews_scheduler: start now=%s display_date=%s window_start=%s window_end=%s redis=%s",
@@ -80,6 +84,34 @@ func main() {
 	}
 
 	log.Printf("webnews_scheduler: done enqueued=%d stream=%s xlen=%d", enqueued, streamKey, xlen)
+}
+
+func resolveWindow(
+	now time.Time,
+	loc *time.Location,
+	openHour int,
+	openMinute int,
+	displayDateFlag string,
+) (string, time.Time, time.Time) {
+	if displayDateFlag == "" {
+		return timewindow.Resolve(now, loc, openHour, openMinute)
+	}
+
+	windowStart, windowEnd, err := timewindow.WindowForDisplayDate(
+		displayDateFlag,
+		loc,
+		openHour,
+		openMinute,
+	)
+	if err != nil {
+		log.Fatalf(
+			"webnews_scheduler: resolve window by display date failed display_date=%q err=%v",
+			displayDateFlag,
+			err,
+		)
+	}
+
+	return displayDateFlag, windowStart, windowEnd
 }
 
 func buildJob(displayDate string, category model.CategoryConfig, now, windowStart, windowEnd time.Time) model.CollectJob {
