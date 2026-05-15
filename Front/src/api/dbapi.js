@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const BASE = import.meta.env.VITE_API_BASE_AUTH ?? 'http://localhost:8002'
+const BASE = import.meta.env.VITE_API_BASE_AUTH ?? 'http://localhost:8000'
 
 const dbapi = axios.create({
   baseURL: BASE,

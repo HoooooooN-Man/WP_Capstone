@@ -1,6 +1,7 @@
 # auth/social.py — 보안 강화 버전
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import httpx
@@ -60,7 +61,6 @@ def _parse_naver(data: dict) -> dict:
 _PARSERS = {"google": _parse_google, "kakao": _parse_kakao, "naver": _parse_naver}
 
 async def get_social_user_data(provider: str, access_token: str) -> dict:
-    """Access Token으로 소셜 플랫폼에서 유저 정보를 가져오고 표준화"""
     try:
         async with httpx.AsyncClient(timeout=HTTPX_TIMEOUT) as client:
             headers  = {"Authorization": f"Bearer {access_token}"}
@@ -69,6 +69,9 @@ async def get_social_user_data(provider: str, access_token: str) -> dict:
         raise HTTPException(status_code=504, detail=f"{provider} 서버 응답 시간이 초과됐습니다.")
     except httpx.RequestError:
         raise HTTPException(status_code=502, detail=f"{provider} 서버에 연결할 수 없습니다.")
+
+    print(f"[소셜 로그인] {provider} 응답 status: {response.status_code}")
+    print(f"[소셜 로그인] {provider} 응답 body: {response.json()}")  # ← 추가
 
     if response.status_code == 401:
         raise HTTPException(status_code=401, detail=f"유효하지 않은 {provider} 액세스 토큰입니다.")
@@ -183,6 +186,7 @@ async def social_login(
     return {
         "session_token":  session_token,
         "nickname":       target_user.nickname,
+        "user_id":        target_user.user_id,
         "needs_password": target_user.hashed_password is None,
         "message":        "로그인 성공",
     }
@@ -236,7 +240,7 @@ async def confirm_social_link(
     if not redis_setex(f"session:{session_token}", SESSION_TTL, user.email):
         raise HTTPException(status_code=503, detail="세션 생성에 실패했습니다.")
 
-    return {"session_token": session_token, "nickname": user.nickname, "message": "계정 연동 및 로그인 성공"}
+    return {"session_token": session_token, "nickname": user.nickname, "user_id": user.user_id, "message": "계정 연동 및 로그인 성공"}
 
 
 # ── 내부 헬퍼 ─────────────────────────────────────────────────────────────
@@ -248,3 +252,66 @@ def _issue_link_hint(email: str, provider: str, social_id: str) -> str:
     token = uuid.uuid4().hex
     rd.setex(f"link_hint:{token}", 300, f"{email}|{provider}|{social_id}")
     return token
+
+KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token"
+KAKAO_REDIRECT_URI = os.getenv("KAKAO_REDIRECT_URI", "http://localhost:8000/auth/kakao/callback")
+KAKAO_CLIENT_ID = os.getenv("KAKAO_CLIENT_ID")  # REST API 키
+KAKAO_CLIENT_SECRET = os.getenv("KAKAO_CLIENT_SECRET", "")
+
+@router.get("/kakao/callback")
+async def kakao_callback(code: str):
+    # code → access_token 교환만 하고 프론트로 넘김
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.post(KAKAO_TOKEN_URL, data={
+                "grant_type":    "authorization_code",
+                "client_id":     KAKAO_CLIENT_ID,
+                "redirect_uri":  KAKAO_REDIRECT_URI,
+                "code":          code,
+                "client_secret": KAKAO_CLIENT_SECRET,
+            })
+        token_data = res.json()
+        access_token = token_data.get("access_token")
+        if not access_token:
+            return HTMLResponse(_popup_result(None, "카카오 토큰 발급 실패"))
+    except httpx.RequestError:
+        return HTMLResponse(_popup_result(None, "카카오 서버 연결 실패"))
+
+    return HTMLResponse(_popup_result(access_token, None))
+
+
+def _popup_result(access_token, error):
+    import json
+    data = {"access_token": access_token, "error": error}
+    return f"""
+    <script>
+      window.opener.postMessage({json.dumps(data)}, "http://localhost:5173");
+      window.close();
+    </script>
+    """
+
+NAVER_TOKEN_URL    = "https://nid.naver.com/oauth2.0/token"
+NAVER_CLIENT_ID    = os.getenv("NAVER_CLIENT_ID")
+NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET")
+NAVER_REDIRECT_URI = os.getenv("NAVER_REDIRECT_URI", "http://localhost:8000/auth/naver/callback")
+
+@router.get("/naver/callback")
+async def naver_callback(code: str, state: str):
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.post(NAVER_TOKEN_URL, data={
+                "grant_type":    "authorization_code",
+                "client_id":     NAVER_CLIENT_ID,
+                "client_secret": NAVER_CLIENT_SECRET,
+                "redirect_uri":  NAVER_REDIRECT_URI,
+                "code":          code,
+                "state":         state,
+            })
+        token_data = res.json()
+        access_token = token_data.get("access_token")
+        if not access_token:
+            return HTMLResponse(_popup_result(None, "네이버 토큰 발급 실패"))
+    except httpx.RequestError:
+        return HTMLResponse(_popup_result(None, "네이버 서버 연결 실패"))
+
+    return HTMLResponse(_popup_result(access_token, None))

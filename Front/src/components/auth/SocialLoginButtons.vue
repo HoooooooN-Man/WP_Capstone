@@ -54,51 +54,32 @@ async function handleSocialLogin(provider) {
   loadingProvider.value = provider
 
   try {
-    // ── 플랫폼별 SDK로 Access Token 획득 ──────────────────────────
     let accessToken = ''
+    if (provider === 'google')      accessToken = await getGoogleToken()
+    else if (provider === 'kakao')  accessToken = await getKakaoToken()
+    else if (provider === 'naver')  accessToken = await getNaverToken()
 
-    if (provider === 'google') {
-      // Google Identity Services SDK (window.google.accounts.oauth2)
-      // 실제 연동 시 SDK 초기화 필요:
-      // <script src="https://accounts.google.com/gsi/client">
-      accessToken = await getGoogleToken()
-    } else if (provider === 'kakao') {
-      // Kakao JS SDK (window.Kakao)
-      // <script src="https://t1.kakaocdn.net/kakao_js_sdk/...">
-      accessToken = await getKakaoToken()
-    } else if (provider === 'naver') {
-      // 네이버는 팝업 OAuth redirect 방식 사용
-      accessToken = await getNaverToken()
-    }
-
-    // ── 백엔드에 토큰 전달 ─────────────────────────────────────────
     const { data } = await dbapi.post(`/auth/login/${provider}`, {
       access_token: accessToken,
     })
 
-    // ── 응답 분기 처리 ─────────────────────────────────────────────
     if (data.requires_link_confirmation) {
-      // 기존 이메일 계정과 연동 확인 필요
       props.onRequiresLinkConfirm?.(data.link_hint_token, provider)
       return
     }
 
-    // 정상 로그인
     auth.login(data.session_token, data.nickname, data.user_id)
 
     if (data.needs_password) {
-      // 비밀번호 미설정 계정 → 설정 모달 표시
       props.onNeedsPassword?.(data.session_token, data.nickname)
+    } else {
+      emit('done')  // ← 추가
     }
-    // needs_password가 없으면 부모(Login/Register)에서 router.push 처리
 
   } catch (err) {
     const status = err.response?.status
-    if (status === 429) {
-      error.value = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
-    } else {
-      error.value = err.response?.data?.detail ?? `${provider} 로그인에 실패했습니다.`
-    }
+    if (status === 429) error.value = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
+    else error.value = err.response?.data?.detail ?? `${provider} 로그인에 실패했습니다.`
   } finally {
     loadingProvider.value = null
   }
@@ -127,41 +108,67 @@ function getGoogleToken() {
 
 function getKakaoToken() {
   return new Promise((resolve, reject) => {
-    if (!window.Kakao?.isInitialized?.()) {
-      reject(new Error('Kakao SDK가 초기화되지 않았습니다.'))
-      return
-    }
-    window.Kakao.Auth.login({
-      success: (auth) => resolve(auth.access_token),
-      fail:    (err)  => reject(new Error(err.error_description ?? 'Kakao 로그인 실패')),
+    const redirectUri = 'http://localhost:8000/auth/kakao/callback'
+    const kakaoAuthUrl =
+      `https://kauth.kakao.com/oauth/authorize?response_type=code` +
+      `&client_id=${import.meta.env.VITE_KAKAO_REST_KEY}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}`
+
+    const popup = window.open(kakaoAuthUrl, 'kakao_login', 'width=500,height=600')
+
+    const timer = setInterval(() => {
+      if (popup?.closed) {
+        clearInterval(timer)
+        reject(new Error('카카오 로그인 창이 닫혔습니다.'))
+      }
+    }, 500)
+
+    window.addEventListener('message', function handler(e) {
+      if (e.origin !== 'http://localhost:8000') return
+      clearInterval(timer)
+      window.removeEventListener('message', handler)
+      popup?.close()
+
+      if (e.data?.error) reject(new Error(e.data.error))
+      else if (e.data?.access_token) resolve(e.data.access_token)
+      else reject(new Error('카카오 토큰 수신 실패'))
     })
   })
 }
 
 function getNaverToken() {
-  // 네이버는 팝업 + postMessage 방식
   return new Promise((resolve, reject) => {
-    const popup = window.open(
-      `${import.meta.env.VITE_API_BASE_AUTH}/auth/naver/popup`,
-      'naver_login',
-      'width=500,height=600'
-    )
+    const state = Math.random().toString(36).substring(2)
+    const redirectUri = 'http://localhost:8000/auth/naver/callback'
+    const naverAuthUrl =
+      `https://nid.naver.com/oauth2.0/authorize?response_type=code` +
+      `&client_id=${import.meta.env.VITE_NAVER_CLIENT_ID}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&state=${state}`
+
+    const popup = window.open(naverAuthUrl, 'naver_login', 'width=500,height=600')
+
     const timer = setInterval(() => {
       if (popup?.closed) {
         clearInterval(timer)
         reject(new Error('네이버 로그인 창이 닫혔습니다.'))
       }
     }, 500)
+
     window.addEventListener('message', function handler(e) {
-      if (e.origin !== import.meta.env.VITE_API_BASE_AUTH) return
+      if (e.origin !== 'http://localhost:8000') return
       clearInterval(timer)
       window.removeEventListener('message', handler)
       popup?.close()
-      if (e.data?.access_token) resolve(e.data.access_token)
+
+      if (e.data?.error) reject(new Error(e.data.error))
+      else if (e.data?.access_token) resolve(e.data.access_token)
       else reject(new Error('네이버 토큰 수신 실패'))
     })
   })
 }
+
+const emit = defineEmits(['done'])
 </script>
 
 <template>

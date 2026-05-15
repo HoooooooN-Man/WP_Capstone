@@ -26,5 +26,4 @@ def send_verification_email(target_email: str, code: str):
             smtp.send_message(msg)
         return True
     except Exception as e:
-        print(f"메일 발송 실패: {e}")
-        return False
+        raise Exception(f"메일 발송 실패: {e}")

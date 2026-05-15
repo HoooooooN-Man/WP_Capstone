@@ -147,9 +147,10 @@ def check_email_duplicate(
         # 실패 카운터 초기화
         redis_delete(f"verify_fail:{email}")
 
-        success = send_verification_email(email, code)
-        if not success:
-            raise HTTPException(status_code=500, detail="메일 발송에 실패했습니다.")
+        try:
+            send_verification_email(email, code)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"메일 발송 실패: {str(e)}")
 
     # user가 있어도 없는 척 동일 응답 반환
     return {"message": "인증 코드가 이메일로 발송되었습니다."}
@@ -238,7 +239,7 @@ def login(data: UserLogin, request: Request, db: Session = Depends(get_db)):
     if not redis_setex(f"session:{session_token}", SESSION_TTL, user.email):
         raise HTTPException(status_code=503, detail="서버 오류가 발생했습니다.")
 
-    return {"session_token": session_token, "nickname": user.nickname}
+    return {"session_token": session_token, "nickname": user.nickname, "user_id": user.user_id}
 
 
 @router.post("/logout")
