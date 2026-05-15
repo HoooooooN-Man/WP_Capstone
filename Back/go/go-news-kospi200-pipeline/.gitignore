@@ -1,4 +1,26 @@
+# env / secrets
 .env
+configs/.env
+configs/*.local
+configs/webnews.env
+
+# build outputs
+bin/
+
+# local runtime artifacts
+.venv/
+logs/
+reports/
 spool/
-*.duckdb
+run/
+
+# webnews runtime outputs
+data/webnews/staging/
+data/webnews/archive/
+data/webnews/current/
+
+# misc runtime files
+*.pid
+*.lock
 *.log
+*.duckdb
