@@ -24,3 +24,6 @@ data/webnews/current/
 *.lock
 *.log
 *.duckdb
+
+# root-level Go build outputs
+/webnews_*
