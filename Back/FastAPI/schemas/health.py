@@ -72,3 +72,34 @@ class MetricsResponse(BaseModel):
     metrics:       list[DailyScoreMetrics] = []
     summary:       Optional[MetricsSummary] = None
     error:         Optional[str] = None
+
+
+# ── /system/status (Phase 0 / P0-11) ─────────────────────────────────────────
+
+class ModelVersionInfo(BaseModel):
+    """scores 테이블에 적재된 단일 모델 버전 요약."""
+    model_version: str
+    latest_date:   Optional[str] = Field(None, description="해당 버전의 최신 거래일 (YYYY-MM-DD)")
+    inserted_at:   Optional[str] = Field(None, description="가장 최근 적재 시각 (UTC ISO)")
+    row_count:     int = 0
+
+
+class SystemStatusResponse(BaseModel):
+    """프론트/모니터링용 통합 상태 응답.
+
+    - 서버가 가리키는 DuckDB 파일과 그 가용성
+    - scores 테이블의 모델 버전별 적재 현황
+    - 현재 `resolve_version("latest")` 가 가리키는 운영 default
+    - Redis 가용성 (캐시 사용 가능 여부 — 추천 응답 속도 추정)
+    """
+    status:              str = "ok"
+    app:                 str
+    version:             str
+    duckdb_exists:       bool
+    duckdb_path:         str
+    redis_available:     bool
+    default_model:       Optional[str]            = Field(None, description="resolve_version('latest') 결과")
+    default_model_env:   Optional[str]            = Field(None, description="DEFAULT_MODEL_VERSION env var (있으면)")
+    models:              list[ModelVersionInfo]   = []
+    scores_latest_date:  Optional[str]            = Field(None, description="default_model 기준 최신 거래일")
+    error:               Optional[str]            = None

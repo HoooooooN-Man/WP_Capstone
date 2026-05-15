@@ -49,6 +49,24 @@ from .scores_svc import (
     compare_stocks,
     get_market_regime,
     get_kospi200_portfolio,
+    get_peers,  # P0-5 (PRD §8.1) — 자동 경쟁사 비교
+)
+from .outcomes_svc import (
+    get_recommendation_outcome,  # P0-2 (PRD §8.1) — 종목별 추천 후 누적 상승률
+    attach_outcomes,
+)
+from .scores_svc import batch_diagnosis  # P1-12 (PRD §8.1) — 원스톱 진단
+from .star_rating import score_to_stars, attach_star_ratings  # P1-7
+from .feature_groups import get_radar, compute_radar_scores    # P1-8
+from .headline import generate_headline, attach_headlines       # P1-10
+from .fairvalue_svc import (  # P2-13 (PRD §8.2) — 적정주가 밴드차트
+    get_fair_value,
+    get_fair_value_history,
+    classify_valuation,
+)
+from .dividend_svc import (  # P2-14 (PRD §8.2) — 배당스코어
+    get_dividend_score,
+    get_dividend_history,
 )
 # Private 심볼은 *모듈 내부 호환*용으로만 import (외부 호출 없음 확인됨, 캡스톤 정리).
 # 향후 누가 `from ..services.data import _get_kospi_regime` 같이 쓰면 깨질 수 있으므로

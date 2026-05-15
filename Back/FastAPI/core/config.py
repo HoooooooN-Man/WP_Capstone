@@ -38,6 +38,10 @@ NEWS_DUCKDB_PATH: Path = Path(os.getenv("NEWS_DUCKDB_PATH", str(_DEFAULT_NEWS_DB
 # ── SQLite (게시판 OLTP) ─────────────────────────────────────────────────────
 BOARD_DB_PATH: Path = Path(os.getenv("BOARD_DB_PATH", str(_FASTAPI_DIR / "board.db")))
 
+# ── DART OpenAPI (전자공시) ──────────────────────────────────────────────────
+# 재무/공시 데이터 갱신용. 일일 호출 한도 40,000건.
+DART_API_KEY: str | None = os.getenv("DART_API_KEY") or None
+
 # ── Redis ────────────────────────────────────────────────────────────────────
 # 8001 ML 서버의 응답 캐시는 redis-queue 인스턴스의 db=1 을 사용한다.
 # 비밀번호는 충돌 방지를 위해 REDIS_QUEUE_PASSWORD 를 우선 읽고, 없으면 REDIS_PASSWORD.

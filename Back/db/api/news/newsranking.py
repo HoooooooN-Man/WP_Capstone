@@ -30,19 +30,29 @@ _DB_PKG = _HERE.parent.parent.parent          # Back/db/
 _DEFAULT_NEWS_DB = _DB_PKG / "db" / "news_data.duckdb"
 
 DB_PATH = os.getenv("NEWS_DUCKDB_PATH", str(_DEFAULT_NEWS_DB))
+# 폴백: 전용 뉴스 DB 파일이 없으면 메인 DB(market_data.duckdb)를 읽는다.
+# news_normalized/news_company_map/news_rankings 테이블이 메인 DB 에 적재돼 있음.
+_MAIN_DB_PATH = os.getenv("DUCKDB_PATH", "")
 
 
 def get_conn():
-    """읽기 전용 DuckDB 연결 반환. 파일이 없으면 빈 파일을 만들지 않고 503 처리."""
-    if not Path(DB_PATH).exists():
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                f"뉴스 DB 가 아직 생성되지 않았습니다 ({DB_PATH}). "
-                "Go 파이프라인 + /internal/ingest 가 한 번 이상 실행돼야 합니다."
-            ),
-        )
-    return duckdb.connect(DB_PATH, read_only=True)
+    """읽기 전용 DuckDB 연결 반환.
+
+    1순위: NEWS_DUCKDB_PATH 전용 파일
+    2순위: DUCKDB_PATH(market_data.duckdb) — news_* 테이블이 그쪽에 있음
+    둘 다 없으면 503.
+    """
+    if Path(DB_PATH).exists():
+        return duckdb.connect(DB_PATH, read_only=True)
+    if _MAIN_DB_PATH and Path(_MAIN_DB_PATH).exists():
+        return duckdb.connect(_MAIN_DB_PATH, read_only=True)
+    raise HTTPException(
+        status_code=503,
+        detail=(
+            f"뉴스 DB 가 아직 생성되지 않았습니다 ({DB_PATH}). "
+            "Go 파이프라인 + /internal/ingest 가 한 번 이상 실행돼야 합니다."
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -245,28 +255,47 @@ def get_news_feed(
             where.append("sentiment_label = ?")
             params.append(sentiment)
 
+        # ticker 필터: news_company_map 매핑 우선, 비어있으면 title LIKE 폴백
+        join_sql = "FROM news_normalized n"
         if ticker:
-            # Tier 1B 4.4: 와일드카드(`%`, `_`) 입력으로 전수 조회되는 것을 방지.
-            where.append("(query_text LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\')")
-            t = f"%{escape_like(ticker)}%"
-            params.extend([t, t])
+            mapped = 0
+            try:
+                mapped = conn.execute(
+                    "SELECT COUNT(*) FROM news_company_map WHERE ticker = ?",
+                    [str(ticker).zfill(6)],
+                ).fetchone()[0]
+            except Exception:
+                mapped = 0
+            if mapped > 0:
+                join_sql = (
+                    "FROM news_normalized n "
+                    "JOIN news_company_map m ON n.news_id = m.news_id"
+                )
+                where.append("m.ticker = ?")
+                params.append(str(ticker).zfill(6))
+            else:
+                # Tier 1B 4.4: 와일드카드 입력으로 전수 조회 방지.
+                where.append("(n.query_text LIKE ? ESCAPE '\\' OR n.title LIKE ? ESCAPE '\\')")
+                t = f"%{escape_like(ticker)}%"
+                params.extend([t, t])
 
         where_sql = " AND ".join(where)
 
         total = conn.execute(
-            f"SELECT COUNT(*) FROM news_normalized WHERE {where_sql}", params
+            f"SELECT COUNT(DISTINCT n.news_id) {join_sql} WHERE {where_sql}", params
         ).fetchone()[0]
 
         rows = conn.execute(
             f"""
-            SELECT news_id, provider, title, source_name, origin_url, image_url,
-                   CAST(published_at AS VARCHAR) AS published_at,
-                   sentiment_label,
-                   CAST(sentiment_score AS DOUBLE) AS sentiment_score,
-                   CAST(pos_prob AS DOUBLE)        AS pos_prob,
-                   CAST(neg_prob AS DOUBLE)        AS neg_prob,
-                   CAST(neu_prob AS DOUBLE)        AS neu_prob
-            FROM news_normalized
+            SELECT DISTINCT
+                   n.news_id, n.provider, n.title, n.source_name, n.origin_url, n.image_url,
+                   CAST(n.published_at AS VARCHAR) AS published_at,
+                   n.sentiment_label,
+                   CAST(n.sentiment_score AS DOUBLE) AS sentiment_score,
+                   CAST(n.pos_prob AS DOUBLE)        AS pos_prob,
+                   CAST(n.neg_prob AS DOUBLE)        AS neg_prob,
+                   CAST(n.neu_prob AS DOUBLE)        AS neu_prob
+            {join_sql}
             WHERE {where_sql}
             ORDER BY published_at DESC
             LIMIT ? OFFSET ?

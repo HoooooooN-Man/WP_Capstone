@@ -265,11 +265,15 @@ def train_lambdarank(
     num_leaves:    int   = 63,
     early_stopping_rounds: int = 30,
     seed: int = 42,
+    train_end:   str = TRAIN_END,
+    valid_start: str = VALID_START,
+    valid_end:   str = VALID_END,
 ):
     import lightgbm as lgb
 
-    train = df[df["date"] <= TRAIN_END].copy()
-    valid = df[(df["date"] >= VALID_START) & (df["date"] <= VALID_END)].copy()
+    train = df[df["date"] <= train_end].copy()
+    valid = df[(df["date"] >= valid_start) & (df["date"] <= valid_end)].copy()
+    log(f"  split — train ≤ {train_end} / valid {valid_start}~{valid_end}")
     log(f"  train rows: {len(train):,}  valid rows: {len(valid):,}")
 
     train["relevance"] = bin_relevance_per_group(train)
@@ -331,6 +335,9 @@ def archive_model(
     use_embeddings: bool,
     force: bool = False,
     suffix: str = "",
+    train_end:   str = TRAIN_END,
+    valid_start: str = VALID_START,
+    valid_end:   str = VALID_END,
 ) -> Path:
     out_dir = MODELS_ROOT / f"v11{variant}{suffix}"
     if out_dir.exists() and any(out_dir.iterdir()) and not force:
@@ -356,9 +363,9 @@ def archive_model(
         "n_features":          len(feature_cols),
         "n_train_rows":        int(n_train),
         "n_valid_rows":        int(n_valid),
-        "train_end":           TRAIN_END,
-        "valid_start":         VALID_START,
-        "valid_end":           VALID_END,
+        "train_end":           train_end,
+        "valid_start":         valid_start,
+        "valid_end":           valid_end,
         "n_relevance_bins":    N_RELEVANCE_BINS,
         "best_iteration":      int(best_iter),
         "valid_ndcg@5":        float(valid_ndcg5)  if valid_ndcg5  is not None else None,
@@ -376,7 +383,9 @@ def archive_model(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="W5A — LambdaRank v11 학습")
-    parser.add_argument("--variant",      default="a", choices=["a", "b", "c", "d"])
+    parser.add_argument("--variant",      default="a", choices=["a", "b", "c", "d"],
+                        help="학습 variant. 'b', 'd' 는 임베딩 포함(W5 ablation 결과 "
+                             "negative gain, Phase 0 archived). 재실험 목적 외 사용 금지.")
     parser.add_argument("--target-label", default="fwd_return_20d")
     parser.add_argument("--use-embeddings", action="store_true",
                         help="ticker_embeddings (PG) join. variant b·d 에서 자동 활성.")
@@ -393,6 +402,10 @@ def main() -> int:
     parser.add_argument("--n-estimators", type=int, default=500)
     parser.add_argument("--lr",         type=float, default=0.05)
     parser.add_argument("--seed",       type=int, default=42)
+    parser.add_argument("--train-end",   default=TRAIN_END,
+                        help=f"학습 종료일 (기본 {TRAIN_END}). 분할을 앞으로 당겨 진짜 OOS 확보 시 사용.")
+    parser.add_argument("--valid-start", default=VALID_START, help=f"검증 시작일 (기본 {VALID_START}).")
+    parser.add_argument("--valid-end",   default=VALID_END,   help=f"검증 종료일 (기본 {VALID_END}).")
     parser.add_argument("--force",      action="store_true")
     parser.add_argument("--dry-run",    action="store_true",
                         help="학습 후 박제 생략 (빠른 검증).")
@@ -469,6 +482,9 @@ def main() -> int:
         n_estimators=args.n_estimators,
         learning_rate=args.lr,
         seed=args.seed,
+        train_end=args.train_end,
+        valid_start=args.valid_start,
+        valid_end=args.valid_end,
     )
 
     # 5. 박제.
@@ -488,6 +504,9 @@ def main() -> int:
         use_embeddings=use_embeddings,
         force=args.force,
         suffix=args.variant_suffix,
+        train_end=args.train_end,
+        valid_start=args.valid_start,
+        valid_end=args.valid_end,
     )
     log(f"  archived → {out_dir}")
     return 0

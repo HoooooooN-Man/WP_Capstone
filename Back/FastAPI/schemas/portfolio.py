@@ -13,14 +13,23 @@ from pydantic import BaseModel
 # ── 마켓 레이더 ────────────────────────────────────────────────────────────────
 
 class MarketRegimeResponse(BaseModel):
-    """시장 국면(기상도) 응답."""
+    """시장 국면(기상도) 응답.
+
+    P0-4 (PRD §8.1): 5단계 라벨 + 0-100 마켓스코어. choicestock 벤치마크 호환.
+    기존 3단계 status(greed/neutral/fear)는 5단계(panic/pessimism/neutral/optimism/greed)로 확장.
+    """
     date:          str
     model_version: str
-    total_count:   int                              # 해당 날짜 전체 종목 수
-    tier_a_count:  int                              # Tier A 종목 수
-    tier_a_ratio:  float                            # Tier A 비율 (%)
-    status:        Literal["greed", "neutral", "fear"]
-    weather:       Literal["맑음", "흐림", "비"]
+    total_count:   int
+    tier_a_count:  int
+    tier_a_ratio:  float
+    daily_change:  Optional[float] = None
+    status:        Literal["panic", "pessimism", "neutral", "optimism", "greed"]
+    status_ko:     str
+    weather:       str
+    mood:          str
+    market_score:  float
+    score_range:   str
     message:       str
 
 

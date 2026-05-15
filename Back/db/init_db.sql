@@ -26,10 +26,42 @@ CREATE TABLE IF NOT EXISTS user_watchlist (
     user_id     INTEGER         REFERENCES users(user_id) ON DELETE CASCADE,
     ticker      VARCHAR(20)     NOT NULL,
     created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (user_id, ticker)
+    -- P0-3 (PRD §8.1) — 관심종목 그룹 분류. UNIQUE 제약은 (user, ticker, group) 조합으로 변경.
+    group_name  VARCHAR(50)     NOT NULL DEFAULT 'default'
 );
+
+-- 기존 환경 마이그레이션 — UNIQUE(user, ticker) 가 있다면 제거하고 group 포함 제약으로 교체.
+ALTER TABLE user_watchlist
+    ADD COLUMN IF NOT EXISTS group_name VARCHAR(50) NOT NULL DEFAULT 'default';
+ALTER TABLE user_watchlist DROP CONSTRAINT IF EXISTS user_watchlist_user_id_ticker_key;
+ALTER TABLE user_watchlist DROP CONSTRAINT IF EXISTS uq_watch_user_ticker;
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'uq_watch_user_ticker_group'
+    ) THEN
+        ALTER TABLE user_watchlist
+            ADD CONSTRAINT uq_watch_user_ticker_group UNIQUE (user_id, ticker, group_name);
+    END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_watch_user   ON user_watchlist(user_id);
 CREATE INDEX IF NOT EXISTS idx_watch_ticker ON user_watchlist(ticker);
+CREATE INDEX IF NOT EXISTS idx_watch_group  ON user_watchlist(user_id, group_name);
+
+-- 2-1) user_holdings — 사용자 보유 종목 (PRD §3.6 신규)
+CREATE TABLE IF NOT EXISTS user_holdings (
+    id          SERIAL          PRIMARY KEY,
+    user_id     INTEGER         REFERENCES users(user_id) ON DELETE CASCADE NOT NULL,
+    ticker      VARCHAR(20)     NOT NULL,
+    quantity    INTEGER         NOT NULL DEFAULT 0,
+    avg_price   INTEGER         NOT NULL DEFAULT 0,
+    bought_at   DATE,
+    memo        VARCHAR(200),
+    created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_holding_user   ON user_holdings(user_id);
+CREATE INDEX IF NOT EXISTS idx_holding_ticker ON user_holdings(ticker);
 
 -- 3) notifications — 사용자 알림 (긍정/부정 뉴스 트리거)
 CREATE TABLE IF NOT EXISTS notifications (

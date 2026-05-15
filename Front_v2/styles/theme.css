@@ -1,0 +1,297 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: oklch(0.145 0 0);
+  --card: #ffffff;
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #030213;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.0058 264.53);
+  --secondary-foreground: #030213;
+  --muted: #ececf0;
+  --muted-foreground: #717182;
+  --accent: #e9ebef;
+  --accent-foreground: #030213;
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --input: transparent;
+  --input-background: #f3f3f5;
+  --switch-background: #cbced4;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #030213;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Korean Stock Market Design System */
+  --bg-base: #FFFFFF;
+  --bg-elev-1: #F5F7FA;
+  --bg-elev-2: #EDF1F5;
+  --text-primary: #0B0F14;
+  --text-secondary: #4A5568;
+  --text-tertiary: #9CA3AF;
+  --accent-blue: #3B82F6;
+  --border-default: #E5E7EB;
+
+  /* Korean Convention - Rise=Red, Fall=Blue */
+  --color-up: #F04452;
+  --color-down: #3182F6;
+  --color-neutral: #9CA3AF;
+
+  /* Signal Chips */
+  --buy-bg: #FEE2E2;
+  --buy-text: #B91C1C;
+  --hold-bg: #FEF3C7;
+  --hold-text: #92400E;
+  --sell-bg: #DBEAFE;
+  --sell-text: #1E40AF;
+  --watch-bg: #F3F4F6;
+  --watch-text: #4B5563;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+
+  /* Korean Stock Market Design System - Dark Mode */
+  --bg-base: #0B0F14;
+  --bg-elev-1: #13181F;
+  --bg-elev-2: #1A2029;
+  --text-primary: #F5F7FA;
+  --text-secondary: #A0AEC0;
+  --text-tertiary: #718096;
+  --accent-blue: #60A5FA;
+  --border-default: #2D3748;
+
+  /* Korean Convention - Rise=Red, Fall=Blue (Dark Mode) */
+  --color-up: #FF5A6B;
+  --color-down: #5A9CFF;
+  --color-neutral: #9CA3AF;
+
+  /* Signal Chips - Dark Mode */
+  --buy-bg: #7F1D1D;
+  --buy-text: #FCA5A5;
+  --hold-bg: #78350F;
+  --hold-text: #FCD34D;
+  --sell-bg: #1E3A8A;
+  --sell-text: #93C5FD;
+  --watch-bg: #374151;
+  --watch-text: #D1D5DB;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+                 "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  }
+
+  /**
+  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
+  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  */
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  label {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  button {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  input {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.5;
+  }
+}
+
+/* ── 리디자인: 로딩 스켈레톤 ──────────────────────────────────────────── */
+.wp-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elev-2) 25%,
+    var(--bg-elev-1) 37%,
+    var(--bg-elev-2) 63%
+  );
+  background-size: 400% 100%;
+  animation: wp-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes wp-skeleton-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+/* ── 리디자인: 카드 진입 페이드인 ────────────────────────────────────── */
+@keyframes wp-fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.wp-fade-in {
+  animation: wp-fade-in-up 0.35s ease-out both;
+}
+
+/* ── 접근성: 키보드 포커스 링 ────────────────────────────────────────── */
+/* 키보드 탐색(focus-visible)에만 링 표시, 마우스 클릭 포커스에는 미표시 */
+:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── 타이포그래피 스케일 ─────────────────────────────────────────────────
+   인라인 `fontSize` 매직넘버를 대체하는 명명 스케일.
+   size + line-height 만 담당하고, font-weight 는 Tailwind 유틸(font-normal /
+   font-medium / font-bold / font-extrabold)로 따로 지정한다.
+   px 값은 기존 디자인 유지를 위해 현행 값 그대로.
+
+     wp-t-2xs  11  마이크로 라벨
+     wp-t-xs   12  캡션·티커코드·배지
+     wp-t-sm   13  보조 본문
+     wp-t-base 14  본문 기본
+     wp-t-md   16  강조 본문·소제목
+     wp-t-lg   18  카드/섹션 제목
+     wp-t-xl   20  h2·종목명·수치
+     wp-t-2xl  22  큰 수치
+     wp-t-3xl  28  페이지 제목
+     wp-t-4xl  36  히어로 수치
+*/
+.wp-t-2xs  { font-size: 11px; line-height: 15px; }
+.wp-t-xs   { font-size: 12px; line-height: 16px; }
+.wp-t-sm   { font-size: 13px; line-height: 19px; }
+.wp-t-base { font-size: 14px; line-height: 20px; }
+.wp-t-md   { font-size: 16px; line-height: 24px; }
+.wp-t-lg   { font-size: 18px; line-height: 26px; }
+.wp-t-xl   { font-size: 20px; line-height: 28px; }
+.wp-t-2xl  { font-size: 22px; line-height: 30px; }
+.wp-t-3xl  { font-size: 28px; line-height: 36px; }
+.wp-t-4xl  { font-size: 36px; line-height: 1.15; }

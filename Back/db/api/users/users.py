@@ -102,6 +102,33 @@ class PublicProfileResponse(BaseModel):
     recent_posts:    List[PublicPostItem] = []
 
 
+# ── 내 프로필 ─────────────────────────────────────────────────────────────────
+
+class MeResponse(BaseModel):
+    user_id:     int
+    email:       str
+    nickname:    str
+    cohort:      Optional[str] = None
+    is_verified: bool = False
+    created_at:  Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/me", response_model=MeResponse, summary="내 프로필 조회")
+def get_me(current_user: User = Depends(_require_current_user)):
+    """현재 로그인 사용자의 기본 프로필(이메일·닉네임·코호트·가입일)."""
+    return MeResponse(
+        user_id=current_user.user_id,
+        email=current_user.email,
+        nickname=current_user.nickname,
+        cohort=current_user.cohort,
+        is_verified=bool(current_user.is_verified),
+        created_at=current_user.created_at.isoformat() if current_user.created_at else None,
+    )
+
+
 # ── 알림 엔드포인트 ───────────────────────────────────────────────────────────
 
 @router.get("/notifications", response_model=NotificationsResponse, summary="내 알림 목록")

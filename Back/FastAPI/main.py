@@ -12,6 +12,24 @@ ReDoc:       http://localhost:8001/redoc
 from __future__ import annotations
 
 import os
+import sys
+
+# ── UTF-8 모드 강제 ───────────────────────────────────────────────────────────
+# 한국어 Windows(cp949 로캘)에서 시스템 Python 이 UTF-8 모드 없이 실행되면
+# DuckDB VARCHAR(한글 종목명 등)가 깨져 들어온다. uvicorn 으로 기동됐는데
+# utf8_mode 가 꺼져 있으면 `-X utf8` 로 자기 자신을 한 번 재실행한다.
+# (pytest 등 다른 진입점에서는 sys.argv[0] 에 'uvicorn' 이 없어 재실행 안 됨)
+if (
+    not sys.flags.utf8_mode
+    and os.environ.get("_WP_UTF8_REEXEC") != "1"
+    and "uvicorn" in (sys.argv[0] or "").lower()
+):
+    os.environ["_WP_UTF8_REEXEC"] = "1"
+    os.execv(
+        sys.executable,
+        [sys.executable, "-X", "utf8", "-m", "uvicorn", *sys.argv[1:]],
+    )
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -22,8 +40,14 @@ from .core.errors import register_exception_handlers
 from .core.middleware import RequestIDMiddleware
 # 8001 = ML 분석 서버. 게시판/뉴스/사용자/인증은 8000 (Back/db/server.py) 가 담당.
 # (board/news/users_stub 코드 파일은 보관하되 본 서버에서는 등록하지 않음.)
-from .routers import stocks, portfolio, chart, finance, screener, compare, market, realtime, transparency, playground
-from .schemas.health import RootResponse, HealthResponse, MetricsResponse
+from .routers import stocks, portfolio, chart, finance, screener, compare, market, realtime, transparency, playground, winners
+from .schemas.health import (
+    RootResponse,
+    HealthResponse,
+    MetricsResponse,
+    SystemStatusResponse,
+    ModelVersionInfo,
+)
 from .services.data import init_duckdb, get_model_metrics
 
 
@@ -101,6 +125,7 @@ app.include_router(portfolio.router, prefix=API_PREFIX)
 app.include_router(market.router,    prefix=API_PREFIX)
 app.include_router(chart.router,     prefix=API_PREFIX)
 app.include_router(finance.router,   prefix=API_PREFIX)
+app.include_router(winners.router,   prefix=API_PREFIX)
 app.include_router(screener.router,  prefix=API_PREFIX)
 app.include_router(compare.router,   prefix=API_PREFIX)
 app.include_router(transparency.router, prefix=API_PREFIX)  # Tier 1.5 — holdout 박제 read-only
@@ -128,6 +153,97 @@ def health():
         status="ok",
         duckdb_exists=DUCKDB_PATH.exists(),
         duckdb_path=str(DUCKDB_PATH),
+    )
+
+
+@app.get("/system/status", response_model=SystemStatusResponse, tags=["health"])
+def system_status():
+    """
+    프론트 상태 페이지·모니터링용 통합 헬스 정보.
+
+    - DuckDB 파일 존재 여부 + 절대 경로
+    - Redis 가용성 (캐시 ON/OFF 추정)
+    - scores 테이블에 적재된 모든 model_version + 각각의 최신 거래일·적재 시각·행수
+    - `resolve_version("latest")` 가 현재 가리키는 운영 default
+
+    P0-11 — 신규 프론트의 "오늘 데이터는 언제 적재됐는가?" 위젯에 직접 사용.
+    """
+    from .services._core import (
+        con as _con,
+        get_redis as _get_redis,
+        resolve_version as _resolve_version,
+        DEFAULT_MODEL_VERSION_ENV,
+    )
+
+    if not DUCKDB_PATH.exists():
+        return SystemStatusResponse(
+            status="no-data",
+            app=APP_TITLE,
+            version=APP_VERSION,
+            duckdb_exists=False,
+            duckdb_path=str(DUCKDB_PATH),
+            redis_available=False,
+            error="scores.duckdb 파일이 존재하지 않습니다.",
+        )
+
+    try:
+        rows = _con().execute(
+            """
+            SELECT
+                model_version,
+                COUNT(*) AS row_count,
+                MAX(CAST(date AS VARCHAR)) AS latest_date,
+                MAX(inserted_at) AS inserted_at
+            FROM scores
+            GROUP BY model_version
+            ORDER BY MAX(inserted_at) DESC NULLS LAST
+            """
+        ).fetchall()
+    except Exception as e:
+        return SystemStatusResponse(
+            status="error",
+            app=APP_TITLE,
+            version=APP_VERSION,
+            duckdb_exists=True,
+            duckdb_path=str(DUCKDB_PATH),
+            redis_available=False,
+            error=f"scores 조회 실패: {e}",
+        )
+
+    models = [
+        ModelVersionInfo(
+            model_version=r[0],
+            row_count=int(r[1] or 0),
+            latest_date=r[2],
+            inserted_at=r[3],
+        )
+        for r in rows
+    ]
+
+    default_model: str | None = None
+    default_latest: str | None = None
+    try:
+        default_model = _resolve_version("latest")
+        for m in models:
+            if m.model_version == default_model:
+                default_latest = m.latest_date
+                break
+    except Exception:
+        default_model = None
+
+    redis_available = _get_redis() is not None
+
+    return SystemStatusResponse(
+        status="ok",
+        app=APP_TITLE,
+        version=APP_VERSION,
+        duckdb_exists=True,
+        duckdb_path=str(DUCKDB_PATH),
+        redis_available=redis_available,
+        default_model=default_model,
+        default_model_env=os.getenv(DEFAULT_MODEL_VERSION_ENV) or None,
+        models=models,
+        scores_latest_date=default_latest,
     )
 
 

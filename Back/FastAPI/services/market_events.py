@@ -39,6 +39,69 @@ def classify_regime(daily_change: float, *, threshold: float = EXTREME_THRESHOLD
     return "normal"
 
 
+# P0-4 (PRD §8.1) — 마켓스코어 5단계 + 0~100 점수
+# Tier A 비율 (0~100%) 과 KOSPI 일일 변화율 (-5%~+5%) 을 결합해 0~100 점수 산출.
+MARKET_LEVELS = [
+    ("panic",     "패닉",   "비",   "공포",      0,  20),
+    ("pessimism", "비관",   "흐림", "경계",     20,  40),
+    ("neutral",   "중립",   "흐림", "관망",     40,  60),
+    ("optimism",  "낙관",   "맑음", "긍정",     60,  80),
+    ("greed",     "과욕",   "맑음", "주의(과열)", 80, 101),
+]
+
+
+def compute_market_score(tier_a_ratio_pct: float, daily_change: float | None) -> float:
+    """Tier A 비율 + KOSPI 일일 변화율 → 0~100 마켓스코어.
+
+    공식:
+      - 기본점수 = clamp(tier_a_ratio_pct × 5, 0, 80)    (10% 이상이면 50점부터 시작)
+      - 변화율 보정 = clamp(daily_change × 1000, -20, +20)
+      - 최종 = clamp(기본점수 + 보정, 0, 100)
+
+    예시:
+      - Tier A 12% + 변화율 +1.5% → 60 + 15 = 75 (낙관)
+      - Tier A  3% + 변화율 -3.5% → 15 + (-20) = 0  (패닉)
+      - Tier A  7% + 변화율  0%   → 35 + 0    = 35 (비관)
+    """
+    try:
+        ratio = max(0.0, float(tier_a_ratio_pct))
+    except (TypeError, ValueError):
+        ratio = 0.0
+    base = min(80.0, ratio * 5.0)
+
+    bonus = 0.0
+    if daily_change is not None:
+        try:
+            dc = float(daily_change)
+            if dc == dc:   # not NaN
+                bonus = max(-20.0, min(20.0, dc * 1000.0))
+        except (TypeError, ValueError):
+            pass
+
+    return round(max(0.0, min(100.0, base + bonus)), 1)
+
+
+def classify_market_level(score: float) -> dict:
+    """0~100 마켓스코어 → 5단계 라벨 dict.
+
+    Returns: {status, status_ko, weather, mood, score, range}.
+    """
+    s = max(0.0, min(100.0, float(score)))
+    for status, ko, weather, mood, lo, hi in MARKET_LEVELS:
+        if lo <= s < hi:
+            return {
+                "status":     status,
+                "status_ko":  ko,
+                "weather":    weather,
+                "mood":       mood,
+                "score":      round(s, 1),
+                "score_range": f"{lo}-{hi - 1}",
+            }
+    # fallback (s == 100 일 때 greed)
+    return {"status": "greed", "status_ko": "과욕", "weather": "맑음",
+            "mood": "주의(과열)", "score": 100.0, "score_range": "80-100"}
+
+
 # ── 데이터 어댑터 ──────────────────────────────────────────────────────────
 
 def load_kospi_daily_change(

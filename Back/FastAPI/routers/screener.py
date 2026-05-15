@@ -20,8 +20,11 @@ class ScreenerItem(BaseModel):
     ticker:         str
     name:           Optional[str]   = None
     sector:         Optional[str]   = None
+    close:          Optional[float] = None   # 현재가 (scores.close)
+    change_pct:     Optional[float] = None   # 전일 대비 등락률
     score:          Optional[float] = None
     tier:           Optional[str]   = None
+    signal_label:   Optional[str]   = None   # 매수/보유/매도/관망
     latest_date:    Optional[str]   = None
     per:            Optional[float] = None
     pbr:            Optional[float] = None

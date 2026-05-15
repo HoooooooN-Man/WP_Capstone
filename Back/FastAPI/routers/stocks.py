@@ -324,6 +324,202 @@ def get_stock_price(ticker: str):
     return StockPrice(**data)
 
 
+# ── 적정주가 밴드차트 (P2-13, PRD §8.2) ───────────────────────────────────────
+
+@router.get("/{ticker}/fairvalue", summary="종목 적정주가 + 5단계 밴드 분류")
+def get_stock_fair_value(ticker: str):
+    """
+    PER·PBR multiple 기반 적정가 추정 (4가지 추정치 평균).
+
+    응답: current_price · fair_value · deviation_pct · band (very_undervalued ~
+    very_overvalued) · inputs (eps/bps/sector_per/sector_pbr/self_per_med/self_pbr_med).
+    """
+    try:
+        result = svc.get_fair_value(ticker=ticker)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"종목 {ticker} 의 적정가 계산에 필요한 데이터가 없습니다.")
+    return result
+
+
+@router.get("/{ticker}/fairvalue/history", summary="종목 적정주가 분기별 이력 (밴드차트용)")
+def get_stock_fair_value_history(
+    ticker: str,
+    periods: int = Query(12, ge=4, le=40, description="조회 분기 수"),
+):
+    """
+    분기별 종가 vs 적정가 시계열 — 밴드차트 시각화에 사용.
+
+    응답: items[{year, quarter, date, close, fair_value, deviation_pct, band, band_ko}]
+    """
+    try:
+        rows = svc.get_fair_value_history(ticker=ticker, periods=periods)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    return {
+        "ticker": ticker.zfill(6) if str(ticker).isdigit() else ticker.upper(),
+        "total":  len(rows),
+        "items":  rows,
+    }
+
+
+# ── 배당 스코어 (P2-14, PRD §8.2) ─────────────────────────────────────────────
+
+@router.get("/{ticker}/dividend", summary="종목 배당스코어 (5항목) + 투자포인트")
+def get_stock_dividend(ticker: str):
+    """
+    5항목(yield/consecutive/growth/payout/eps_growth) 0-100 점수 + 평균 종합 배당스코어.
+    응답: dividend_score · scores{} · yield_pct · dps · years_paid · payout_pct · investment_points[].
+    """
+    try:
+        result = svc.get_dividend_score(ticker=ticker)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"종목 {ticker} 의 배당 데이터가 없습니다.")
+    return result
+
+
+@router.get("/{ticker}/dividend/history", summary="종목 연도별 배당 이력 (10년)")
+def get_stock_dividend_history(
+    ticker: str,
+    years: int = Query(10, ge=3, le=20, description="조회 연도 수"),
+):
+    """연도별 dividend_yield · dps · payout_pct (배당성향) 이력."""
+    try:
+        rows = svc.get_dividend_history(ticker=ticker, years=years)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    return {
+        "ticker": ticker.zfill(6) if str(ticker).isdigit() else ticker.upper(),
+        "total":  len(rows),
+        "items":  rows,
+    }
+
+
+# ── 5요인 레이더 (P1-8, PRD §8.1) ─────────────────────────────────────────────
+
+@router.get("/{ticker}/radar", summary="종목의 5요인 레이더 점수 + 섹터 평균")
+def get_stock_radar(
+    ticker:        str,
+    model_version: str = Query("latest", description="모델 버전"),
+):
+    """
+    SHAP TopFactors 를 5 그룹(성장성/수익성/안전성/독점력/현금창출)으로 합산해
+    0-100 정규화한 레이더 데이터 + 동일 섹터 평균을 반환.
+    """
+    try:
+        result = svc.get_radar(ticker=ticker, model_version=model_version)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"종목 {ticker} 의 레이더 데이터가 없습니다.")
+    return result
+
+
+# ── 별점 + 백분위 (P1-7, PRD §8.1) ────────────────────────────────────────────
+
+@router.get("/{ticker}/rating", summary="종목 별점(0-5) + 동종 섹터 백분위")
+def get_stock_rating(
+    ticker:        str,
+    model_version: str = Query("latest", description="모델 버전"),
+):
+    """ML 점수 → 별점 변환 + 동일 섹터 내 백분위 (상위 N%)."""
+    rows = svc.search_stocks(q=ticker, model_version=model_version, limit=1)
+    if not rows:
+        # 정확 매치 시도
+        t = ticker.zfill(6) if str(ticker).isdigit() else ticker.upper()
+        rows = [r for r in svc.search_stocks(q=t, model_version=model_version, limit=5) if r.get("ticker") == t]
+    if not rows:
+        raise HTTPException(status_code=404, detail=f"종목 {ticker} 점수를 찾을 수 없습니다.")
+
+    # search_stocks 에 이미 signal_label 이 붙어있음. star_rating·percentile 추가 부착.
+    svc.attach_star_ratings(rows, model_version=model_version)
+    return rows[0]
+
+
+# ── 원스톱 진단 — 다중 종목 일괄 (P1-12, PRD §8.1) ───────────────────────────
+
+from pydantic import BaseModel
+from typing import List
+
+class BatchDiagnosisRequest(BaseModel):
+    tickers: List[str]
+
+
+@router.post("/batch-diagnosis", summary="다중 종목 일괄 진단 (점수+티어+신호+별점+누적수익)")
+def batch_diagnosis(
+    payload:       BatchDiagnosisRequest,
+    model_version: str = Query("latest", description="모델 버전"),
+):
+    """
+    watchlist 또는 임의 ticker 배열에 대한 일괄 진단 (최대 200개).
+
+    응답 — 각 종목별: score · tier · signal_label · star_rating · cumulative_return_pct ·
+    percentile_in_sector. summary: tier 분포 · signal 분포 · 평균 점수.
+    """
+    try:
+        result = svc.batch_diagnosis(tickers=payload.tickers, model_version=model_version)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    return result
+
+
+# ── 추천 후 누적 상승률 (P0-2, PRD §8.1) ──────────────────────────────────────
+
+@router.get("/{ticker}/outcome", summary="종목의 첫 A티어 추천 후 누적 상승률")
+def get_stock_outcome(
+    ticker:        str,
+    model_version: str = Query("latest", description="모델 버전"),
+):
+    """
+    `scores.tier == 'A'` 진입 시점부터의 누적 수익률 (현재가 / 진입가 - 1).
+
+    응답: `first_recommended_date`, `price_at_first_rec`, `latest_price`,
+    `cumulative_return_pct`, `days_since_rec`.
+    """
+    try:
+        result = svc.get_recommendation_outcome(ticker=ticker, model_version=model_version)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"종목 {ticker} 의 추천 이력이 없습니다.")
+    return result
+
+
+# ── 자동 경쟁사 비교 (P0-5, PRD §8.1) ─────────────────────────────────────────
+
+@router.get("/{ticker}/peers", summary="자동 경쟁사 비교 — 같은 섹터 + 시가총액 유사 종목")
+def get_peers(
+    ticker:        str,
+    model_version: str = Query("latest", description="모델 버전"),
+    limit:         int = Query(8, ge=2, le=20, description="반환 종목 수"),
+):
+    """
+    기준 종목의 같은 섹터·시가총액(close 프록시) ±50% 종목을 ML 점수 순으로 반환.
+    동일 섹터 우선, 부족하면 mid_sector 단계로 자동 확대.
+
+    각 종목에는 signal_label (매수/보유/매도/관망) 라벨이 함께 부착됩니다 (P0-1).
+    """
+    try:
+        rows = svc.get_peers(ticker=ticker, model_version=model_version, limit=limit)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    if not rows:
+        raise HTTPException(status_code=404, detail=f"종목 {ticker} 의 경쟁사를 찾을 수 없습니다.")
+
+    return {
+        "ticker": ticker.zfill(6) if str(ticker).isdigit() else ticker.upper(),
+        "model_version": model_version,
+        "total": len(rows),
+        "items": rows,
+    }
+
+
 # ── 급상승 종목 ────────────────────────────────────────────────────────────────
 
 @router.get("/rising", response_model=RisingStockList, summary="전일 대비 급상승 종목")

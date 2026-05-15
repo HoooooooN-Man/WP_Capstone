@@ -82,6 +82,17 @@ def score_and_tier(df: pd.DataFrame, raw_col: str = "raw_score") -> pd.DataFrame
 
 def load_model(variant: str) -> tuple[lgb.Booster, list[str]]:
     model_dir = MODELS_ROOT / f"v11{variant}"
+    if not model_dir.exists():
+        archived = MODELS_ROOT / "archived" / f"v11{variant}"
+        if archived.exists():
+            raise FileNotFoundError(
+                f"모델 v11{variant} 은 archived 상태입니다 "
+                f"(negative gain 으로 운영 제외, Phase 0 - 2026-05-12).\n"
+                f"의도적 비교라면 archived 경로를 직접 지정하라: "
+                f"MODELS_ROOT='{archived.parent}'\n"
+                f"운영 후보 variant: a, a_prime, a_prime_dart, c"
+            )
+        raise FileNotFoundError(f"모델 없음: {model_dir}")
     booster = lgb.Booster(model_file=str(model_dir / "model.txt"))
     feature_cols = json.loads((model_dir / "feature_cols.json").read_text(encoding="utf-8"))
     return booster, feature_cols
@@ -175,6 +186,19 @@ def main() -> int:
     log(f"  features (model): {len(feature_cols)}")
 
     df = pd.read_parquet(INFER_PARQUET)
+
+    # 차차기 W5E — feature_cols 에 dart_* 가 있으면 DuckDB disclosures 에서 build·join.
+    # infer_v11_holdout.py 의 동일 패턴 이식 (Phase 0 P0-11 v11a_prime_dart 적재 경로).
+    dart_needed = [c for c in feature_cols if c.startswith("dart_")]
+    if dart_needed:
+        log(f"  attaching DART features ({len(dart_needed)}) for inference …")
+        from dart_features import build_features_table, load_disclosures_from_duckdb
+        disc = load_disclosures_from_duckdb(str(DUCKDB_PATH))
+        target_dt = df[["ticker", "date"]].copy()
+        feats = build_features_table(disc, target_dt)
+        df = df.merge(feats, on=["ticker", "date"], how="left")
+        df[dart_needed] = df[dart_needed].fillna(0).astype("int32")
+
     df = sanitize_feature_names(df)
     df["date"] = pd.to_datetime(df["date"]).dt.date
     log(f"  inference rows: {len(df):,}")

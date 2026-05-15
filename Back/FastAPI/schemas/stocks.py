@@ -57,6 +57,26 @@ class StockScore(BaseModel):
     regime_label:   Optional[str]   = None  # "상승" | "하락(방어)"
     position_scale: Optional[float] = None  # 1.0 또는 0.5
 
+    # ── P0~P2 후처리 부착 필드 (PRD §8) ─────────────────────────────────────
+    # P0-1: 4단계 신호 라벨
+    signal_label:    Optional[str]   = None  # BUY / HOLD / SELL / WATCH
+    signal_label_ko: Optional[str]   = None  # 매수 / 보유 / 매도 / 관망
+    # P1-7: 별점 + 동종 섹터 백분위
+    star_rating:         Optional[float] = None  # 0.5 단위 0-5
+    percentile_in_sector: Optional[float] = None
+    sector_rank:         Optional[int]   = None
+    sector_total:        Optional[int]   = None
+    # P0-2: 추천 후 누적 상승률
+    cumulative_return_pct:  Optional[float] = None
+    first_recommended_date: Optional[str]   = None
+    days_since_rec:         Optional[int]   = None
+    # P1-10: 헤드라인 한 줄
+    headline:        Optional[str]   = None
+    # 정합성 보강: 전일 대비 등락률
+    change_pct:      Optional[float] = None
+    # market cap 라벨 (선택 — 백엔드 미부착 시 None)
+    market_cap_label: Optional[str]  = None
+
 
 class StockScoreList(BaseModel):
     """추천 목록 응답."""
@@ -70,18 +90,25 @@ class StockScoreList(BaseModel):
 # ── 종목 이력 ──────────────────────────────────────────────────────────────────
 
 class StockHistoryItem(BaseModel):
-    """단일 종목의 날짜별 스코어 한 행."""
-    date:           str
-    ticker:         str
-    name:           Optional[str]  = None
-    sector:         Optional[str]  = None
-    close:          Optional[float] = None
-    prob_ensemble:  float
-    score:          float
-    tier:           str
-    rank_in_date:   int
-    total_in_date:  int
-    model_version:  str
+    """단일 종목의 날짜별 스코어 한 행 (+ prices OHLCV·시총)."""
+    date:               str
+    ticker:             str
+    name:               Optional[str]  = None
+    sector:             Optional[str]  = None
+    close:              Optional[float] = None
+    open:               Optional[float] = None
+    high:               Optional[float] = None
+    low:                Optional[float] = None
+    volume:             Optional[float] = None
+    market_cap:         Optional[float] = None
+    shares_outstanding: Optional[float] = None
+    foreign_ratio:      Optional[float] = None
+    prob_ensemble:      float
+    score:              float
+    tier:               str
+    rank_in_date:       int
+    total_in_date:      int
+    model_version:      str
 
 
 class StockHistory(BaseModel):
@@ -150,10 +177,19 @@ class StockSearchResult(BaseModel):
     name:          Optional[str]  = None
     sector:        Optional[str]  = None
     mid_sector:    Optional[str]  = None
+    close:         Optional[float] = None   # 현재가 (scores.close)
+    change_pct:    Optional[float] = None   # 전일 대비 등락률
     score:         Optional[float] = None   # 최신 날짜 ML 점수
     tier:          Optional[str]  = None
     model_version: Optional[str]  = None
     latest_date:   Optional[str]  = None
+    # P0~P1 후처리 필드 (search_stocks 도 attach_* 호출함)
+    signal_label:    Optional[str]   = None
+    signal_label_ko: Optional[str]   = None
+    star_rating:     Optional[float] = None
+    percentile_in_sector: Optional[float] = None
+    sector_rank:     Optional[int]   = None
+    sector_total:    Optional[int]   = None
 
 
 class StockSearchList(BaseModel):

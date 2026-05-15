@@ -12,6 +12,7 @@ scores 테이블 + KOSPI 레짐 + 자동 포트폴리오 도메인.
 
 from __future__ import annotations
 
+import json
 import pandas as pd
 
 from ._core import (
@@ -20,6 +21,50 @@ from ._core import (
     resolve_version as _resolve_version,
     get_latest_date as _get_latest_date,
 )
+from .signal_label import attach_signal_labels
+from .star_rating import attach_star_ratings
+from .headline import attach_headlines
+
+
+def _attach_change_pct(items: list[dict]) -> list[dict]:
+    """추천/검색 결과에 전일 대비 등락률 `change_pct` 필드 부착.
+
+    prices 테이블의 직전 거래일 종가를 조회해 일괄 계산.
+    실패 시 0 으로 폴백 (graceful).
+    """
+    if not items:
+        return items
+    try:
+        tickers = list({it["ticker"] for it in items if it.get("ticker")})
+        if not tickers:
+            return items
+        placeholders = ",".join(["?"] * len(tickers))
+        con = _con()
+        # 각 ticker 의 마지막 두 거래일 종가
+        rows = con.execute(
+            f"""
+            WITH ranked AS (
+              SELECT ticker, close,
+                     ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) AS rn
+              FROM prices WHERE ticker IN ({placeholders})
+            )
+            SELECT ticker,
+                   MAX(CASE WHEN rn = 1 THEN close END) AS today_close,
+                   MAX(CASE WHEN rn = 2 THEN close END) AS prev_close
+            FROM ranked WHERE rn <= 2 GROUP BY ticker
+            """,
+            tickers,
+        ).fetchall()
+        diff_map = {}
+        for ticker, today_c, prev_c in rows:
+            if today_c and prev_c and float(prev_c) > 0:
+                diff_map[ticker] = round((float(today_c) - float(prev_c)) / float(prev_c) * 100, 2)
+        for it in items:
+            it["change_pct"] = diff_map.get(it.get("ticker"), 0)
+    except Exception:
+        for it in items:
+            it.setdefault("change_pct", 0)
+    return items
 
 
 def _norm_optional_str(val: str | None) -> str | None:
@@ -157,6 +202,17 @@ def get_recommendations(
                 # 하락 구간 경고: 실제 포지션 축소는 클라이언트 측에서 처리
                 r["position_scale"] = 1.0 if regime == 1 else 0.5
 
+        # P0-1 (PRD §8.1): score+tier → 매수/보유/매도/관망 4단계 라벨 부착
+        attach_signal_labels(result)
+        # P1-7 (PRD §8.1): 별점 + 동종 섹터 백분위
+        attach_star_ratings(result, model_version=ver)
+        # P1-10 (PRD §8.1): SHAP TopFactors 기반 헤드라인 한 줄
+        attach_headlines(result)
+        # 정합성 보강: 전일 대비 등락률 (FE change_pct 매핑)
+        _attach_change_pct(result)
+        # P1-5 outcomes 부착은 N+1 쿼리라 본 추천 응답에선 비활성 (timeout 회피).
+        # 종목 상세에서 단건 호출 `/stocks/{ticker}/outcome` 으로 enrich.
+
         return result
 
     return _cached(
@@ -188,6 +244,7 @@ def get_stock_history(
             conditions.append("CAST(s.date AS VARCHAR) <= ?")
             params.append(end_date)
 
+        # prices 테이블(date 는 INTEGER YYYYMMDD)을 조인해 OHLCV·시총 부착.
         sql = f"""
             SELECT
                 CAST(s.date AS VARCHAR)                AS date,
@@ -195,6 +252,8 @@ def get_stock_history(
                 COALESCE(s.name, st.name)              AS name,
                 COALESCE(s.sector, st.wics_large_name) AS sector,
                 s.close,
+                p.open, p.high, p.low, p.volume,
+                p.market_cap, p.shares_outstanding, p.foreign_ratio,
                 ROUND(s.prob_ensemble, 6)              AS prob_ensemble,
                 ROUND(CAST(s.score AS DOUBLE), 1)      AS score,
                 s.tier,
@@ -203,6 +262,9 @@ def get_stock_history(
                 s.model_version
             FROM scores s
             LEFT JOIN stocks st ON s.ticker = st.ticker
+            LEFT JOIN prices p
+                   ON p.ticker = s.ticker
+                  AND p.date = CAST(REPLACE(CAST(s.date AS VARCHAR), '-', '') AS INTEGER)
             WHERE {' AND '.join(conditions)}
             ORDER BY s.date
         """
@@ -255,6 +317,213 @@ def get_sector_summary(
     return _cached("sector_summary", fetch, date=date_key, model_version=ver)
 
 
+def batch_diagnosis(
+    tickers: list[str],
+    model_version: str = "latest",
+) -> dict:
+    """P1-12 (PRD §8.1) — 원스톱 진단. 다중 종목에 대한 일괄 점수/티어/신호/별점 리포트.
+
+    응답:
+      {
+        date, model_version, total, summary: {avg_score, tier_distribution, signal_distribution},
+        items: [
+          {ticker, name, sector, score, tier, signal_label, star_rating,
+           cumulative_return_pct, percentile_in_sector}, ...
+        ],
+        missing: [tickers_not_found]
+      }
+    """
+    from .signal_label import attach_signal_labels
+    from .star_rating import attach_star_ratings
+    from .outcomes_svc import attach_outcomes
+
+    ver = _resolve_version(model_version)
+
+    # 입력 정규화
+    norm = []
+    for raw in (tickers or [])[:200]:
+        s = str(raw or "").strip()
+        if not s:
+            continue
+        norm.append(s.zfill(6) if s.isdigit() else s.upper())
+    if not norm:
+        return {"date": None, "model_version": ver, "total": 0,
+                "summary": {}, "items": [], "missing": []}
+
+    def fetch():
+        con = _con()
+        latest = _get_latest_date(ver)
+        if not latest:
+            return {"date": None, "model_version": ver, "total": 0,
+                    "summary": {}, "items": [], "missing": list(norm)}
+
+        cols = {row[1] for row in con.execute("PRAGMA table_info('scores')").fetchall()}
+        has_top_factors = "top_factors" in cols
+        tf_col = "s.top_factors," if has_top_factors else ""
+
+        placeholders = ",".join(["?"] * len(norm))
+        sql = f"""
+            SELECT
+                s.ticker,
+                s.name,
+                s.sector,
+                s.mid_sector,
+                ROUND(CAST(s.score AS DOUBLE), 1) AS score,
+                s.tier,
+                s.close,
+                {tf_col}
+                NULL AS _placeholder
+            FROM scores s
+            WHERE s.model_version=? AND CAST(s.date AS VARCHAR)=?
+              AND s.ticker IN ({placeholders})
+            ORDER BY s.score DESC
+        """
+        params = [ver, latest] + norm
+        rows = con.execute(sql, params).fetchdf()
+        if "_placeholder" in rows.columns:
+            rows = rows.drop(columns=["_placeholder"])
+        items = rows.to_dict(orient="records")
+
+        # top_factors JSON 파싱
+        if has_top_factors:
+            for r in items:
+                tf = r.get("top_factors")
+                if isinstance(tf, str) and tf:
+                    try:
+                        r["top_factors"] = json.loads(tf)
+                    except Exception:
+                        r["top_factors"] = None
+
+        # P0-1 라벨 / P0-2 누적 수익률 / P1-7 별점 + 상위% 부착
+        attach_signal_labels(items)
+        attach_star_ratings(items, model_version=ver)
+        attach_outcomes(items, model_version=ver)
+
+        # 요약 통계
+        found_tickers = {r["ticker"] for r in items}
+        missing = [t for t in norm if t not in found_tickers]
+
+        if items:
+            avg_score = round(sum(r["score"] for r in items if r.get("score") is not None) / len(items), 2)
+            tier_dist = {}
+            signal_dist = {}
+            for r in items:
+                t = r.get("tier") or "?"
+                tier_dist[t] = tier_dist.get(t, 0) + 1
+                sl = r.get("signal_label") or "?"
+                signal_dist[sl] = signal_dist.get(sl, 0) + 1
+            summary = {
+                "avg_score":          avg_score,
+                "tier_distribution":  tier_dist,
+                "signal_distribution": signal_dist,
+            }
+        else:
+            summary = {}
+
+        return {
+            "date":          latest,
+            "model_version": ver,
+            "total":         len(items),
+            "summary":       summary,
+            "items":         items,
+            "missing":       missing,
+        }
+
+    return _cached("batch_diagnosis", fetch, ttl=120,
+                   tickers="|".join(sorted(norm)), model_version=ver)
+
+
+def get_peers(
+    ticker: str,
+    model_version: str = "latest",
+    limit: int = 8,
+) -> list[dict]:
+    """P0-5 (PRD §8.1) — 자동 경쟁사 비교.
+
+    기준 종목의 같은 섹터·시가총액(close 프록시) ±50% 종목을 점수 순으로 반환.
+    동일 섹터 우선, 부족하면 mid_sector 단계로 확대.
+    """
+    ver = _resolve_version(model_version)
+    t = str(ticker or "").strip().zfill(6)
+
+    def fetch():
+        con = _con()
+        latest = _get_latest_date(ver)
+        if not latest:
+            return []
+
+        # 기준 종목 정보
+        base = con.execute(
+            """
+            SELECT s.ticker, s.name, s.sector, s.mid_sector, s.close, s.score, s.tier
+            FROM scores s
+            WHERE s.model_version=? AND CAST(s.date AS VARCHAR)=? AND s.ticker=?
+            """,
+            [ver, latest, t],
+        ).fetchone()
+        if not base:
+            return []
+        _, _, sector, mid_sector, close, _, _ = base
+
+        # close 가 None 이면 시가총액 필터 우회
+        price_lo = float(close) * 0.5 if close else 0.0
+        price_hi = float(close) * 1.5 if close else 1e18
+
+        # 1차: 같은 sector + 시가총액(close) 유사 종목
+        rows = con.execute(
+            """
+            SELECT
+                s.ticker,
+                s.name,
+                s.sector,
+                s.mid_sector,
+                s.close,
+                ROUND(CAST(s.score AS DOUBLE), 1) AS score,
+                s.tier,
+                ROUND(s.prob_ensemble, 6)         AS prob_ensemble
+            FROM scores s
+            WHERE s.model_version=?
+              AND CAST(s.date AS VARCHAR)=?
+              AND s.ticker != ?
+              AND s.sector = ?
+              AND s.close BETWEEN ? AND ?
+            ORDER BY s.score DESC
+            LIMIT ?
+            """,
+            [ver, latest, t, sector or "", price_lo, price_hi, limit],
+        ).fetchdf()
+
+        # 2차: 부족하면 mid_sector 로 확대
+        if len(rows) < limit and mid_sector:
+            need = limit - len(rows)
+            extra = con.execute(
+                """
+                SELECT
+                    s.ticker, s.name, s.sector, s.mid_sector, s.close,
+                    ROUND(CAST(s.score AS DOUBLE), 1) AS score,
+                    s.tier,
+                    ROUND(s.prob_ensemble, 6)         AS prob_ensemble
+                FROM scores s
+                WHERE s.model_version=?
+                  AND CAST(s.date AS VARCHAR)=?
+                  AND s.ticker != ?
+                  AND s.mid_sector = ?
+                  AND s.sector != ?
+                ORDER BY s.score DESC
+                LIMIT ?
+                """,
+                [ver, latest, t, mid_sector, sector or "", need],
+            ).fetchdf()
+            if not extra.empty:
+                rows = pd.concat([rows, extra], ignore_index=True)
+
+        result = rows.to_dict(orient="records")
+        attach_signal_labels(result)
+        return result
+
+    return _cached("peers", fetch, ttl=300, ticker=t, model_version=ver, limit=limit)
+
+
 def search_stocks(
     q: str,
     model_version: str = "latest",
@@ -274,6 +543,7 @@ def search_stocks(
                 s.name,
                 s.sector,
                 s.mid_sector,
+                s.close,
                 ROUND(CAST(s.score AS DOUBLE), 1) AS score,
                 s.tier,
                 s.model_version,
@@ -291,7 +561,10 @@ def search_stocks(
             LIMIT ?
         """
         rows = con.execute(sql, [ver, ver, keyword, keyword, limit]).fetchdf()
-        return rows.to_dict(orient="records")
+        result = rows.to_dict(orient="records")
+        attach_signal_labels(result)   # P0-1
+        _attach_change_pct(result)     # 전일 대비 등락률
+        return result
 
     return _cached("search", fetch, ttl=120, q=q, model_version=ver, limit=limit)
 
@@ -374,6 +647,7 @@ def screen_stocks(
                 s.ticker,
                 COALESCE(s.name, fi.finance_name)   AS name,
                 s.sector,
+                s.close,
                 ROUND(CAST(s.score AS DOUBLE), 1)   AS score,
                 s.tier,
                 CAST(s.date AS VARCHAR)              AS latest_date,
@@ -391,7 +665,10 @@ def screen_stocks(
             LIMIT {int(limit)}
         """
         rows = con.execute(sql, params).fetchdf()
-        return rows.to_dict(orient="records")
+        result = rows.to_dict(orient="records")
+        attach_signal_labels(result)   # P0-1
+        _attach_change_pct(result)     # 전일 대비 등락률
+        return result
 
     return _cached(
         "screener", fetch, ttl=120,
@@ -478,7 +755,18 @@ def compare_stocks(
 
 
 def get_market_regime(model_version: str = "latest") -> dict:
-    """Tier A 종목 비율로 현재 시장 국면(greed/neutral/fear)을 판단."""
+    """Tier A 비율 + KOSPI 일일 변화율로 현재 시장 국면을 판단.
+
+    P0-4 (PRD §8.1) — 기존 3단계(greed/neutral/fear)를 5단계로 세분화하고
+    0-100 마켓스코어를 함께 반환. 응답 호환을 위해 기존 status/weather 필드는 유지
+    (5단계 status 값 그대로 노출 — greed/optimism/neutral/pessimism/panic).
+    """
+    from .market_events import (
+        compute_market_score,
+        classify_market_level,
+        load_kospi_daily_change,
+    )
+
     ver = _resolve_version(model_version)
 
     def fetch():
@@ -500,12 +788,20 @@ def get_market_regime(model_version: str = "latest") -> dict:
         tier_a = int(row[1] or 0)
         ratio  = (tier_a / total * 100) if total else 0.0
 
-        if ratio >= 10:
-            status, weather, msg = "greed", "맑음", "상승 모멘텀이 강합니다. 적극적인 투자가 유리한 국면입니다."
-        elif ratio >= 5:
-            status, weather, msg = "neutral", "흐림", "방향성 탐색 구간입니다. 선별적인 종목 접근이 필요합니다."
-        else:
-            status, weather, msg = "fear", "비", "시장 변동성이 커지고 있습니다. 현금 비중 확대를 권장합니다."
+        # KOSPI 일일 변화율 (없으면 None)
+        daily_change = load_kospi_daily_change(as_of_date=latest)
+
+        # 0-100 마켓스코어 + 5단계 분류
+        score = compute_market_score(ratio, daily_change)
+        level = classify_market_level(score)
+
+        messages = {
+            "panic":     "시장 공포 단계입니다. 현금 비중 확대와 보수적 접근이 필요합니다.",
+            "pessimism": "비관 분위기가 우세합니다. 선별적 매수 + 변동성 주의.",
+            "neutral":   "방향성 탐색 구간입니다. 선별적인 종목 접근이 필요합니다.",
+            "optimism":  "낙관 분위기입니다. 상승 모멘텀을 활용한 투자가 유효합니다.",
+            "greed":     "과욕 단계입니다. 단기 과열 위험 — 분할 매수와 차익 실현 검토.",
+        }
 
         return {
             "date":          latest,
@@ -513,9 +809,15 @@ def get_market_regime(model_version: str = "latest") -> dict:
             "total_count":   total,
             "tier_a_count":  tier_a,
             "tier_a_ratio":  round(ratio, 2),
-            "status":        status,
-            "weather":       weather,
-            "message":       msg,
+            "daily_change":  round(daily_change, 4) if daily_change is not None else None,
+            # 5단계 — choicestock 벤치마크 호환 (status/status_ko/weather/mood/score)
+            "status":        level["status"],
+            "status_ko":     level["status_ko"],
+            "weather":       level["weather"],
+            "mood":          level["mood"],
+            "market_score":  level["score"],
+            "score_range":   level["score_range"],
+            "message":       messages.get(level["status"], ""),
         }
 
     return _cached("market_regime", fetch, ttl=300, model_version=ver)

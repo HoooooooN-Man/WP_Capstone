@@ -1,0 +1,14 @@
+[
+  "BPS", "PBR", "volume_ma20", "EPS", "HV_20", "amount", "US_5Y", "Profit_z_mkt", "GOLD",
+  "flow_indiv_5d", "flow_indiv_20d",
+  "flow_foreign_5d", "flow_foreign_20d",
+  "flow_othercorp_5d", "flow_othercorp_20d",
+  "flow_inst_5d", "flow_inst_20d",
+  "flow_trust_5d", "flow_trust_20d",
+  "foreign_shares_chg_20d_pct",
+  "foreign_ratio_chg_20d",
+  "short_ratio_z20",
+  "short_volume_pct_chg_20d",
+  "foreign_dominance_20d",
+  "inst_dominance_20d"
+]

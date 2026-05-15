@@ -109,21 +109,28 @@ def cached(fn_name: str, fetch_fn: Callable[[], Any], ttl: int = REDIS_CACHE_TTL
 
 
 # ── DuckDB 헬퍼 ─────────────────────────────────────────────────────────────
+#
+# DuckDB 단일 Connection 객체는 스레드 동시 사용에 안전하지 않다. FastAPI 는
+# 동기 핸들러를 스레드풀에서 실행하므로(종목 상세는 7+ 쿼리를 병렬 발사),
+# 하나의 싱글턴 커넥션을 공유하면 동시 .execute() 가 서로 깨져 빈 결과·오류가
+# 난다("scores 비어있음" 503 등). → 스레드별 read-only 커넥션을 둔다
+# (read-only 는 동일 파일 다중 연결 허용).
 
-_duckdb_con: duckdb.DuckDBPyConnection | None = None
+_duckdb_base: duckdb.DuckDBPyConnection | None = None   # 워밍업·폴백용 베이스 핸들
 _duckdb_lock = threading.Lock()
+_duckdb_tls = threading.local()
 _news_con_obj: duckdb.DuckDBPyConnection | None = None
 _news_con_lock = threading.Lock()
 
 
 def init_duckdb() -> None:
     """앱 시작 시(lifespan) 한 번만 호출 — 연결 + 워밍업으로 첫 요청 지연 제거."""
-    global _duckdb_con
+    global _duckdb_base
     with _duckdb_lock:
-        if _duckdb_con is None:
-            _duckdb_con = duckdb.connect(str(DUCKDB_PATH), read_only=True)
+        if _duckdb_base is None:
+            _duckdb_base = duckdb.connect(str(DUCKDB_PATH), read_only=True)
 
-    con = _duckdb_con
+    con = _duckdb_base
     # 컬럼 스토리지 워밍업 (OS 파일 캐시 확보)
     con.execute("SELECT * FROM finance LIMIT 500").fetchdf()
     con.execute("SELECT * FROM scores  LIMIT 500").fetchdf()
@@ -166,31 +173,50 @@ def init_duckdb() -> None:
 
 
 def con() -> duckdb.DuckDBPyConnection:
-    """읽기 전용 DuckDB 싱글턴 연결 (시장/스코어/재무)."""
-    global _duckdb_con
-    if _duckdb_con is None:
-        with _duckdb_lock:
-            if _duckdb_con is None:
-                _duckdb_con = duckdb.connect(str(DUCKDB_PATH), read_only=True)
-    return _duckdb_con
+    """읽기 전용 DuckDB 연결 — 스레드별 독립 커넥션.
+
+    동시 요청이 같은 커넥션을 공유하면 .execute() 가 깨지므로 thread-local 로
+    분리한다. read-only 라 동일 파일 다중 연결이 안전하다 (스레드당 1개 생성).
+    """
+    c = getattr(_duckdb_tls, "conn", None)
+    if c is None:
+        c = duckdb.connect(str(DUCKDB_PATH), read_only=True)
+        _duckdb_tls.conn = c
+    return c
 
 
 def news_con() -> duckdb.DuckDBPyConnection | None:
-    """뉴스 전용 DuckDB read-only. 파일 미존재 시 None."""
+    """뉴스 전용 DuckDB read-only.
+
+    NEWS_DUCKDB_PATH 파일이 존재하면 그것을 사용하고,
+    없으면 메인 DB(DUCKDB_PATH=market_data.duckdb)로 폴백한다 —
+    news_normalized/news_company_map/news_rankings 테이블이 메인 DB 에 적재돼 있음.
+    """
     global _news_con_obj
     if _news_con_obj is not None:
         return _news_con_obj
     with _news_con_lock:
         if _news_con_obj is not None:
             return _news_con_obj
-        if not NEWS_DUCKDB_PATH.exists():
-            return None
+        # 1순위: 전용 뉴스 DB 파일
+        if NEWS_DUCKDB_PATH.exists():
+            try:
+                _news_con_obj = duckdb.connect(str(NEWS_DUCKDB_PATH), read_only=True)
+                return _news_con_obj
+            except Exception as e:
+                print(f"[WARN] news DuckDB 연결 실패: {e}")
+        # 2순위: 메인 DB 폴백 (news_* 테이블이 존재하는지 확인)
         try:
-            _news_con_obj = duckdb.connect(str(NEWS_DUCKDB_PATH), read_only=True)
+            main = con()
+            tbls = {r[0] for r in main.execute(
+                "SELECT table_name FROM information_schema.tables"
+            ).fetchall()}
+            if "news_normalized" in tbls:
+                _news_con_obj = main
+                return _news_con_obj
         except Exception as e:
-            print(f"[WARN] news DuckDB 연결 실패: {e}")
-            return None
-    return _news_con_obj
+            print(f"[WARN] news 메인 DB 폴백 실패: {e}")
+        return None
 
 
 DEFAULT_MODEL_VERSION_ENV = "DEFAULT_MODEL_VERSION"

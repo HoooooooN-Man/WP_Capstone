@@ -1,3 +1,4 @@
+import logging
 import os
 
 from fastapi import FastAPI
@@ -11,6 +12,8 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 import uvicorn
 
+logger = logging.getLogger(__name__)
+
 from api.auth.auth import router as auth_router
 from api.socket.internal_router import router as internal_router
 from api.news.newsranking import router as news_router
@@ -18,6 +21,8 @@ from api.board.board import router as board_router
 from api.users.users import router as users_router
 from api.users.watchlist import router as watchlist_router
 from api.users.cohort    import router as cohort_router
+from api.users.portfolio import router as portfolio_router
+from api.users.notes import router as notes_router
 from api.events.events import router as events_router
 
 load_dotenv()
@@ -47,6 +52,30 @@ app = FastAPI(title="Stock Analysis System")
 # Rate limiter 등록 — slowapi 는 app.state.limiter 를 통해 데코레이터와 연결.
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
+
+
+# 모든 미처리 예외를 JSON 으로 래핑 — Starlette ServerErrorMiddleware 의 bare 500 응답을
+# 가로채지 못해 CORSMiddleware 까지 도달하지 못하는 문제를 회피한다. FE 가 ERR_FAILED /
+# "No Access-Control-Allow-Origin" 으로 끊어지지 않고 정상적으로 .catch() 처리 가능.
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("[unhandled] %s %s", request.method, request.url.path)
+    origin = request.headers.get("origin", "")
+    headers = {}
+    if origin in ALLOWED_ORIGINS:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+        headers["Vary"] = "Origin"
+    return JSONResponse(
+        status_code=500,
+        content={
+            "code": "INTERNAL_ERROR",
+            "message": "서버 내부 오류가 발생했습니다.",
+            "detail": str(exc),
+            "request_id": request.headers.get("X-Request-ID", ""),
+        },
+        headers=headers,
+    )
 
 
 @app.exception_handler(RateLimitExceeded)
@@ -79,6 +108,8 @@ app.include_router(board_router)
 app.include_router(users_router)
 app.include_router(watchlist_router)  # Tier 1.6 — /users/me/watchlist CRUD
 app.include_router(cohort_router)     # W2C — /users/me/cohort GET·PUT
+app.include_router(portfolio_router)  # PRD §3.6 — /users/me/portfolio/holdings CRUD
+app.include_router(notes_router)      # /users/me/notes — 투자노트 CRUD
 app.include_router(events_router)     # W1B — /events impressions·clicks·outcomes
 
 

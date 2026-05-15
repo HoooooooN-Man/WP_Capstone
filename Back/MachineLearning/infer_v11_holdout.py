@@ -67,6 +67,15 @@ def log(msg: str) -> None:
 def load_model(variant: str) -> tuple[lgb.Booster, list[str], dict]:
     model_dir = MODELS_ROOT / f"v11{variant}"
     if not model_dir.exists():
+        archived = MODELS_ROOT / "archived" / f"v11{variant}"
+        if archived.exists():
+            raise FileNotFoundError(
+                f"모델 v11{variant} 은 archived 상태입니다 "
+                f"(negative gain 으로 운영 제외, Phase 0 - 2026-05-12).\n"
+                f"의도적 비교라면 archived 경로를 직접 지정하라: "
+                f"MODELS_ROOT='{archived.parent}'\n"
+                f"운영 후보 variant: a, a_prime, a_prime_dart, c"
+            )
         raise FileNotFoundError(f"모델 없음: {model_dir}")
     booster = lgb.Booster(model_file=str(model_dir / "model.txt"))
     feature_cols = json.loads((model_dir / "feature_cols.json").read_text(encoding="utf-8"))

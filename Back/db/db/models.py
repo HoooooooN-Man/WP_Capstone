@@ -56,14 +56,18 @@ class User(Base):
 class UserWatchlist(Base):
     __tablename__ = "user_watchlist"
     __table_args__ = (
-        UniqueConstraint("user_id", "ticker", name="uq_watch_user_ticker"),
+        UniqueConstraint("user_id", "ticker", "group_name", name="uq_watch_user_ticker_group"),
         Index("idx_watch_user",   "user_id"),
         Index("idx_watch_ticker", "ticker"),
+        Index("idx_watch_group",  "user_id", "group_name"),
     )
 
     id         = Column(Integer, primary_key=True, index=True)
     user_id    = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"))
     ticker     = Column(String(20), nullable=False)
+    # P0-3 (PRD §8.1) — 관심종목 그룹 분류 (예: '보유', '배당', '관심', 'default').
+    # NULL 또는 'default' = 분류 없음. 동일 ticker 를 여러 그룹에 등록 가능.
+    group_name = Column(String(50), nullable=False, server_default="default", default="default")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     owner = relationship("User", back_populates="watchlist")
@@ -82,6 +86,41 @@ class Notification(Base):
     created_at      = Column(DateTime, default=datetime.datetime.utcnow)
 
     recipient = relationship("User", back_populates="notifications")
+
+
+# ── 3-1. user_holdings (사용자 보유 종목 — PRD §3.6 신규) ─────────────────────
+class UserHolding(Base):
+    __tablename__ = "user_holdings"
+    __table_args__ = (
+        Index("idx_holding_user", "user_id"),
+        Index("idx_holding_ticker", "ticker"),
+    )
+
+    id         = Column(Integer, primary_key=True, index=True)
+    user_id    = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    ticker     = Column(String(20), nullable=False)
+    quantity   = Column(Integer, nullable=False, default=0)              # 보유 수량 (주)
+    avg_price  = Column(Integer, nullable=False, default=0)              # 평균 매수가 (원)
+    bought_at  = Column(SQLDate, nullable=True)                          # 첫 매수일
+    memo       = Column(String(200), nullable=True)                      # 메모
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+
+# ── 3-2. user_notes (사용자 투자노트 — NewsPage 투자노트 탭) ──────────────────
+class UserNote(Base):
+    __tablename__ = "user_notes"
+    __table_args__ = (
+        Index("idx_note_user", "user_id"),
+    )
+
+    id         = Column(Integer, primary_key=True, index=True)
+    user_id    = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    title      = Column(String(200), nullable=False)
+    content    = Column(Text, nullable=False)
+    tags       = Column(String(200), nullable=True)                      # 쉼표 구분 태그
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
 
 # ── 4. board_posts ────────────────────────────────────────────────────────────
