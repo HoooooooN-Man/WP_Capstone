@@ -11,6 +11,7 @@ go build -o bin/webnews_enricher ./cmd/webnews_enricher
 go build -o bin/webnews_scheduler ./cmd/webnews_scheduler
 go build -o bin/webnews_finalizer ./cmd/webnews_finalizer
 go build -o bin/webnews_publish ./cmd/webnews_publish
+go build -o bin/webnews_prune ./cmd/webnews_prune
 
 echo "[OK] build complete"
 ls -lh bin/webnews_*

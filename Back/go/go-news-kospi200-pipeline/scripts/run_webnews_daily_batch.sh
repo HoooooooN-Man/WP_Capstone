@@ -9,6 +9,7 @@ export APP_ENV_FILE="${APP_ENV_FILE:-configs/webnews.env}"
 DISPLAY_DATE="${1:-$(TZ=Asia/Seoul date +%F)}"
 IDLE_TIMEOUT="${WEBNEWS_BATCH_IDLE_TIMEOUT:-10s}"
 BATCH_SIZE="${WEBNEWS_BATCH_SIZE:-10}"
+PUBLISH_EVENTS_KEEP="${WEBNEWS_PUBLISH_EVENTS_KEEP:-30}"
 
 LOG_DIR="$ROOT_DIR/logs/webnews"
 RUN_DIR="$ROOT_DIR/run"
@@ -35,23 +36,32 @@ mkdir -p "$ROOT_DIR/data/webnews/archive"
     echo "[INFO] display_date=$DISPLAY_DATE"
     echo "[INFO] idle_timeout=$IDLE_TIMEOUT"
     echo "[INFO] batch_size=$BATCH_SIZE"
+    echo "[INFO] publish_events_keep=$PUBLISH_EVENTS_KEEP"
     echo "[INFO] started_at=$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S %Z')"
     echo
 
     echo "------------------------------------------------------------"
-    echo "[1/6] build webnews binaries"
+    echo "[1/8] build webnews binaries"
     echo "------------------------------------------------------------"
     bash scripts/build_webnews_bins.sh
     echo
 
     echo "------------------------------------------------------------"
-    echo "[2/6] schedule collect jobs"
+    echo "[2/8] prune before batch"
+    echo "------------------------------------------------------------"
+    ./bin/webnews_prune \
+      --phase before \
+      --display-date "$DISPLAY_DATE"
+    echo
+
+    echo "------------------------------------------------------------"
+    echo "[3/8] schedule collect jobs"
     echo "------------------------------------------------------------"
     ./bin/webnews_scheduler --display-date "$DISPLAY_DATE"
     echo
 
     echo "------------------------------------------------------------"
-    echo "[3/6] collect RSS items"
+    echo "[4/8] collect RSS items"
     echo "------------------------------------------------------------"
     ./bin/webnews_collector \
       --once \
@@ -60,7 +70,7 @@ mkdir -p "$ROOT_DIR/data/webnews/archive"
     echo
 
     echo "------------------------------------------------------------"
-    echo "[4/6] enrich raw items"
+    echo "[5/8] enrich raw items"
     echo "------------------------------------------------------------"
     ./bin/webnews_enricher \
       --once \
@@ -69,21 +79,29 @@ mkdir -p "$ROOT_DIR/data/webnews/archive"
     echo
 
     echo "------------------------------------------------------------"
-    echo "[5/6] finalize staging JSON"
+    echo "[6/8] finalize staging JSON"
     echo "------------------------------------------------------------"
     ./bin/webnews_finalizer --display-date "$DISPLAY_DATE"
     echo
 
     echo "------------------------------------------------------------"
-    echo "[6/6] publish current JSON"
+    echo "[7/8] publish current JSON"
     echo "------------------------------------------------------------"
     ./bin/webnews_publish --display-date "$DISPLAY_DATE"
     echo
 
     echo "------------------------------------------------------------"
-    echo "[cleanup] remove staging for display date and old logs"
+    echo "[8/8] prune after batch"
     echo "------------------------------------------------------------"
-    rm -rf "$ROOT_DIR/data/webnews/staging/$DISPLAY_DATE"
+    ./bin/webnews_prune \
+      --phase after \
+      --display-date "$DISPLAY_DATE" \
+      --trim-publish-events "$PUBLISH_EVENTS_KEEP"
+    echo
+
+    echo "------------------------------------------------------------"
+    echo "[cleanup] remove old logs"
+    echo "------------------------------------------------------------"
     find "$LOG_DIR" -type f -name "*.log" -mtime +7 -delete || true
     echo
 
