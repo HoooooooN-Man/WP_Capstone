@@ -66,9 +66,6 @@ func GetEnrichedItem(
 		Title:         strings.TrimSpace(values["title"]),
 		Publisher:     strings.TrimSpace(values["publisher"]),
 		GoogleNewsURL: strings.TrimSpace(values["google_news_url"]),
-		OriginURL:     strings.TrimSpace(values["origin_url"]),
-		CanonicalURL:  strings.TrimSpace(values["canonical_url"]),
-		ImageURL:      strings.TrimSpace(values["image_url"]),
 
 		PublishedAt: strings.TrimSpace(values["published_at"]),
 		CollectedAt: strings.TrimSpace(values["collected_at"]),
