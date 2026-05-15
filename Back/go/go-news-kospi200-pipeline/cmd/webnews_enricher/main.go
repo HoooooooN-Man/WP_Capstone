@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -20,6 +21,11 @@ import (
 )
 
 func main() {
+	onceMode := flag.Bool("once", false, "run in one-shot drain mode and exit after the stream becomes idle")
+	idleTimeout := flag.Duration("idle-timeout", 10*time.Second, "idle duration before exiting in --once mode")
+	batchSize := flag.Int64("batch-size", 10, "maximum number of raw items to read per Redis call")
+	flag.Parse()
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -45,17 +51,28 @@ func main() {
 
 	consumerName := hostnameOr("webnews-enricher-1")
 
+	pollBlock := baseCfg.PollBlock
+	if *onceMode && pollBlock > *idleTimeout {
+		pollBlock = *idleTimeout
+	}
+
 	log.Printf(
-		"webnews_enricher: start redis=%s stream=%s consumer=%s",
+		"webnews_enricher: start redis=%s stream=%s consumer=%s once=%t idle_timeout=%s batch_size=%d",
 		baseCfg.RedisAddr,
 		redisstore.StreamRawItems(webCfg.RedisPrefix),
 		consumerName,
+		*onceMode,
+		idleTimeout.String(),
+		*batchSize,
 	)
+
+	processedItems := 0
+	idleDeadline := time.Now().Add(*idleTimeout)
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("webnews_enricher: shutdown requested")
+			log.Printf("webnews_enricher: shutdown requested processed_items=%d", processedItems)
 			return
 		default:
 		}
@@ -65,8 +82,8 @@ func main() {
 			client,
 			webCfg.RedisPrefix,
 			consumerName,
-			10,
-			baseCfg.PollBlock,
+			*batchSize,
+			pollBlock,
 		)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
@@ -78,8 +95,18 @@ func main() {
 		}
 
 		if len(messages) == 0 {
+			if *onceMode && time.Now().After(idleDeadline) {
+				log.Printf(
+					"webnews_enricher: once mode idle timeout reached; exit processed_items=%d idle_timeout=%s",
+					processedItems,
+					idleTimeout.String(),
+				)
+				return
+			}
 			continue
 		}
+
+		idleDeadline = time.Now().Add(*idleTimeout)
 
 		for _, msg := range messages {
 			rawItem, err := redisstore.ParseRawItem(msg)
@@ -118,6 +145,8 @@ func main() {
 				log.Printf("webnews_enricher: ack raw item failed msg_id=%s err=%v", msg.ID, err)
 				continue
 			}
+
+			processedItems++
 
 			log.Printf(
 				"webnews_enricher: stored msg_id=%s category=%s item_id=%s seen=%d score=%.2f rss_only=true",

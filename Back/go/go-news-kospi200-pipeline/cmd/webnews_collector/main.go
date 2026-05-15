@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -17,6 +18,11 @@ import (
 )
 
 func main() {
+	onceMode := flag.Bool("once", false, "run in one-shot drain mode and exit after the stream becomes idle")
+	idleTimeout := flag.Duration("idle-timeout", 10*time.Second, "idle duration before exiting in --once mode")
+	batchSize := flag.Int64("batch-size", 10, "maximum number of collect jobs to read per Redis call")
+	flag.Parse()
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -44,17 +50,29 @@ func main() {
 
 	rssClient := collector.NewGoogleRSSClient(webCfg.FetchTimeout, webCfg.UserAgent)
 
+	pollBlock := baseCfg.PollBlock
+	if *onceMode && pollBlock > *idleTimeout {
+		pollBlock = *idleTimeout
+	}
+
 	log.Printf(
-		"webnews_collector: start redis=%s stream=%s consumer=%s",
+		"webnews_collector: start redis=%s stream=%s consumer=%s once=%t idle_timeout=%s batch_size=%d",
 		baseCfg.RedisAddr,
 		redisstore.StreamCollectJobs(webCfg.RedisPrefix),
 		consumerName,
+		*onceMode,
+		idleTimeout.String(),
+		*batchSize,
 	)
+
+	processedJobs := 0
+	collectedItems := 0
+	idleDeadline := time.Now().Add(*idleTimeout)
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("webnews_collector: shutdown requested")
+			log.Printf("webnews_collector: shutdown requested processed_jobs=%d collected_items=%d", processedJobs, collectedItems)
 			return
 		default:
 		}
@@ -64,8 +82,8 @@ func main() {
 			client,
 			webCfg.RedisPrefix,
 			consumerName,
-			10,
-			baseCfg.PollBlock,
+			*batchSize,
+			pollBlock,
 		)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
@@ -77,8 +95,19 @@ func main() {
 		}
 
 		if len(messages) == 0 {
+			if *onceMode && time.Now().After(idleDeadline) {
+				log.Printf(
+					"webnews_collector: once mode idle timeout reached; exit processed_jobs=%d collected_items=%d idle_timeout=%s",
+					processedJobs,
+					collectedItems,
+					idleTimeout.String(),
+				)
+				return
+			}
 			continue
 		}
+
+		idleDeadline = time.Now().Add(*idleTimeout)
 
 		for _, msg := range messages {
 			job, err := redisstore.ParseCollectJob(msg)
@@ -105,6 +134,7 @@ func main() {
 				if err := redisstore.AckCollectJob(ctx, client, webCfg.RedisPrefix, msg.ID); err != nil {
 					log.Printf("webnews_collector: ack empty job failed msg_id=%s err=%v", msg.ID, err)
 				}
+				processedJobs++
 				continue
 			}
 
@@ -122,6 +152,9 @@ func main() {
 				log.Printf("webnews_collector: ack failed msg_id=%s err=%v", msg.ID, err)
 				continue
 			}
+
+			processedJobs++
+			collectedItems += len(items)
 
 			log.Printf(
 				"webnews_collector: collected msg_id=%s category=%s items=%d query=%q",
