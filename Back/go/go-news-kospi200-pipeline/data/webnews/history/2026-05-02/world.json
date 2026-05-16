@@ -1,0 +1,45 @@
+{
+  "display_date": "2026-05-02",
+  "category_id": "world",
+  "category_label": "세계",
+  "window_start": "2026-05-01T09:00:00+09:00",
+  "window_end": "2026-05-02T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:28:13+09:00",
+  "item_count": 2,
+  "items": [
+    {
+      "rank": 1,
+      "id": "7fdbf258ea92ce2d3b4d1b4af3f8b216cd163b38",
+      "title": "빅테크가 전쟁보다 강하다…4월 미국 증시, 6년 만에 최대 수익률",
+      "publisher": "중앙일보",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5aNFVDQVJGbjhVRTdOX3N4LW9OazlqWTRTYU9ERzFaWXpqVVBkVmFSeEkzRE5uUHVVZXZaRHpISGFfcFhHU2I5NjJqcVZ5OGtWMG1mUE9n?oc=5",
+      "published_at": "2026-05-01T07:00:00Z",
+      "collected_at": "2026-05-16T13:27:52+09:00",
+      "first_seen_at": "2026-05-16T13:28:03+09:00",
+      "last_seen_at": "2026-05-16T13:28:03+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "세계경제 OR 국제정세 OR 미국증시"
+    },
+    {
+      "rank": 2,
+      "id": "1f725778236de08bab46a084948045e46cf63984",
+      "title": "오늘 글로벌 경제지표와 일정",
+      "publisher": "연합인포맥스",
+      "google_news_url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE1lb2FUQmFTRU02VVpUZTdILU1OTU13dDFPY096ekdpLU5BS3ZZdnp4clNydWR4NDlHNGpvX1UwQlQ2SS1FNFN2SGFWQkhpU1dBb1p1b2lBRF9wMlpMeDBfdjBjN19mSTJheDJYTVVSOGLSAXRBVV95cUxPRE54T3FsdUdYcENIODBoODlsQkQxS3dVZ19aZHpVVUdxQUNNZU12dnU4dkZjTTRHcmhjY0tJRW9RaGJUSlNZeXBNTWNNNW16eFFvZDJLQWdmRDUtaDlMMTRZWmhKTmpQYk8yejlsNnNOTjI2Yw?oc=5",
+      "published_at": "2026-05-01T07:00:00Z",
+      "collected_at": "2026-05-16T13:27:52+09:00",
+      "first_seen_at": "2026-05-16T13:28:03+09:00",
+      "last_seen_at": "2026-05-16T13:28:03+09:00",
+      "seen_count": 1,
+      "best_rank": 2,
+      "latest_rank": 2,
+      "score": 9,
+      "source": "google_news",
+      "query": "세계경제 OR 국제정세 OR 미국증시"
+    }
+  ]
+}

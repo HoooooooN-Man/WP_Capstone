@@ -1,0 +1,45 @@
+{
+  "display_date": "2026-05-15",
+  "category_id": "korea",
+  "category_label": "대한민국",
+  "window_start": "2026-05-14T09:00:00+09:00",
+  "window_end": "2026-05-15T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:32:56+09:00",
+  "item_count": 2,
+  "items": [
+    {
+      "rank": 1,
+      "id": "e21a0c3efd5f5cf35d606b8a08cacbca26706188",
+      "title": "다시 만나는 대한민국-몽골, 보건의료 협력의 새로운 미래 함께 열다",
+      "publisher": "대한민국 정책브리핑",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxQS25KWVVvTjNGdDNCb3BGSkpxSXl3V1dyT195YXAxMzFiQ1c5WERyQWZmN19OU1FaRGtIWkg0WHNVUG5jNlFVZjRCNUgtV2dvRXNMN2ZnSjNZOElDM1YwYmZWaU9zU0pMXzVFMHptX3RRaWloaW1vWlBYMkpWOHRwQ3hoQ2NwVG1hRTVn?oc=5",
+      "published_at": "2026-05-14T18:31:38Z",
+      "collected_at": "2026-05-16T13:32:37+09:00",
+      "first_seen_at": "2026-05-16T13:32:46+09:00",
+      "last_seen_at": "2026-05-16T13:32:46+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "대한민국 OR 한국경제 OR 한국정책"
+    },
+    {
+      "rank": 2,
+      "id": "1c998223ce71ee22dffb6cf371cabc3f4db3801c",
+      "title": "[사설] 한국 경제 볼모 삼은 파업 도박 당장 멈춰야",
+      "publisher": "중앙일보",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBDbF9wdWNPN0N3OU0xSGxXWlFNN3I5RnVnSkUzY21UMjhzenpqSEJLMkpyVVlOTW5Uc2tiY1U1YVZtZE5OOWxKWmFNLVhIenFrM1BVVXRB?oc=5",
+      "published_at": "2026-05-14T15:24:00Z",
+      "collected_at": "2026-05-16T13:32:37+09:00",
+      "first_seen_at": "2026-05-16T13:32:46+09:00",
+      "last_seen_at": "2026-05-16T13:32:46+09:00",
+      "seen_count": 1,
+      "best_rank": 2,
+      "latest_rank": 2,
+      "score": 9,
+      "source": "google_news",
+      "query": "대한민국 OR 한국경제 OR 한국정책"
+    }
+  ]
+}

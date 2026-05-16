@@ -1,0 +1,62 @@
+{
+  "display_date": "2026-05-14",
+  "category_id": "business",
+  "category_label": "비즈니스",
+  "window_start": "2026-05-13T09:00:00+09:00",
+  "window_end": "2026-05-14T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:32:35+09:00",
+  "item_count": 3,
+  "items": [
+    {
+      "rank": 1,
+      "id": "5544bfa0ba44ceea48d04a8154c785f71beb0658",
+      "title": "\"불장에 취하지 마라\"…스타 블로거 '메르'의 투자 조언",
+      "publisher": "연합인포맥스",
+      "google_news_url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE9FeXJxV2NxTVRkNUdqZVhXN3M5Zk1OVzJ0eERiT1JKVTBhaENYNlY5WjhjRDBHUVBKd1hnOEN5YzRrekU2eUZJZHk2elRkN2hyeWtYR2o3RmdMcWZEOTM3dEZtN1VHTDNqUDVFdDJqVlY?oc=5",
+      "published_at": "2026-05-13T22:52:18Z",
+      "collected_at": "2026-05-16T13:32:15+09:00",
+      "first_seen_at": "2026-05-16T13:32:25+09:00",
+      "last_seen_at": "2026-05-16T13:32:25+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "기업 OR 실적 OR 증시 OR 투자"
+    },
+    {
+      "rank": 2,
+      "id": "dbeabcd6dc2744beffa645e9ad050d2156551f30",
+      "title": "투자도 배당도 다 해라…길 잃은 코리아 밸류업 [더롱뷰]",
+      "publisher": "중앙일보",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFB6RzNLMXJyaHA2d2swcVVOc2w0YUZBLU1SOHV4LVhCR0hUcFFCd2NpcklxU3FINkFNUlJpNm51cWZGZ3BwYWktQzdPbE1uTldZcW5fU25B?oc=5",
+      "published_at": "2026-05-13T20:00:03Z",
+      "collected_at": "2026-05-16T13:32:15+09:00",
+      "first_seen_at": "2026-05-16T13:32:25+09:00",
+      "last_seen_at": "2026-05-16T13:32:25+09:00",
+      "seen_count": 1,
+      "best_rank": 2,
+      "latest_rank": 2,
+      "score": 9,
+      "source": "google_news",
+      "query": "기업 OR 실적 OR 증시 OR 투자"
+    },
+    {
+      "rank": 3,
+      "id": "4f52944616bec291b2a404295b4e0034100ac0f6",
+      "title": "수출 1000만 달러 이상 '스타 기업 500개' 육성한다! - 전체 카드/한컷 멀티미디어",
+      "publisher": "대한민국 정책브리핑",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxON1dpY1NxZ01kQUJ0ZUhIenlVU3JGQnRtUlpzeVQyaThIM2lrbFA3Q0xaazAtOEJnRmJtUkVzS29ONVY2akZ2TUd1T1NHMTc1eUt1R1prVVp4VzNfRVBINFViTUxNbU4wYVdYcXJFNjhQTnNjRTQ3LVg5amRYUWRvX2ktSnk4RzFhVmxV?oc=5",
+      "published_at": "2026-05-13T02:33:17Z",
+      "collected_at": "2026-05-16T13:32:15+09:00",
+      "first_seen_at": "2026-05-16T13:32:25+09:00",
+      "last_seen_at": "2026-05-16T13:32:25+09:00",
+      "seen_count": 1,
+      "best_rank": 3,
+      "latest_rank": 3,
+      "score": 8,
+      "source": "google_news",
+      "query": "기업 OR 실적 OR 증시 OR 투자"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-08",
+  "category_id": "science_tech",
+  "category_label": "과학기술",
+  "window_start": "2026-05-07T09:00:00+09:00",
+  "window_end": "2026-05-08T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:30:24+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "89c58b547b4c49858cf1a7b4af5be5686c8ad647",
+      "title": "\"결국 삼전 하닉\"…KODEX AI 반도체 ETF 대수술 나선다",
+      "publisher": "한국경제",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBqSkFsZzBSbTJ5N0hiRUxfWlBwMnFIczJZU01TRHF4RjJxSWlCSS1uRTZJY1FnUUVpMVc1aXVEeEM4dXVyT250enRLQWNnMmRMVmxudmgwOFZ6QdIBVEFVX3lxTE5FRC1MdWowaC1OOGFTTW94TklRY1ZtNm9YSllrekdKd2xiVHZNNVQ0cUZ6eVpsZnJYYllPYnNSRUZTV3NWZFJpU2FLSGhqWmhTTVBKNQ?oc=5",
+      "published_at": "2026-05-07T07:00:00Z",
+      "collected_at": "2026-05-16T13:30:05+09:00",
+      "first_seen_at": "2026-05-16T13:30:14+09:00",
+      "last_seen_at": "2026-05-16T13:30:14+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR 기술 OR 데이터센터"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-14",
+  "category_id": "policy_finance",
+  "category_label": "정책금융",
+  "window_start": "2026-05-13T09:00:00+09:00",
+  "window_end": "2026-05-14T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:32:35+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "1c970c61d44b944c5067afcd5601802c8cf02040",
+      "title": "고신용자 4.9%, 저신용자 3.7%…‘거꾸로 금리’에 뒤통수 맞았다",
+      "publisher": "중앙일보",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1zRVRmNFpSMGxDUDcyamNDVEJvOTJuYS0zSWZIbjVXVHZiQ21LdldnRG4tWHlrN3YxMDNWUmN0M05XQ1R2bUplVTBiTWlvLTdJMEF1QWJR?oc=5",
+      "published_at": "2026-05-13T20:00:00Z",
+      "collected_at": "2026-05-16T13:32:15+09:00",
+      "first_seen_at": "2026-05-16T13:32:25+09:00",
+      "last_seen_at": "2026-05-16T13:32:25+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "금리 OR 환율 OR 한국은행 OR 금융위원회 OR 증시"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-08",
+  "category_id": "business",
+  "category_label": "비즈니스",
+  "window_start": "2026-05-07T09:00:00+09:00",
+  "window_end": "2026-05-08T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:30:24+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "dd2ced60f8a67d03717d8e40d943768eb1a31e4c",
+      "title": "\"앞으로 50% 더 오른다고?\"…투자고수, 1등주 집중 매수",
+      "publisher": "한국경제",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1xSkp4ZTcwTDc5SmE2OVQtcnl2RGJCMUpta2EzR3B1RkprTjVzWGJzcTNnTmthcUVDU1gyOTg5MnNkUHpmSW43RS1USU5tOWtxcmR5QkNPZXhnd9IBVEFVX3lxTE5iVG1La1Z5Y1ZENVJnbUZxMXBwa0Z2Xzd1UG9VU0FkbDFfTEdUV2N5cXJybjhHUkNlWWV1U2dDTk9TdEVuQTBaNk00dzNYd3UyODAtbg?oc=5",
+      "published_at": "2026-05-07T07:00:00Z",
+      "collected_at": "2026-05-16T13:30:04+09:00",
+      "first_seen_at": "2026-05-16T13:30:14+09:00",
+      "last_seen_at": "2026-05-16T13:30:14+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "기업 OR 실적 OR 증시 OR 투자"
+    }
+  ]
+}

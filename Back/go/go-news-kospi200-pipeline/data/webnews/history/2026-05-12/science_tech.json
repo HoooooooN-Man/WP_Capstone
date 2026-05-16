@@ -1,0 +1,45 @@
+{
+  "display_date": "2026-05-12",
+  "category_id": "science_tech",
+  "category_label": "과학기술",
+  "window_start": "2026-05-11T09:00:00+09:00",
+  "window_end": "2026-05-12T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:31:52+09:00",
+  "item_count": 2,
+  "items": [
+    {
+      "rank": 1,
+      "id": "90b2ff7086aaa32ca005ee66438e6e339141c91c",
+      "title": "디스플레이 업계, 돈 되는 반도체 신사업 추진",
+      "publisher": "디일렉",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE50ZmZreXNHNnhtR3JwQ0R1Q0g5OXdlRHY5UVJYa0NPT1J0Vmd0RmMyOWlrSHBzYTU5ZVNBWmx1MGs2RVJmTmt3WVhpQVZsOEVBQXhZMkxjNVZseUZrVk9XSktXWl9yQQ?oc=5",
+      "published_at": "2026-05-11T08:34:15Z",
+      "collected_at": "2026-05-16T13:31:31+09:00",
+      "first_seen_at": "2026-05-16T13:31:41+09:00",
+      "last_seen_at": "2026-05-16T13:31:41+09:00",
+      "seen_count": 2,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR HBM OR 배터리 OR 자동차 OR 데이터센터"
+    },
+    {
+      "rank": 2,
+      "id": "4e7af9c11d856623606b1af052453db625002eaf",
+      "title": "미국 빅테크들, 이제 바다 위에 데이터 센터 짓는대요",
+      "publisher": "조선일보",
+      "google_news_url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxNS1JheWEyUnhNMnhqdW1GNkZLcmFyc2huWVBVaE12Y1dyYU1FVmtSR1c4azFNdi1CYzgzOG96VEFwRnVIRmF3V0ZMa1YzMjc4VUZQZFg4b0tjMHhEczk2bG5YaXpSaWdRaEEtVWdXN3FjTTZNaVA2SkFyVkJ4X3d5Wkxua05FR0lnMy1JdzRKSFFHS19H?oc=5",
+      "published_at": "2026-05-11T10:56:00Z",
+      "collected_at": "2026-05-16T13:31:31+09:00",
+      "first_seen_at": "2026-05-16T13:31:41+09:00",
+      "last_seen_at": "2026-05-16T13:31:41+09:00",
+      "seen_count": 1,
+      "best_rank": 2,
+      "latest_rank": 2,
+      "score": 9,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR 기술 OR 데이터센터"
+    }
+  ]
+}

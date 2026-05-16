@@ -1,0 +1,45 @@
+{
+  "display_date": "2026-05-13",
+  "category_id": "science_tech",
+  "category_label": "과학기술",
+  "window_start": "2026-05-12T09:00:00+09:00",
+  "window_end": "2026-05-13T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:32:14+09:00",
+  "item_count": 2,
+  "items": [
+    {
+      "rank": 1,
+      "id": "3597d94f0edc1e56df375638eac0493cdb472843",
+      "title": "반도체 이익 ‘국민 배당’ 띄운 김용범",
+      "publisher": "조선일보",
+      "google_news_url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxONDdBUGJoWlkyaVhUdkZFNGdlS2xob05RSkdsbnJrdGR3WGZZQWJNejhvNmRPS0xrY0I5LXhPZGg2amxkSDRyVllwQjN1ZkpISThEU3BLNkhyLVJzU0RNa1NpWlNlYy0zckR2T2ozcW5Kbl9kSzFOYWNjWXp3OXhuVHp6WQ?oc=5",
+      "published_at": "2026-05-12T15:59:26Z",
+      "collected_at": "2026-05-16T13:31:54+09:00",
+      "first_seen_at": "2026-05-16T13:32:04+09:00",
+      "last_seen_at": "2026-05-16T13:32:04+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR 기술 OR 데이터센터"
+    },
+    {
+      "rank": 2,
+      "id": "f1637cb5dba2b6d161f50bd91f58638923f5fcb7",
+      "title": "블룸버그 \"코스피 5% 급락은 김용범 AI 국민배당금 제안 탓\"",
+      "publisher": "조선일보",
+      "google_news_url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNc1FZRTZnWmdEV20yWXVJbURKMUd1cFZqMzhrdk1tVWpTVkJlQVBMa0NNSE5PSFBnUVk4Z2d6a0cyUGpCX2hBV09nbW5JVFVQUXB2bGYyZEZNemhISzU5aXRmWmozSGp6Rjc5TlJGWnNWalM2S1gtZC13N2VPUmR3aA?oc=5",
+      "published_at": "2026-05-12T06:44:07Z",
+      "collected_at": "2026-05-16T13:31:54+09:00",
+      "first_seen_at": "2026-05-16T13:32:04+09:00",
+      "last_seen_at": "2026-05-16T13:32:04+09:00",
+      "seen_count": 1,
+      "best_rank": 2,
+      "latest_rank": 2,
+      "score": 9,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR 기술 OR 데이터센터"
+    }
+  ]
+}

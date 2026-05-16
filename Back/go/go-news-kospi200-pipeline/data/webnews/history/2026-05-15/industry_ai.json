@@ -1,0 +1,45 @@
+{
+  "display_date": "2026-05-15",
+  "category_id": "industry_ai",
+  "category_label": "산업AI",
+  "window_start": "2026-05-14T09:00:00+09:00",
+  "window_end": "2026-05-15T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:32:56+09:00",
+  "item_count": 2,
+  "items": [
+    {
+      "rank": 1,
+      "id": "211e9a88e5062e03cd17a7de6c97c666c2a56084",
+      "title": "이란발 반도체 소재 파동 또 터졌다... 이번엔 불산",
+      "publisher": "디일렉",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTFBuUGdjQnpnUk5DdGRMWlYwei1GWkNEZU9NNDY4ZGo5VE5FbWVWX001R19DN1hPMmN6LWVwRDZFVW1UUmZ3VDU4OXBjSDMwd01DUjM5d3AybEhaeUFXSGNsdnI2ejBZUQ?oc=5",
+      "published_at": "2026-05-14T04:00:46Z",
+      "collected_at": "2026-05-16T13:32:40+09:00",
+      "first_seen_at": "2026-05-16T13:32:46+09:00",
+      "last_seen_at": "2026-05-16T13:32:46+09:00",
+      "seen_count": 2,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR HBM OR 배터리 OR 자동차 OR 데이터센터"
+    },
+    {
+      "rank": 2,
+      "id": "23ca8832dd2e328a3fda3a390096e888592b0b59",
+      "title": "\"반도체는 기본\" 부자들이 찾는 다음 투자처는…",
+      "publisher": "아시아경제",
+      "google_news_url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE94VGJPODdKYUREUUdaNnVBZThxSGQwdGM4V1hWY1ZheDV3RFdubE1nOHlkeDlhd1RpVEJJbGJyN01fZWNfTUl3TVlidXJEb003MVUwNGszTGlSejA1WXd3TkJHWXdfcl9ZRHYyLTFnMFg?oc=5",
+      "published_at": "2026-05-14T05:35:12Z",
+      "collected_at": "2026-05-16T13:32:40+09:00",
+      "first_seen_at": "2026-05-16T13:32:46+09:00",
+      "last_seen_at": "2026-05-16T13:32:46+09:00",
+      "seen_count": 2,
+      "best_rank": 2,
+      "latest_rank": 2,
+      "score": 9,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR HBM OR 배터리 OR 자동차 OR 데이터센터"
+    }
+  ]
+}

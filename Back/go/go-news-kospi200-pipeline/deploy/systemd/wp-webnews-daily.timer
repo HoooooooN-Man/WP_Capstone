@@ -1,0 +1,17 @@
+[Unit]
+Description=Run WP Capstone Webnews Daily Batch at 08:50 KST
+
+[Timer]
+# 서버 timezone을 Asia/Seoul로 맞춘다는 전제
+OnCalendar=*-*-* 08:50:00
+
+# 서버가 꺼져 있다가 다시 켜졌을 때, 놓친 실행을 1회 보정
+Persistent=true
+
+# 동시에 몰리지 않게 약간의 여유. 정확히 08:50 고정 실행 원하면 0으로 유지.
+RandomizedDelaySec=0
+
+Unit=wp-webnews-daily.service
+
+[Install]
+WantedBy=timers.target

@@ -49,3 +49,7 @@ Learning/.ipynb_checkpoints/
 *.duckdb.wal
 *.venv
 __pycache__/**
+
+# local historical webnews datasets
+data/webnews/history/
+exports/webnews-history/

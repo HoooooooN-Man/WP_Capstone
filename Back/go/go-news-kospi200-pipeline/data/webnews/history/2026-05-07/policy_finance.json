@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-07",
+  "category_id": "policy_finance",
+  "category_label": "정책금융",
+  "window_start": "2026-05-06T09:00:00+09:00",
+  "window_end": "2026-05-07T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:30:02+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "346202ea6cd9661907bbee0c4d2d0a047513b928",
+      "title": "금리 인상기 진입 예고한 한은…1분기 깜짝 성장에 기류 급변",
+      "publisher": "연합뉴스",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFA1UXEzSjVDX0tVZXduQ2JmcUo4bXpIcXY4eDVHTWZpRDgwVExYT3NjZUdiajczRy1GRWJIclRqcExhLTIxdzcwcXlBMWpmN0dmdk9VdXprbEVQUDTSAWBBVV95cUxPZlEzeEF6VDQwS0JTVmFRMVNZeXA5YXV2V3dEcWduVktUWHZnT1ozeGRMZEw4ek96ZWt1SlJNUGFUcXE4dnktY0cyb0VTVzREN1V0aFhEUzBkYXJtY1VIcUI?oc=5",
+      "published_at": "2026-05-06T07:00:00Z",
+      "collected_at": "2026-05-16T13:29:43+09:00",
+      "first_seen_at": "2026-05-16T13:29:52+09:00",
+      "last_seen_at": "2026-05-16T13:29:52+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "금리 OR 환율 OR 한국은행 OR 금융위원회 OR 증시"
+    }
+  ]
+}

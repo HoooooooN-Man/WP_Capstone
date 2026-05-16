@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-12",
+  "category_id": "korea",
+  "category_label": "대한민국",
+  "window_start": "2026-05-11T09:00:00+09:00",
+  "window_end": "2026-05-12T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:31:52+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "11d9ce1497a49eacdf9aec93f6a4c91a079f08a6",
+      "title": "고유가 피해지원금 2차 지급계획",
+      "publisher": "대한민국 정책브리핑",
+      "google_news_url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE9iaG5LMGNYcnMzNGNOTDdna1drek1EWVFCenJnM2x6TzcwXzdhVE9oUHRmeVZpcDhzbC1vXzg4WW96cDhNMzNPdERvQ1lGdWVES29IanQyVEpNaml1X3NRY2NRMTVqbVJ5ZlQ3ZGo4N1hucUhVcUpz?oc=5",
+      "published_at": "2026-05-11T03:11:39Z",
+      "collected_at": "2026-05-16T13:31:31+09:00",
+      "first_seen_at": "2026-05-16T13:31:41+09:00",
+      "last_seen_at": "2026-05-16T13:31:41+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "대한민국 OR 한국경제 OR 한국정책"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-13",
+  "category_id": "business",
+  "category_label": "비즈니스",
+  "window_start": "2026-05-12T09:00:00+09:00",
+  "window_end": "2026-05-13T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:32:14+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "1fd5dfe4de073642020c211067704ed3523413d0",
+      "title": "[판결] “옵티머스 판매한 NH투자증권, JYP에 15억 배상”",
+      "publisher": "법률신문",
+      "google_news_url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE4tdEdRR1ZNcDJwYUZPRWh1ZnJ4azlDSlNWckpqWnp0M292OWF4S01pbGhkMEZGWlI4SnBic2tEWDZZNTkxOEhPdmVjallEVmh3VzVaWHkxUVV1ZjhySWRPaXA4Ty1mVzBRQVFsczFn0gFyQVVfeXFMUDVBdG5Zd0pCYVNFbTRYMnpYamU2bXpyenRfNmtab0cwQnR0NG95U0xwQ0RuTUZPM09zaEowQWxGbk40dF95aFBZOTBSZXNWY0lJWGZIQjBvUS1GbURFZnJVSHR4LWNPXzlxNURndVpVRDJB?oc=5",
+      "published_at": "2026-05-12T21:05:00Z",
+      "collected_at": "2026-05-16T13:31:54+09:00",
+      "first_seen_at": "2026-05-16T13:32:04+09:00",
+      "last_seen_at": "2026-05-16T13:32:04+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "기업 OR 실적 OR 증시 OR 투자"
+    }
+  ]
+}
