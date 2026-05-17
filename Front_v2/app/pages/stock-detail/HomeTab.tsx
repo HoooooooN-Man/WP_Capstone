@@ -11,7 +11,8 @@ export interface HomeTabSelectedStock {
 }
 
 export interface HomeTabNewsPreview {
-  id: number;
+  // 백엔드 news_id 는 해시 문자열 — 숫자 가정 불가.
+  id: string | number;
   title: string;
   source: string;
   time: string;
@@ -50,9 +51,23 @@ export default function HomeTab({
     <div className="space-y-6">
       {/* 스마트스코어 추이 */}
       <Card>
-        <SectionHeader title="스마트스코어 추이" right={<span className="wp-t-sm text-[var(--text-tertiary)]">최근 30 거래일</span>} />
+        <SectionHeader
+          title="스마트스코어 추이"
+          right={
+            <span className="wp-t-sm text-[var(--text-tertiary)]">
+              {performanceHistory.length > 0
+                ? `${performanceHistory[0]?.date?.slice(5) ?? ''} ~ ${performanceHistory.at(-1)?.date?.slice(5) ?? ''} · ${performanceHistory.length} 거래일`
+                : '데이터 없음'}
+            </span>
+          }
+        />
         <div className="mt-4">
           <LineChart data={performanceHistory} height={260} />
+          {performanceHistory.length > 0 && performanceHistory.length < 20 && (
+            <div className="wp-t-sm text-[var(--text-tertiary)] mt-2 text-center">
+              ⓘ 일부 구간 데이터 부재 — 신규상장 또는 데이터 적재 중일 수 있습니다.
+            </div>
+          )}
         </div>
       </Card>
 
@@ -77,10 +92,15 @@ export default function HomeTab({
               </button>
             }
           />
+          {/* FE 평가 #7 — 단위·기준 명시 */}
+          <div className="wp-t-xs text-[var(--text-tertiary)] mt-1">
+            0~100 백분위 (전체 universe 재무 데이터 대비 순위)
+          </div>
           {radarGroupEntries.length > 0 ? (
             <div className="space-y-2.5 mt-4">
               {radarGroupEntries.map((g) => (
-                <div key={g.key} className="flex items-center gap-3">
+                <div key={g.key} className="flex items-center gap-3"
+                     title={`${g.label}: 전체 universe 백분위 ${g.score}점 (높을수록 우수)`}>
                   <span className="wp-t-sm text-[var(--text-secondary)]" style={{ width: 64 }}>{g.label}</span>
                   <div className="flex-1 rounded-full overflow-hidden h-2 bg-[var(--bg-elev-2)]">
                     <div className="h-full bg-[var(--accent-blue)]" style={{ width: `${Math.max(0, Math.min(100, g.score))}%` }} />

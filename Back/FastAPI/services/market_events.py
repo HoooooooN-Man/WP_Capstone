@@ -50,35 +50,116 @@ MARKET_LEVELS = [
 ]
 
 
-def compute_market_score(tier_a_ratio_pct: float, daily_change: float | None) -> float:
-    """Tier A 비율 + KOSPI 일일 변화율 → 0~100 마켓스코어.
+def compute_market_score(
+    tier_a_ratio_pct: float | None = None,
+    daily_change:     float | None = None,
+    *,
+    weekly_change:    float | None = None,
+    avg_prob:         float | None = None,
+) -> float:
+    """0~100 마켓스코어.
 
-    공식:
-      - 기본점수 = clamp(tier_a_ratio_pct × 5, 0, 80)    (10% 이상이면 50점부터 시작)
-      - 변화율 보정 = clamp(daily_change × 1000, -20, +20)
-      - 최종 = clamp(기본점수 + 보정, 0, 100)
+    B21 fix: 이전 base = `tier_a_ratio × 5` 는 ML 점수가 백분위라 ratio ≈ 20% 고정이라
+    구조적으로 base = 80 saturated → score < 60 절대 불가. 패닉 단계 출현 불능.
 
-    예시:
-      - Tier A 12% + 변화율 +1.5% → 60 + 15 = 75 (낙관)
-      - Tier A  3% + 변화율 -3.5% → 15 + (-20) = 0  (패닉)
-      - Tier A  7% + 변화율  0%   → 35 + 0    = 35 (비관)
+    새 공식 (중립 50 기준 가산):
+      score = 50
+            + clamp(daily_change  × 800, -25, +25)   # 단기 모멘텀 (1일 ±3% 가 ±24)
+            + clamp(weekly_change × 300, -15, +15)   # 추세 (5일 ±5% 가 ±15)
+            + clamp((avg_prob - 0.5) × 100, -10, +10)  # 모델 낙관도
+      → clamp 0~100
+
+    `avg_prob` 은 당일 prob_ensemble 의 평균 (모델의 시장 전반 낙관도).
+    `weekly_change` 미제공 시 daily 가중치만 사용. 모두 None 이면 50 반환 (중립).
+
+    Legacy: 첫 positional 인자 (tier_a_ratio_pct) 는 backward-compat 용이며 무시.
     """
-    try:
-        ratio = max(0.0, float(tier_a_ratio_pct))
-    except (TypeError, ValueError):
-        ratio = 0.0
-    base = min(80.0, ratio * 5.0)
+    score = 50.0
 
-    bonus = 0.0
     if daily_change is not None:
         try:
             dc = float(daily_change)
             if dc == dc:   # not NaN
-                bonus = max(-20.0, min(20.0, dc * 1000.0))
+                score += max(-25.0, min(25.0, dc * 800.0))
         except (TypeError, ValueError):
             pass
 
-    return round(max(0.0, min(100.0, base + bonus)), 1)
+    if weekly_change is not None:
+        try:
+            wc = float(weekly_change)
+            if wc == wc:
+                score += max(-15.0, min(15.0, wc * 300.0))
+        except (TypeError, ValueError):
+            pass
+
+    if avg_prob is not None:
+        try:
+            ap = float(avg_prob)
+            if ap == ap:
+                score += max(-10.0, min(10.0, (ap - 0.5) * 100.0))
+        except (TypeError, ValueError):
+            pass
+
+    return round(max(0.0, min(100.0, score)), 1)
+
+
+def load_kospi_weekly_change(
+    *,
+    raw_index_parquet: Optional[str | Path] = None,
+    duckdb_path:       Optional[str | Path] = None,
+    as_of_date:        Optional[str]        = None,
+) -> Optional[float]:
+    """as_of_date 의 KOSPI 종가 / 5 거래일 전 종가 − 1.
+
+    daily_change 와 동일한 어댑터 우선순위. 데이터 5일치 미만이면 None.
+    """
+    if raw_index_parquet is None:
+        raw_index_parquet = os.getenv(
+            "RAW_INDEX_PARQUET",
+            r"E:\Capstone Data\data_pipeline\raw_index_fx.parquet",
+        )
+    parquet_path = Path(raw_index_parquet)
+    if parquet_path.exists():
+        try:
+            import pandas as pd
+            df = pd.read_parquet(parquet_path)
+            df["date"] = pd.to_datetime(df["date"])
+            df = df.dropna(subset=["kospi_close"]).sort_values("date").reset_index(drop=True)
+            if as_of_date:
+                df = df[df["date"] <= as_of_date]
+            if len(df) >= 6:
+                last  = float(df["kospi_close"].iloc[-1])
+                prev5 = float(df["kospi_close"].iloc[-6])
+                if prev5 > 0:
+                    return last / prev5 - 1.0
+        except Exception:
+            pass
+
+    if duckdb_path is None:
+        duckdb_path = os.getenv("DUCKDB_PATH")
+    if duckdb_path:
+        try:
+            import duckdb
+            con = duckdb.connect(str(duckdb_path), read_only=True)
+            try:
+                where = ["ticker = '005930'"]
+                if as_of_date:
+                    cutoff_int = int(str(as_of_date).replace("-", ""))
+                    where.append(f"date <= {cutoff_int}")
+                rows = con.execute(f"""
+                    SELECT close FROM prices WHERE {' AND '.join(where)}
+                    ORDER BY date DESC LIMIT 6
+                """).fetchall()
+            finally:
+                con.close()
+            if len(rows) >= 6:
+                last, prev5 = float(rows[0][0]), float(rows[5][0])
+                if prev5 > 0:
+                    return last / prev5 - 1.0
+        except Exception:
+            pass
+
+    return None
 
 
 def classify_market_level(score: float) -> dict:

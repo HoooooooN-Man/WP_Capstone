@@ -3,15 +3,18 @@ services/dividend_svc.py
 ========================
 P2-14 (PRD §8.1) — 배당스코어 + 배당 이력 + 투자포인트.
 
+B31 fix: 한국 시장 분포 반영 임계 재조정 (yield/eps cutoff). 한국 평균 배당수익률
+~2.5%, 우량 배당주 3-4%. 이전 4% 만점은 비현실적 → 3.5% 만점으로 조정.
+
 5 항목 점수화 (각 0-100, 평균 = 종합 배당스코어):
 
   1. 배당수익률 (yield_score)
        dividend_yield (%) → 0-100
-       4% 이상 → 100, 0% → 0, 선형 보간
+       3.5% 이상 → 100, 0% → 0, 선형 보간 (B31)
 
   2. 연속배당 (consecutive_score)
        최근 N년 dps > 0 인 연수
-       10년+ → 100, 0 → 0
+       10년+ → 100, 0 → 0 (Korean Dividend Aristocrats 기준)
 
   3. 배당금 인상 (growth_score)
        최근 2년간 dps 증가 비율
@@ -21,9 +24,9 @@ P2-14 (PRD §8.1) — 배당스코어 + 배당 이력 + 투자포인트.
        payout = dps / eps × 100
        30~70% → 100 (sweet spot), 그 외 감점
 
-  5. EPS 성장률 (eps_growth_score)
-       finance.rev_growth_yoy 활용 (proxy)
-       +15%+ → 100
+  5. 매출성장률 (rev_growth_score) — 이전 이름 'eps_growth_score' 였으나
+       실제로는 rev_growth_yoy 사용 (B35). 이름·docstring 정합화.
+       +12%+ → 100 (한국 코스피 평균 ~5%, 우량 성장주 10-15%)
 
 투자포인트는 종합 스코어에 따라 텍스트 자동 생성.
 """
@@ -49,8 +52,9 @@ def _yield_score(yield_pct: float | None) -> float:
         y = float(yield_pct)
     except (TypeError, ValueError):
         return 0.0
-    # 0% → 0, 4%+ → 100 선형
-    return round(_clamp(y / 4.0 * 100.0), 1)
+    # B31: 한국 평균 ~2.5%, 우량 배당주 3-4% → 3.5% 만점 (이전 4% 는 너무 가혹).
+    # 0% → 0, 3.5%+ → 100 선형.
+    return round(_clamp(y / 3.5 * 100.0), 1)
 
 
 def _consecutive_score(years_paid: int) -> float:
@@ -88,15 +92,23 @@ def _payout_score(payout_pct: float | None) -> float:
     return 50.0
 
 
-def _eps_growth_score(growth_yoy: float | None) -> float:
+def _rev_growth_score(growth_yoy: float | None) -> float:
+    """매출성장률 점수. B35: 함수명 변경 (이전 _eps_growth_score 였으나 입력은 rev_growth_yoy).
+
+    한국 시장 평균 매출성장률 ~5%, 우량 성장주 10-15% → 12% 만점.
+    """
     if growth_yoy is None:
         return 50.0
     try:
         g = float(growth_yoy)
     except (TypeError, ValueError):
         return 50.0
-    # +15%+ → 100, -15% → 0
-    return round(_clamp((g + 0.15) / 0.30 * 100.0), 1)
+    # +12% → 100, -12% → 0 선형, 0% → 50
+    return round(_clamp((g + 0.12) / 0.24 * 100.0), 1)
+
+
+# 하위호환 alias — 외부에서 _eps_growth_score 를 직접 import 하는 코드가 있을 가능성.
+_eps_growth_score = _rev_growth_score
 
 
 def _investment_point(total: float, consecutive: int, yield_pct: float) -> list[str]:
@@ -155,12 +167,20 @@ def get_dividend_score(ticker: str) -> Optional[dict]:
             [t],
         ).fetchall()
         years_paid = 0
-        # 연속 카운트 (가장 최근부터 끊기는 시점까지)
+        # 연속 카운트 — 가장 최근부터 끊기는 시점까지.
+        # 단, 올해 분기 데이터가 아직 미공시이거나 0 인 경우(흔함) 첫 1행은 그냥 건너뛰고
+        # 실제 데이터가 시작되는 시점부터 카운트한다. 이렇게 하지 않으면 모든 정상 배당주가
+        # years_paid=0 으로 잡혀 consecutive_score 가 항상 0 이 된다.
+        started = False
         for y, ydps in years:
-            if ydps is not None and float(ydps) > 0:
+            paid = ydps is not None and float(ydps) > 0
+            if paid:
+                started = True
                 years_paid += 1
-            else:
+            elif started:
+                # 실제 단절 — 카운트 종료
                 break
+            # else: 아직 안 시작 (선행 NULL/0) → 다음 행 계속
 
         # 배당금 인상 — 최근 2년 dps 비교
         dps_growth = None
@@ -180,15 +200,39 @@ def get_dividend_score(ticker: str) -> Optional[dict]:
         else:
             rev_g_ratio = float(rev_g) if rev_g is not None else None
 
-        # 5항목 점수
+        # 5항목 점수 — B35: eps_growth_score 키는 하위호환 유지, rev_growth_score alias 추가.
+        rev_score = _rev_growth_score(rev_g_ratio)
         scores = {
             "yield_score":         _yield_score(yield_pct),
             "consecutive_score":   _consecutive_score(years_paid),
             "growth_score":        _growth_score(dps_growth),
             "payout_score":        _payout_score(payout_pct),
-            "eps_growth_score":    _eps_growth_score(rev_g_ratio),
+            "rev_growth_score":    rev_score,
+            "eps_growth_score":    rev_score,  # deprecated alias (B35)
         }
-        total = round(sum(scores.values()) / 5.0, 1)
+        # B47 — 가중평균 (배당투자 본질: yield 가 가장 중요).
+        # 이전 산술평균은 카카오(yield 0.11%)가 80점 → 우량 배당주로 오분류.
+        # 가중치: yield 40% / consecutive 20% / growth 15% / payout 15% / rev_growth 10%.
+        # 추가 컷: yield < 0.5% 면 사실상 무배당 → 총점 캡 (40 max). 무배당주 우량 라벨 차단.
+        WEIGHTS = {
+            "yield_score":      0.40,
+            "consecutive_score": 0.20,
+            "growth_score":     0.15,
+            "payout_score":     0.15,
+            "rev_growth_score": 0.10,
+        }
+        weighted = sum(scores[k] * w for k, w in WEIGHTS.items())
+        # B57 — 한국 시장 배당수익률 평균 ~2.5% 기준 다단계 컷.
+        # yield < 1%   : 사실상 무배당 → 25점 캡 (이전 35)
+        # yield < 2%   : 평균 절반 미달 → 35점 캡 (신규)
+        # yield < 2.5% : 평균 미달 → 50점 캡 (신규 - 1.5% 같이 미달 배당도 무차별 정상 점수 차단)
+        if yield_pct < 1.0:
+            weighted = min(weighted, 25.0)
+        elif yield_pct < 2.0:
+            weighted = min(weighted, 35.0)
+        elif yield_pct < 2.5:
+            weighted = min(weighted, 50.0)
+        total = round(weighted, 1)
 
         return {
             "ticker":            t,

@@ -96,14 +96,46 @@ def _top_factor_phrases(top_factors: list[dict] | None, max_n: int = 2) -> list[
     return phrases
 
 
+def _finance_phrases(per: float | None, pbr: float | None, roe: float | None,
+                     rev_growth: float | None, dividend_yield: float | None) -> list[str]:
+    """B4: SHAP 부재 시 finance 지표에서 두드러진 신호 1~2개 추출."""
+    phrases: list[str] = []
+    # ROE 우수 → 수익성 강세
+    if roe is not None and roe >= 15:
+        phrases.append(f"ROE {roe:.1f}% 강세")
+    # 매출 성장 → 성장성
+    if rev_growth is not None and rev_growth >= 15:
+        phrases.append(f"매출 성장 +{rev_growth:.0f}%")
+    elif rev_growth is not None and rev_growth <= -10:
+        phrases.append("매출 역성장")
+    # PER 저평가 → 가치
+    if per is not None and 0 < per < 10:
+        phrases.append(f"PER {per:.1f}배 저평가")
+    # PBR 저평가
+    if pbr is not None and 0 < pbr < 1.0:
+        phrases.append(f"PBR {pbr:.2f}배 자산주")
+    # 배당 매력
+    if dividend_yield is not None and dividend_yield >= 4.0:
+        phrases.append(f"배당 {dividend_yield:.1f}%")
+    return phrases[:2]
+
+
 def generate_headline(
     name: str | None,
     sector: str | None,
     score: float | None,
     tier: str | None,
     top_factors: list[dict] | None,
+    per: float | None = None,
+    pbr: float | None = None,
+    roe: float | None = None,
+    rev_growth_yoy: float | None = None,
+    dividend_yield: float | None = None,
 ) -> str:
-    """카드 헤드라인 1줄 생성. SHAP 부재 시 점수 + 티어 + 섹터로 fallback."""
+    """카드 헤드라인 1줄 생성.
+
+    우선순위: SHAP top_factors → finance 지표 (B4 신규) → score+tier+sector fallback.
+    """
     strength = _strength_word(score, tier)
     phrases = _top_factor_phrases(top_factors, max_n=2)
     sector_part = f"{sector} 섹터" if sector else "주력 종목"
@@ -111,6 +143,12 @@ def generate_headline(
     if phrases:
         body = " + ".join(phrases)
         return f"{body} → {sector_part}의 {strength} 신호"
+
+    # B4: SHAP 가 비어 있어도 finance 지표 기반으로 차별화된 헤드라인.
+    fin_phrases = _finance_phrases(per, pbr, roe, rev_growth_yoy, dividend_yield)
+    if fin_phrases:
+        body = " + ".join(fin_phrases)
+        return f"{body} → {sector_part}의 {strength} 종목"
 
     # Fallback — SHAP 없을 때 (다양성 위해 ticker+score 해시로 변형)
     try:
@@ -165,5 +203,10 @@ def attach_headlines(items: list[dict]) -> list[dict]:
             score=r.get("score"),
             tier=r.get("tier"),
             top_factors=r.get("top_factors"),
+            per=r.get("per"),
+            pbr=r.get("pbr"),
+            roe=r.get("roe"),
+            rev_growth_yoy=r.get("rev_growth_yoy"),
+            dividend_yield=r.get("dividend_yield"),
         )
     return items

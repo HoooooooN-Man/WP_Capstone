@@ -11,6 +11,7 @@ ReDoc:       http://localhost:8001/redoc
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 
@@ -34,13 +35,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .core.config import APP_TITLE, APP_VERSION, API_PREFIX, DUCKDB_PATH
 from .core.errors import register_exception_handlers
 from .core.middleware import RequestIDMiddleware
 # 8001 = ML 분석 서버. 게시판/뉴스/사용자/인증은 8000 (Back/db/server.py) 가 담당.
 # (board/news/users_stub 코드 파일은 보관하되 본 서버에서는 등록하지 않음.)
-from .routers import stocks, portfolio, chart, finance, screener, compare, market, realtime, transparency, playground, winners
+from .routers import stocks, portfolio, chart, finance, screener, compare, market, realtime, transparency, playground, winners, admin
 from .schemas.health import (
     RootResponse,
     HealthResponse,
@@ -66,7 +68,16 @@ _DEFAULT_DEV_ORIGINS = [
     "http://localhost:4173",
     "http://127.0.0.1:4173",
 ]
-ALLOWED_ORIGINS = _parse_origins(os.getenv("CORS_ALLOW_ORIGINS")) or _DEFAULT_DEV_ORIGINS
+_CORS_ENV = os.getenv("CORS_ALLOW_ORIGINS")
+ALLOWED_ORIGINS = _parse_origins(_CORS_ENV) or _DEFAULT_DEV_ORIGINS
+if not _CORS_ENV:
+    # 운영 배포에서 .env 가 누락된 채 띄우면 dev origin (localhost:5173 등) 만 허용되어
+    # 실 프론트가 차단됨 — 호출 차단의 원인이 모호하므로 시작 시점에 명확히 경고.
+    logging.getLogger(__name__).warning(
+        "[CORS] CORS_ALLOW_ORIGINS 환경변수 미설정 — dev 폴백(%s) 사용. "
+        "운영 배포 시 반드시 도메인 화이트리스트로 .env 에 명시하세요.",
+        ",".join(_DEFAULT_DEV_ORIGINS),
+    )
 
 
 # ── 앱 수명 이벤트 ─────────────────────────────────────────────────────────────
@@ -102,13 +113,37 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Host 헤더 검증 — 운영 reverse proxy 뒤에서 Host 헤더 spoof 차단.
+# ALLOWED_HOSTS 환경변수가 없으면 dev 폴백 (* — 모든 호스트 허용).
+_ALLOWED_HOSTS_ENV = os.getenv("ALLOWED_HOSTS")
+_ALLOWED_HOSTS = (
+    [h.strip() for h in _ALLOWED_HOSTS_ENV.split(",") if h.strip()]
+    if _ALLOWED_HOSTS_ENV
+    else ["*"]
+)
+if _ALLOWED_HOSTS == ["*"]:
+    logging.getLogger(__name__).warning(
+        "[host] ALLOWED_HOSTS 미설정 — 모든 Host 허용(개발용). "
+        "운영에서는 ALLOWED_HOSTS=api.example.com 처럼 명시."
+    )
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=_ALLOWED_HOSTS)
+
 # CORS — 화이트리스트 기반. 운영 시 CORS_ALLOW_ORIGINS 환경변수로 도메인 명시.
+# H#26: allow_headers 를 "*" 에서 명시 리스트로 좁힘. credentials=True 와 "*" 조합은
+# CORS 사양상 거의 모든 요청 헤더 허용 — XSS 발생 시 임의 헤더 주입 면적이 큼.
+_ALLOWED_HEADERS = [
+    "Accept", "Accept-Language", "Content-Type", "Content-Language",
+    "Origin", "Authorization",
+    "session-token",        # 헤더 기반 인증 (legacy 호환)
+    "X-Request-ID",
+    "X-CSRF-Token",         # 쿠키 기반 인증 시 CSRF 토큰
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=_ALLOWED_HEADERS,
     expose_headers=["X-Request-ID"],
 )
 
@@ -130,6 +165,7 @@ app.include_router(screener.router,  prefix=API_PREFIX)
 app.include_router(compare.router,   prefix=API_PREFIX)
 app.include_router(transparency.router, prefix=API_PREFIX)  # Tier 1.5 — holdout 박제 read-only
 app.include_router(playground.router,   prefix=API_PREFIX)  # Tier 2.5 — 정책 grid playground
+app.include_router(admin.router,        prefix=API_PREFIX)  # M#35 — cron_runs 텔레메트리 조회
 
 # 실시간 시세 WebSocket (no /api/v1 prefix — wss:// 표준 경로)
 app.include_router(realtime.router)
@@ -200,6 +236,10 @@ def system_status():
             """
         ).fetchall()
     except Exception as e:
+        # 내부 SQL/예외 메시지는 클라이언트에 노출하지 않는다 (CRITICAL #4 와 동일 원칙).
+        # 운영자는 서버 로그에서 traceback 확인.
+        logging.getLogger(__name__).exception("[/system/status] scores query failed")
+        del e
         return SystemStatusResponse(
             status="error",
             app=APP_TITLE,
@@ -207,7 +247,7 @@ def system_status():
             duckdb_exists=True,
             duckdb_path=str(DUCKDB_PATH),
             redis_available=False,
-            error=f"scores 조회 실패: {e}",
+            error="scores 조회 실패 — 서버 로그를 확인하세요.",
         )
 
     models = [
@@ -266,5 +306,11 @@ def health_metrics(
     try:
         result = get_model_metrics(model_version=model_version, window_days=window_days)
         return MetricsResponse(status="ok", **result)
-    except Exception as e:
-        return MetricsResponse(status="error", error=str(e), metrics=[])
+    except Exception:
+        # 내부 예외 메시지 노출 차단 — 운영자는 logger.exception 으로 추적.
+        logging.getLogger(__name__).exception("[/health/metrics] failed")
+        return MetricsResponse(
+            status="error",
+            error="metrics 조회 실패 — 서버 로그를 확인하세요.",
+            metrics=[],
+        )

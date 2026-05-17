@@ -25,11 +25,16 @@ class StockScore(BaseModel):
     mid_sector:     Optional[str]  = None
     close:          Optional[float] = None
 
-    # 모델별 확률 (0~1)
+    # 모델별 raw 점수.
+    # B53: v9 는 LightGBM/XGB/CatBoost 확률 (0~1) ensemble 평균. v11 은 LightGBM
+    # lambdarank 단일 모델 raw rank score (음수 가능, 단위 무의미). 컬럼명 prob_* 는
+    # v9 잔재. v11 부터는 ml_rank_score 알리아스 권장 — 의미 명확.
     prob_lgbm:      float
     prob_xgb:       float
     prob_cat:       float
-    prob_ensemble:  float           # (lgbm + xgb + cat) / 3
+    prob_ensemble:  float           # v9: 확률 평균 / v11: raw lambdarank score
+    # B53 alias - FE 가 이 필드를 우선 사용. 명세 명확.
+    ml_rank_score:  Optional[float] = None
 
     # 추천 수치화
     score:          float           # 1~100 (높을수록 좋음)
@@ -76,6 +81,17 @@ class StockScore(BaseModel):
     change_pct:      Optional[float] = None
     # market cap 라벨 (선택 — 백엔드 미부착 시 None)
     market_cap_label: Optional[str]  = None
+
+    # B1: cohort 가중치(conservative/dividend/value/growth) 가 실효되려면 finance
+    # 지표가 응답에 있어야 한다. recommendations 가 latest_finance LEFT JOIN 부착.
+    per:             Optional[float] = None
+    pbr:             Optional[float] = None
+    dividend_yield:  Optional[float] = None  # 단위: % (예: 2.42)
+    roe:             Optional[float] = None
+    debt_ratio:      Optional[float] = None  # %
+    op_margin:       Optional[float] = None  # %
+    net_margin:      Optional[float] = None  # %
+    rev_growth_yoy:  Optional[float] = None  # %
 
 
 class StockScoreList(BaseModel):

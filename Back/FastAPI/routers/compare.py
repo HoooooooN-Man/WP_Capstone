@@ -43,6 +43,9 @@ class CompareResponse(BaseModel):
     tickers:  list[str]
     total:    int
     items:    list[CompareItem]
+    # 요청 ticker 중 scores/finance 모두 부재해 응답에서 제외된 목록.
+    # FE 가 "이 종목은 데이터가 없습니다" 안내를 띄울 수 있도록 노출.
+    missing:  list[str] = []
 
 
 @router.get("", response_model=CompareResponse, summary="종목 비교 (ML 점수 이력 + 재무)")
@@ -57,11 +60,24 @@ def compare_stocks(
     - `score_history`: 기간 내 날짜별 ML 점수 [{date, score}, ...]
     - `finance`: 가장 최근 분기 재무 지표 요약
     """
-    ticker_list = [t.strip().zfill(6) for t in tickers.split(",") if t.strip()]
+    raw_list = [t.strip() for t in tickers.split(",") if t.strip()]
+    # ticker 포맷 검증 — 한국 종목 코드는 숫자 6자리.
+    # 이전엔 strip().zfill(6) 만 적용 → "abc" 같은 garbage 도 "0000ab" 같은
+    # 잘못된 형태로 변환되어 200 응답에 빈 row 가 섞였다.
+    bad = [t for t in raw_list if not t.isdigit() or len(t) > 6]
+    if bad:
+        raise HTTPException(
+            status_code=422,
+            detail=f"올바르지 않은 ticker 형식: {bad} (숫자 6자리만 허용)",
+        )
+    ticker_list = [t.zfill(6) for t in raw_list]
     if len(ticker_list) < 2:
         raise HTTPException(status_code=422, detail="비교할 종목을 2개 이상 입력하세요.")
     if len(ticker_list) > 10:
         raise HTTPException(status_code=422, detail="종목은 최대 10개까지 비교할 수 있습니다.")
+    # 중복 ticker 제거 (순서 유지)
+    seen: set[str] = set()
+    ticker_list = [t for t in ticker_list if not (t in seen or seen.add(t))]
 
     PERIOD_DAYS = {"3m": 90, "6m": 180, "1y": 365, "3y": 1095, "all": 0}
     if period not in PERIOD_DAYS:
@@ -77,4 +93,11 @@ def compare_stocks(
         raise HTTPException(status_code=503, detail=str(e))
 
     items = [CompareItem(**r) for r in rows]
-    return CompareResponse(tickers=ticker_list, total=len(items), items=items)
+    returned = {it.ticker for it in items}
+    missing = [t for t in ticker_list if t not in returned]
+    return CompareResponse(
+        tickers=ticker_list,
+        total=len(items),
+        items=items,
+        missing=missing,
+    )

@@ -222,6 +222,11 @@ export default function RecommendPage() {
                   tier={stock.tier ?? 'C'}
                   cumulativeReturn={stock.cumulative_return_pct}
                   headline={stock.headline}
+                  per={stock.per}
+                  pbr={stock.pbr}
+                  roe={stock.roe}
+                  revGrowthYoy={stock.rev_growth_yoy}
+                  dividendYield={stock.dividend_yield}
                 />
               ))}
             </div>

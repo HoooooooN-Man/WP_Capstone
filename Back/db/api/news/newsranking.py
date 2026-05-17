@@ -15,11 +15,37 @@ dbapi.js (baseURL=http://localhost:8000) 가 본 라우터를 호출.
 
 from fastapi import APIRouter, HTTPException, Query
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
+from datetime import datetime, timezone
 import duckdb
 import os
 
 from .._security import escape_like
+
+
+def _to_iso_utc(v: Any) -> Optional[str]:
+    """timestamp 직렬화 헬퍼.
+
+    DuckDB 의 timestamp 컬럼은 timezone-naive 로 반환되지만 적재 파이프라인이
+    UTC 기준으로 저장한다. 응답에 그대로 str() 하면 FE 가 로컬타임으로 해석해
+    표시 시각이 9시간 어긋났다. ISO + "Z" 접미사로 UTC 명시.
+    """
+    if v is None:
+        return None
+    if isinstance(v, datetime):
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+        else:
+            v = v.astimezone(timezone.utc)
+        return v.isoformat().replace("+00:00", "Z")
+    s = str(v).strip()
+    if not s:
+        return None
+    # 이미 "Z" 또는 ±HH:MM 포함이면 그대로
+    if s.endswith("Z") or "+" in s[10:] or "-" in s[10:]:
+        return s
+    # naive 문자열 ("2026-04-29 13:00:00") → "Z" 부착
+    return s.replace(" ", "T") + "Z"
 
 router = APIRouter(prefix="/api/v1/news", tags=["news"])
 
@@ -159,9 +185,12 @@ def get_news_rankings(
         items = []
         for row in rows:
             item = dict(zip(columns, row))
-            # published_at을 문자열로 변환 (직렬화 안전)
-            if item.get("published_at") and not isinstance(item["published_at"], str):
-                item["published_at"] = str(item["published_at"])
+            # published_at 을 ISO 문자열로 직렬화.
+            # DuckDB 의 timestamp 는 naive — 외부 RSS/스크레이퍼가 UTC 로 적재하므로
+            # 직렬화 단계에서 "Z" 를 붙여 FE 가 KST 로 정확히 변환할 수 있게 한다.
+            # 이전 구현은 그냥 str() — FE 가 "naive 인지 UTC 인지" 판단 불가하여
+            # Date parse 시 로컬타임 가정으로 표시 시각이 9시간 어긋났다.
+            item["published_at"] = _to_iso_utc(item.get("published_at"))
             if item.get("display_date") and not isinstance(item["display_date"], str):
                 item["display_date"] = str(item["display_date"])
             items.append(item)
@@ -317,7 +346,8 @@ def get_news_feed(
                 "company_name":    source_name or "",
                 "title":           title,
                 "source":          provider,
-                "published_at":    published_at,
+                # naive timestamp → ISO + Z (UTC 명시) — FE Date 파싱 안정.
+                "published_at":    _to_iso_utc(published_at),
                 "sentiment":       sentiment_label,
                 "sentiment_label": sentiment_label,
                 "sentiment_score": float(sentiment_score) if sentiment_score is not None else 0.0,

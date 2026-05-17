@@ -145,20 +145,37 @@ def run_custom_backtest(
         if not prices_df.empty:
             prices_df["date"] = prices_df["date"].apply(_bigint_to_iso)
 
-        # KOSPI 벤치마크 (삼성전자 수익률 대용)
-        benchmark_ticker = "005930"
-        bench_df = con.execute(
-            """
-            SELECT date, close
-            FROM prices
-            WHERE ticker = ?
-              AND date BETWEEN ? AND ?
-            ORDER BY date
-            """,
-            [benchmark_ticker, start_int, end_int],
-        ).fetchdf()
-        if not bench_df.empty:
-            bench_df["date"] = bench_df["date"].apply(_bigint_to_iso)
+        # B36 fix: 벤치마크 = market_indices.kospi_close (실제 KOSPI 지수).
+        # 이전엔 005930 (삼성전자) 단일 종목 종가 → KOSPI 지수와 다른 동작.
+        # market_indices.date 는 TIMESTAMP 라 ISO 문자열 비교 가능.
+        try:
+            bench_df = con.execute(
+                """
+                SELECT strftime(date, '%Y-%m-%d') AS date,
+                       kospi_close AS close
+                FROM market_indices
+                WHERE date BETWEEN ? AND ?
+                  AND kospi_close IS NOT NULL
+                ORDER BY date
+                """,
+                [start_date, end_date],
+            ).fetchdf()
+            if bench_df.empty:
+                raise RuntimeError("market_indices empty fallback")
+        except Exception:
+            # 폴백: 데이터 부재 시 기존 005930 프록시.
+            bench_df = con.execute(
+                """
+                SELECT date, close
+                FROM prices
+                WHERE ticker = ?
+                  AND date BETWEEN ? AND ?
+                ORDER BY date
+                """,
+                ["005930", start_int, end_int],
+            ).fetchdf()
+            if not bench_df.empty:
+                bench_df["date"] = bench_df["date"].apply(_bigint_to_iso)
 
         # 월별 수익률 계산
         monthly_returns = []
@@ -215,10 +232,12 @@ def run_custom_backtest(
             if drawdown < mdd:
                 mdd = drawdown
 
-        # Sharpe ratio (단순 근사: 평균수익률 / 표준편차)
+        # Sharpe ratio — B27 fix: 이전엔 var_r 분모가 N (모수 표준편차) 이어서
+        # 표본이 작을 때 σ 가 과소추정 → Sharpe 과대평가. sample stdev (N-1) 로 교체.
         if len(returns_list) > 1:
-            mean_r = sum(returns_list) / len(returns_list)
-            var_r  = sum((r - mean_r) ** 2 for r in returns_list) / len(returns_list)
+            n = len(returns_list)
+            mean_r = sum(returns_list) / n
+            var_r  = sum((r - mean_r) ** 2 for r in returns_list) / (n - 1)
             std_r  = math.sqrt(var_r) if var_r > 0 else 1e-9
             sharpe = round(mean_r / std_r * (12 ** 0.5), 2)
         else:

@@ -48,9 +48,11 @@ export default function MarketTickerBar() {
     },
   ];
 
+  // FE 평가 #5 fix: xl+ 에서는 ContextRail 사이드바가 같은 정보를 더 풍부하게 표시 →
+  // footer 중복 노출 방지. lg ~ xl 사이 (사이드바 없음) 만 footer 노출.
   return (
     <div
-      className="hidden lg:flex items-center gap-7 px-8 fixed bottom-0 left-0 right-0 z-40"
+      className="hidden lg:flex xl:hidden items-center gap-7 px-8 fixed bottom-0 left-0 right-0 z-40"
       style={{
         height: '36px',
         backgroundColor: 'var(--bg-elev-1)',

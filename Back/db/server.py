@@ -3,6 +3,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from dotenv import load_dotenv
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
@@ -45,7 +46,15 @@ _DEFAULT_DEV_ORIGINS = [
     "http://localhost:4173",
     "http://127.0.0.1:4173",
 ]
-ALLOWED_ORIGINS = _parse_origins(os.getenv("CORS_ALLOW_ORIGINS")) or _DEFAULT_DEV_ORIGINS
+_CORS_ENV = os.getenv("CORS_ALLOW_ORIGINS")
+ALLOWED_ORIGINS = _parse_origins(_CORS_ENV) or _DEFAULT_DEV_ORIGINS
+if not _CORS_ENV:
+    # 8001 main.py 와 동일 — 운영에서 .env 누락 시 dev origin 으로만 응답해
+    # 프론트가 차단되는 원인을 즉시 알도록 시작 시점에 경고.
+    logger.warning(
+        "[CORS] CORS_ALLOW_ORIGINS 미설정 — dev 폴백(%s) 사용. 운영에서는 도메인 명시.",
+        ",".join(_DEFAULT_DEV_ORIGINS),
+    )
 
 app = FastAPI(title="Stock Analysis System")
 
@@ -59,6 +68,9 @@ app.add_middleware(SlowAPIMiddleware)
 # "No Access-Control-Allow-Origin" 으로 끊어지지 않고 정상적으로 .catch() 처리 가능.
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    # 서버 내부 정보(드라이버 메시지·경로·트레이스 단편)는 절대 클라이언트로 흘리지 않는다.
+    # 전체 traceback 은 logger.exception 으로 서버 로그에만 남기고,
+    # 클라이언트에는 request_id 만 돌려줘 운영자가 로그를 매칭할 수 있게 한다.
     logger.exception("[unhandled] %s %s", request.method, request.url.path)
     origin = request.headers.get("origin", "")
     headers = {}
@@ -71,7 +83,6 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         content={
             "code": "INTERNAL_ERROR",
             "message": "서버 내부 오류가 발생했습니다.",
-            "detail": str(exc),
             "request_id": request.headers.get("X-Request-ID", ""),
         },
         headers=headers,
@@ -92,12 +103,32 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
     )
 
 
+# Host 헤더 검증 — ALLOWED_HOSTS 가 없으면 dev 폴백("*"). 운영에서는 명시 권장.
+_ALLOWED_HOSTS_ENV = os.getenv("ALLOWED_HOSTS")
+_ALLOWED_HOSTS = (
+    [h.strip() for h in _ALLOWED_HOSTS_ENV.split(",") if h.strip()]
+    if _ALLOWED_HOSTS_ENV
+    else ["*"]
+)
+if _ALLOWED_HOSTS == ["*"]:
+    logger.warning(
+        "[host] ALLOWED_HOSTS 미설정 — 모든 Host 허용(개발용). 운영에서는 도메인 명시."
+    )
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=_ALLOWED_HOSTS)
+
+# H#26: allow_headers 화이트리스트 (XSS 헤더 주입 면적 축소).
+_ALLOWED_HEADERS = [
+    "Accept", "Accept-Language", "Content-Type", "Content-Language",
+    "Origin", "Authorization",
+    "session-token",
+    "X-Request-ID", "X-CSRF-Token",
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=_ALLOWED_HEADERS,
 )
 
 # 라우터 등록

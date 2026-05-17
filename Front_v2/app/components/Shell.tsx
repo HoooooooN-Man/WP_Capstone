@@ -4,6 +4,7 @@ import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
 import MarketTickerBar from './MarketTickerBar';
 import CommandPalette from './CommandPalette';
+import { useSessionBootstrap } from '../api/client';
 
 /**
  * Shell — 라우터 레벨 레이아웃 라우트.
@@ -13,6 +14,8 @@ import CommandPalette from './CommandPalette';
  * 교체되며, 전환 중 lazy 청크 로드는 내부 Suspense 가 셸 안에서 처리한다.
  */
 export default function Shell() {
+  // H#27: 페이지 첫 진입 시 /auth/session 으로 cookie 세션 hydrate (legacy 토큰 모드에선 noop).
+  useSessionBootstrap();
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-base)' }}>
       <div className="hidden lg:block">

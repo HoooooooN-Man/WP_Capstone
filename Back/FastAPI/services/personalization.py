@@ -59,9 +59,18 @@ def rerank_for_cohort(
         return _take(rows, top_k)
 
     if c == "conservative":
-        rows = _filter_low_volatility(rows)
+        # 안전성 우선 — debt_ratio < 100% (자기자본 ≥ 부채) + score 정렬 유지.
+        # 이전엔 volatility_60d 의존이었으나 응답에 미포함이라 사실상 no-op 였다.
+        # B1: recommendations 가 debt_ratio 부착 후 실효 가능.
+        # NULL 은 통과 (재무 데이터 없는 소형주는 별도 score 만으로 평가).
+        rows = [
+            r for r in rows
+            if _safe_float(r.get("debt_ratio"), default=0.0) < 100.0
+        ]
     elif c == "dividend":
-        rows = [r for r in rows if _safe_float(r.get("dividend_yield"), default=0.0) > 0.02]
+        # B3 fix: dividend_yield 는 PERCENT 단위 (삼성 2.42 = 2.42%, 범위 0.01~37.54).
+        # 이전 `> 0.02` 는 0.02% 임계라 거의 모든 종목 통과 = 실효 없음 → `> 2.0` (2%).
+        rows = [r for r in rows if _safe_float(r.get("dividend_yield"), default=0.0) > 2.0]
     elif c == "value":
         rows = [
             r for r in rows
@@ -69,12 +78,13 @@ def rerank_for_cohort(
             and _safe_float(r.get("pbr"), default=float("inf")) < 1.5
         ]
     elif c == "growth":
-        # 점수 + ret_lag_60d × 10 가중. row 자체는 변경하지 않음 (정렬 키만).
+        # 매출 성장률 우선 (ret_lag_60d 미포함이라 rev_growth_yoy 활용).
+        # rev_growth_yoy 는 % (예: 15 = 15%) — score(0-100) 와 스케일 맞춰 × 0.5.
         rows = sorted(
             rows,
             key=lambda r: (
                 _safe_float(r.get("score"), default=0.0)
-                + _safe_float(r.get("ret_lag_60d"), default=0.0) * 10.0
+                + _safe_float(r.get("rev_growth_yoy"), default=0.0) * 0.5
             ),
             reverse=True,
         )

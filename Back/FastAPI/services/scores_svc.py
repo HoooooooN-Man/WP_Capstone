@@ -59,11 +59,13 @@ def _attach_change_pct(items: list[dict]) -> list[dict]:
         for ticker, today_c, prev_c in rows:
             if today_c and prev_c and float(prev_c) > 0:
                 diff_map[ticker] = round((float(today_c) - float(prev_c)) / float(prev_c) * 100, 2)
+        # diff_map 에 없는 ticker 는 prices 가 1일치만 있거나 미수집 — null 로 유지하여
+        # FE 가 "데이터 없음"과 "변동 없음(0.0%)"을 구분할 수 있게 한다.
         for it in items:
-            it["change_pct"] = diff_map.get(it.get("ticker"), 0)
+            it["change_pct"] = diff_map.get(it.get("ticker"))
     except Exception:
         for it in items:
-            it.setdefault("change_pct", 0)
+            it.setdefault("change_pct", None)
     return items
 
 
@@ -150,7 +152,33 @@ def get_recommendations(
         has_top_factors = "top_factors" in cols_in_scores
         top_factors_select = "s.top_factors," if has_top_factors else ""
 
+        # B1: cohort 가중치(conservative/dividend/value/growth) 가 실효되려면 per/pbr/
+        # dividend_yield/roe 가 응답에 있어야 한다. 최신 분기 finance LEFT JOIN.
+        # B60: illiquid 종목 (최근 5일 거래량 평균 0 또는 매우 낮음) 제외 — 추천해도
+        # 실제 매수 체결 불가. 사용자 화면에 "변동률 0%" 다수 출현 원인.
         sql = f"""
+            WITH latest_finance AS (
+                SELECT f.ticker, f.per, f.pbr, f.dividend_yield, f.roe, f.debt_ratio,
+                       f.op_margin, f.net_margin, f.rev_growth_yoy
+                FROM finance f
+                INNER JOIN (
+                    SELECT ticker, MAX(year * 10 + quarter) AS yq_max
+                    FROM finance
+                    WHERE per IS NOT NULL OR pbr IS NOT NULL OR dividend_yield IS NOT NULL
+                       OR roe IS NOT NULL OR rev_growth_yoy IS NOT NULL
+                    GROUP BY ticker
+                ) lf ON f.ticker = lf.ticker AND (f.year * 10 + f.quarter) = lf.yq_max
+            ),
+            recent_liquidity AS (
+                -- B60: ticker 별 최근 5거래일 평균 거래량. 0 이면 illiquid → 제외.
+                SELECT ticker, AVG(volume) AS avg_vol_5d
+                FROM (
+                    SELECT ticker, volume,
+                        ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) rn
+                    FROM prices
+                ) WHERE rn <= 5
+                GROUP BY ticker
+            )
             SELECT
                 CAST(s.date AS VARCHAR)            AS date,
                 s.ticker,
@@ -167,11 +195,16 @@ def get_recommendations(
                 s.rank_in_date,
                 s.total_in_date,
                 s.model_version,
+                lfin.per, lfin.pbr, lfin.dividend_yield, lfin.roe, lfin.debt_ratio,
+                lfin.op_margin, lfin.net_margin, lfin.rev_growth_yoy,
                 {top_factors_select}
                 NULL AS _placeholder
             FROM scores s
-            LEFT JOIN stocks st ON s.ticker = st.ticker
+            LEFT JOIN stocks st         ON s.ticker = st.ticker
+            LEFT JOIN latest_finance lfin ON s.ticker = lfin.ticker
+            LEFT JOIN recent_liquidity rl ON s.ticker = rl.ticker
             WHERE {' AND '.join(conditions)}
+              AND COALESCE(rl.avg_vol_5d, 0) >= 1000   -- B60: illiquid 제외 (5일 평균 1,000주 미만)
             ORDER BY s.score DESC
             {limit_clause}
         """
@@ -179,6 +212,10 @@ def get_recommendations(
         if "_placeholder" in rows.columns:
             rows = rows.drop(columns=["_placeholder"])
         result = rows.to_dict(orient="records")
+
+        # B53 — prob_ensemble alias 부착 (의미 명확: v11 = raw lambdarank score).
+        for r in result:
+            r["ml_rank_score"] = r.get("prob_ensemble")
 
         # top_factors VARCHAR(JSON) → list[dict] 로 변환 (Tier 1.3).
         if has_top_factors:
@@ -202,7 +239,31 @@ def get_recommendations(
                 # 하락 구간 경고: 실제 포지션 축소는 클라이언트 측에서 처리
                 r["position_scale"] = 1.0 if regime == 1 else 0.5
 
-        # P0-1 (PRD §8.1): score+tier → 매수/보유/매도/관망 4단계 라벨 부착
+        # B54: signal_label multi-factor — fair_value band 부착 후 attach_signal_labels.
+        # 거품주 (very_overvalued) 매수 추천 차단. row 별 직접 fairvalue 호출은 N+1 비용.
+        # 대안: 전 ticker 의 finance 최신 분기 multiple 만 가져와 빠른 band 추정.
+        # 정확한 fairvalue 는 stocks/{ticker}/fairvalue 엔드포인트 사용 권장.
+        try:
+            from .fairvalue_svc import compute_fair_value, classify_valuation
+            # 대량 호출 회피: row 에 이미 per/pbr 있으니 간단 추정.
+            # band 정확하려면 sector multiple 필요한데 비용 ↑. 우선 self-only multiple 로 근사.
+            # (recommendations 응답 sort 영향 받지 않음 — 라벨만 변경)
+            for r in result:
+                eps = r.get("close")  # close = current price (not EPS)
+                # 정확한 band 는 stocks/{t}/fairvalue 에서. 여기선 PER 단순 신호로 거품 감지:
+                # PER > 100 또는 PBR > 10 = 매우 거품 → very_overvalued 마킹.
+                per_v = r.get("per")
+                pbr_v = r.get("pbr")
+                try:
+                    if (per_v is not None and float(per_v) > 100) or \
+                       (pbr_v is not None and float(pbr_v) > 10):
+                        r["fair_band"] = "very_overvalued"
+                except (TypeError, ValueError):
+                    pass
+        except Exception:
+            pass
+
+        # P0-1 (PRD §8.1): score+tier+fair_band → 4단계 행동 라벨 부착 (B54)
         attach_signal_labels(result)
         # P1-7 (PRD §8.1): 별점 + 동종 섹터 백분위
         attach_star_ratings(result, model_version=ver)
@@ -210,8 +271,10 @@ def get_recommendations(
         attach_headlines(result)
         # 정합성 보강: 전일 대비 등락률 (FE change_pct 매핑)
         _attach_change_pct(result)
-        # P1-5 outcomes 부착은 N+1 쿼리라 본 추천 응답에선 비활성 (timeout 회피).
-        # 종목 상세에서 단건 호출 `/stocks/{ticker}/outcome` 으로 enrich.
+        # B10: 단일 SQL 로 모든 ticker 의 outcome 부착 — N+1 회피.
+        # attach_outcomes_batch 가 실패 시 자동으로 per-ticker 폴백.
+        from .outcomes_svc import attach_outcomes_batch as _attach_outcomes
+        _attach_outcomes(result, model_version=ver)
 
         return result
 
@@ -440,8 +503,8 @@ def get_peers(
 ) -> list[dict]:
     """P0-5 (PRD §8.1) — 자동 경쟁사 비교.
 
-    기준 종목의 같은 섹터·시가총액(close 프록시) ±50% 종목을 점수 순으로 반환.
-    동일 섹터 우선, 부족하면 mid_sector 단계로 확대.
+    기준 종목의 같은 섹터·**시가총액**(prices.market_cap = close × shares_outstanding,
+    B2 fix) ±50% 종목을 점수 순으로 반환. 동일 섹터 우선, 부족하면 mid_sector 확대.
     """
     ver = _resolve_version(model_version)
     t = str(ticker or "").strip().zfill(6)
@@ -452,26 +515,44 @@ def get_peers(
         if not latest:
             return []
 
-        # 기준 종목 정보
+        # B2 fix: 이전엔 'close' (주당 가격) 를 시가총액 프록시로 사용 →
+        # 주가 5만원·시총 100조 / 주가 7.5만원·시총 1조 가 "비슷한 시총" 으로 묶임.
+        # 실제 시가총액(prices.market_cap = close × shares_outstanding) 으로 교체.
+        # latest_mc 서브쿼리는 가장 최근 일자 prices.market_cap 을 조회.
         base = con.execute(
             """
-            SELECT s.ticker, s.name, s.sector, s.mid_sector, s.close, s.score, s.tier
+            SELECT s.ticker, s.name, s.sector, s.mid_sector, s.close, s.score, s.tier,
+                   p.market_cap AS base_mc
             FROM scores s
+            LEFT JOIN (
+                SELECT ticker, market_cap, ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) rn
+                FROM prices
+            ) p ON s.ticker = p.ticker AND p.rn = 1
             WHERE s.model_version=? AND CAST(s.date AS VARCHAR)=? AND s.ticker=?
             """,
             [ver, latest, t],
         ).fetchone()
         if not base:
             return []
-        _, _, sector, mid_sector, close, _, _ = base
+        _, _, sector, mid_sector, close, _, _, base_mc = base
 
-        # close 가 None 이면 시가총액 필터 우회
-        price_lo = float(close) * 0.5 if close else 0.0
-        price_hi = float(close) * 1.5 if close else 1e18
+        # 시가총액 ±50% 범위. market_cap 없으면 필터 우회 (전 종목 허용).
+        if base_mc and float(base_mc) > 0:
+            mc_lo = float(base_mc) * 0.5
+            mc_hi = float(base_mc) * 1.5
+        else:
+            mc_lo, mc_hi = 0.0, 1e18
 
-        # 1차: 같은 sector + 시가총액(close) 유사 종목
+        # 1차: 같은 sector + 시가총액 ±50% 유사 종목
         rows = con.execute(
             """
+            WITH latest_mc AS (
+                SELECT ticker, market_cap FROM (
+                    SELECT ticker, market_cap,
+                           ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) rn
+                    FROM prices
+                ) WHERE rn = 1
+            )
             SELECT
                 s.ticker,
                 s.name,
@@ -480,17 +561,19 @@ def get_peers(
                 s.close,
                 ROUND(CAST(s.score AS DOUBLE), 1) AS score,
                 s.tier,
-                ROUND(s.prob_ensemble, 6)         AS prob_ensemble
+                ROUND(s.prob_ensemble, 6)         AS prob_ensemble,
+                lmc.market_cap                    AS market_cap
             FROM scores s
+            LEFT JOIN latest_mc lmc ON s.ticker = lmc.ticker
             WHERE s.model_version=?
               AND CAST(s.date AS VARCHAR)=?
               AND s.ticker != ?
               AND s.sector = ?
-              AND s.close BETWEEN ? AND ?
+              AND COALESCE(lmc.market_cap, 0) BETWEEN ? AND ?
             ORDER BY s.score DESC
             LIMIT ?
             """,
-            [ver, latest, t, sector or "", price_lo, price_hi, limit],
+            [ver, latest, t, sector or "", mc_lo, mc_hi, limit],
         ).fetchdf()
 
         # 2차: 부족하면 mid_sector 로 확대
@@ -517,6 +600,42 @@ def get_peers(
             if not extra.empty:
                 rows = pd.concat([rows, extra], ignore_index=True)
 
+        # B65: 3차 fallback — 시총 ±50% 너무 좁아 peer 없는 종목 (현대모비스같이
+        # *그 시총대* 종목 자체가 sector 내 부재) → 시총 무관 같은 sector 전체.
+        if len(rows) < limit:
+            need = limit - len(rows)
+            extra2 = con.execute(
+                """
+                WITH latest_mc AS (
+                    SELECT ticker, market_cap FROM (
+                        SELECT ticker, market_cap,
+                               ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) rn
+                        FROM prices
+                    ) WHERE rn = 1
+                )
+                SELECT
+                    s.ticker, s.name, s.sector, s.mid_sector, s.close,
+                    ROUND(CAST(s.score AS DOUBLE), 1) AS score,
+                    s.tier,
+                    ROUND(s.prob_ensemble, 6) AS prob_ensemble,
+                    lmc.market_cap AS market_cap
+                FROM scores s
+                LEFT JOIN latest_mc lmc ON s.ticker = lmc.ticker
+                WHERE s.model_version=? AND CAST(s.date AS VARCHAR)=?
+                  AND s.ticker != ? AND s.sector = ?
+                ORDER BY s.score DESC LIMIT ?
+                """,
+                [ver, latest, t, sector or "", need],
+            ).fetchdf()
+            if not extra2.empty:
+                # 이미 포함된 ticker 중복 제거 + NaN 정리 (JSON 직렬화 안전)
+                if not rows.empty:
+                    extra2 = extra2[~extra2["ticker"].isin(rows["ticker"])]
+                rows = pd.concat([rows, extra2.head(need)], ignore_index=True)
+
+        # B65 + B64-bis: pd.NaN → None (JSON 직렬화 안전)
+        rows = rows.where(rows.notna(), None)
+
         result = rows.to_dict(orient="records")
         attach_signal_labels(result)
         return result
@@ -537,7 +656,20 @@ def search_stocks(
         con = _con()
         # Tier 1B 4.4: `%` 입력으로 전수 조회 방지.
         keyword = f"%{escape_like(q)}%"
+        # B64 — cross-page MISMATCH fix: /rating 이 search_stocks 호출 후 signal 매김.
+        # search_stocks 에 per/pbr 없으면 fair_band 검사 못함 → 거품주가 BUY 라벨 받음
+        # (엠로 PER 294배인데 /rating=BUY, /recommendations=WATCH 모순).
+        # 해결: latest_finance JOIN + per/pbr 부착 → attach_signal_labels 가 거품 차단.
         sql = """
+            WITH latest_finance AS (
+                SELECT f.ticker, f.per, f.pbr
+                FROM finance f
+                INNER JOIN (
+                    SELECT ticker, MAX(year*10+quarter) AS yq
+                    FROM finance WHERE per IS NOT NULL OR pbr IS NOT NULL
+                    GROUP BY ticker
+                ) m ON f.ticker=m.ticker AND f.year*10+f.quarter=m.yq
+            )
             SELECT
                 s.ticker,
                 s.name,
@@ -547,7 +679,8 @@ def search_stocks(
                 ROUND(CAST(s.score AS DOUBLE), 1) AS score,
                 s.tier,
                 s.model_version,
-                CAST(s.date AS VARCHAR) AS latest_date
+                CAST(s.date AS VARCHAR) AS latest_date,
+                lf.per, lf.pbr
             FROM scores s
             INNER JOIN (
                 SELECT ticker, MAX(date) AS max_date
@@ -555,6 +688,7 @@ def search_stocks(
                 WHERE model_version = ?
                 GROUP BY ticker
             ) latest ON s.ticker = latest.ticker AND s.date = latest.max_date
+            LEFT JOIN latest_finance lf ON s.ticker = lf.ticker
             WHERE s.model_version = ?
               AND (s.ticker ILIKE ? ESCAPE '\\' OR s.name ILIKE ? ESCAPE '\\')
             ORDER BY s.score DESC
@@ -562,8 +696,24 @@ def search_stocks(
         """
         rows = con.execute(sql, [ver, ver, keyword, keyword, limit]).fetchdf()
         result = rows.to_dict(orient="records")
-        attach_signal_labels(result)   # P0-1
+        # B64: 거품주 마킹
+        for r in result:
+            try:
+                per_v = r.get("per"); pbr_v = r.get("pbr")
+                if (per_v is not None and float(per_v) > 100) or \
+                   (pbr_v is not None and float(pbr_v) > 10):
+                    r["fair_band"] = "very_overvalued"
+            except (TypeError, ValueError):
+                pass
         _attach_change_pct(result)     # 전일 대비 등락률
+        # B68: search — change_pct=0 (illiquid 의심) 종목도 WATCH 처리.
+        # search 는 사용자 검색이라 종목 자체 제외하지 않고 signal 만 다운.
+        # fair_band 재사용 (multi-factor signal 룰이 거품과 동일 — WATCH 처리)
+        for r in result:
+            if r.get("change_pct") == 0 and not r.get("fair_band"):
+                r["fair_band"] = "very_overvalued"   # illiquid → WATCH 트리거
+                r["liquidity_warn"] = True           # FE 에 명시할 수 있는 별도 플래그
+        attach_signal_labels(result)
         return result
 
     return _cached("search", fetch, ttl=120, q=q, model_version=ver, limit=limit)
@@ -583,9 +733,16 @@ def screen_stocks(
     min_finance_score: float | None = None,
     sort_by: str = "composite_score",
     limit: int = 50,
+    ml_weight: float = 0.6,   # B11: composite 가중치 조절 가능 (기본 0.6)
 ) -> list[dict]:
-    """ML 점수 + 재무 조건 복합 스크리너."""
+    """ML 점수 + 재무 조건 복합 스크리너.
+
+    B11: composite_score = ML × ml_weight + finance × (1 - ml_weight). 기본 0.6.
+    """
     ver = _resolve_version(model_version)
+    # 0~1 범위 강제 (라우터에서 이미 검증하지만 안전).
+    ml_w  = max(0.0, min(1.0, float(ml_weight)))
+    fin_w = round(1.0 - ml_w, 4)
 
     def fetch():
         con = _con()
@@ -619,28 +776,33 @@ def screen_stocks(
             ml_conditions.append("s.sector ILIKE ?")
             params.append(f"%{sector}%")
 
+        # 재무 조건: 이전엔 f-string 으로 값 직접 삽입. float() 캐스트가 있어
+        # 실제 SQL injection 은 차단되지만, 패턴이 위험하다. ? 바인딩으로 통일.
         finance_conditions = []
         if max_per is not None:
-            finance_conditions.append(f"fi.per <= {float(max_per)}")
+            finance_conditions.append("fi.per <= ?");          params.append(float(max_per))
         if max_pbr is not None:
-            finance_conditions.append(f"fi.pbr <= {float(max_pbr)}")
+            finance_conditions.append("fi.pbr <= ?");          params.append(float(max_pbr))
         if min_roe is not None:
-            finance_conditions.append(f"fi.roe >= {float(min_roe)}")
+            finance_conditions.append("fi.roe >= ?");          params.append(float(min_roe))
         if max_debt_ratio is not None:
-            finance_conditions.append(f"fi.debt_ratio <= {float(max_debt_ratio)}")
+            finance_conditions.append("fi.debt_ratio <= ?");   params.append(float(max_debt_ratio))
         if min_op_margin is not None:
-            finance_conditions.append(f"fi.op_margin >= {float(min_op_margin)}")
+            finance_conditions.append("fi.op_margin >= ?");    params.append(float(min_op_margin))
         if min_rev_growth is not None:
-            finance_conditions.append(f"fi.rev_growth_yoy >= {float(min_rev_growth)}")
+            finance_conditions.append("fi.rev_growth_yoy >= ?"); params.append(float(min_rev_growth))
         if min_finance_score is not None:
-            finance_conditions.append(f"fi.finance_score >= {float(min_finance_score)}")
+            finance_conditions.append("fi.finance_score >= ?"); params.append(float(min_finance_score))
 
         finance_where = ""
         if finance_conditions:
             finance_where = "AND " + " AND ".join(finance_conditions)
 
+        # sort_by / limit 는 SQL identifier·LIMIT 자리라 ? 바인딩 불가.
+        # → 화이트리스트 검사 후에만 f-string 에 삽입.
         ALLOWED_SORT = {"composite_score", "score", "finance_score", "roe", "per", "pbr", "rev_growth_yoy"}
         sort_col = sort_by if sort_by in ALLOWED_SORT else "composite_score"
+        safe_limit = max(1, min(int(limit), 200))
 
         sql = f"""
             SELECT
@@ -655,18 +817,27 @@ def screen_stocks(
                 fi.op_margin, fi.rev_growth_yoy,
                 ROUND(fi.finance_score, 1)           AS finance_score,
                 ROUND(
-                    CAST(s.score AS DOUBLE) * 0.6
-                    + COALESCE(fi.finance_score, 50.0) * 0.4,
+                    CAST(s.score AS DOUBLE) * {ml_w}
+                    + COALESCE(fi.finance_score, 50.0) * {fin_w},
                 1)                                   AS composite_score
             FROM scores s
             LEFT JOIN ({finance_sub}) fi ON s.ticker = fi.ticker
             WHERE {' AND '.join(ml_conditions)} {finance_where}
             ORDER BY {sort_col} DESC NULLS LAST
-            LIMIT {int(limit)}
+            LIMIT {safe_limit}
         """
         rows = con.execute(sql, params).fetchdf()
         result = rows.to_dict(orient="records")
-        attach_signal_labels(result)   # P0-1
+        # B64-bis: cross-page mismatch fix — 스크리너도 거품주 fair_band 마킹 후 attach.
+        for r in result:
+            try:
+                per_v = r.get("per"); pbr_v = r.get("pbr")
+                if (per_v is not None and float(per_v) > 100) or \
+                   (pbr_v is not None and float(pbr_v) > 10):
+                    r["fair_band"] = "very_overvalued"
+            except (TypeError, ValueError):
+                pass
+        attach_signal_labels(result)   # P0-1 (multi-factor)
         _attach_change_pct(result)     # 전일 대비 등락률
         return result
 
@@ -676,7 +847,7 @@ def screen_stocks(
         max_per=max_per, max_pbr=max_pbr, min_roe=min_roe,
         max_debt_ratio=max_debt_ratio, min_op_margin=min_op_margin,
         min_rev_growth=min_rev_growth, min_finance_score=min_finance_score,
-        sort_by=sort_by, limit=limit,
+        sort_by=sort_by, limit=limit, ml_weight=ml_w,
     )
 
 
@@ -736,6 +907,12 @@ def compare_stocks(
             fin = con.execute(fin_sql, [t]).fetchdf()
             finance = fin.to_dict(orient="records")[0] if not fin.empty else None
 
+            # 미존재 ticker: scores 도 finance 도 없으면 응답 row 자체를 만들지 않는다.
+            # 이전엔 모든 필드 null 인 row 가 200 응답에 섞여 들어가 FE 가 "유효 종목"으로
+            # 오해하고 빈 카드를 렌더했다.
+            if hist.empty and (fin is None or fin.empty):
+                continue
+
             results.append({
                 "ticker":        t,
                 "name":          name,
@@ -765,7 +942,9 @@ def get_market_regime(model_version: str = "latest") -> dict:
         compute_market_score,
         classify_market_level,
         load_kospi_daily_change,
+        load_kospi_weekly_change,
     )
+    from ..core.config import DUCKDB_PATH as _DDB_M
 
     ver = _resolve_version(model_version)
 
@@ -788,11 +967,30 @@ def get_market_regime(model_version: str = "latest") -> dict:
         tier_a = int(row[1] or 0)
         ratio  = (tier_a / total * 100) if total else 0.0
 
-        # KOSPI 일일 변화율 (없으면 None)
-        daily_change = load_kospi_daily_change(as_of_date=latest)
+        # B21: ratio 는 ML 백분위 구조상 ~20% 고정이라 base 신호 없음.
+        # KOSPI 일일/주간 변화율 + 모델 평균 prob_ensemble (당일 시장 낙관도) 사용.
+        daily_change  = load_kospi_daily_change(
+            duckdb_path=str(_DDB_M), as_of_date=latest,
+        )
+        weekly_change = load_kospi_weekly_change(
+            duckdb_path=str(_DDB_M), as_of_date=latest,
+        )
+        avg_prob_row = con.execute(
+            """
+            SELECT AVG(prob_ensemble) FROM scores
+            WHERE model_version=? AND CAST(date AS VARCHAR)=?
+              AND prob_ensemble IS NOT NULL
+            """,
+            [ver, latest],
+        ).fetchone()
+        avg_prob = float(avg_prob_row[0]) if avg_prob_row and avg_prob_row[0] is not None else None
 
         # 0-100 마켓스코어 + 5단계 분류
-        score = compute_market_score(ratio, daily_change)
+        score = compute_market_score(
+            daily_change=daily_change,
+            weekly_change=weekly_change,
+            avg_prob=avg_prob,
+        )
         level = classify_market_level(score)
 
         messages = {
@@ -829,8 +1027,13 @@ def get_kospi200_portfolio(
 ) -> dict:
     """KOSPI 종목 중 사용자 성향에 맞는 Top 10 자동 포트폴리오.
 
+    B13 주의: 이 함수의 universe 는 `seed.exchange = 'KOSPI'` 전체 (~1,500개) —
+    진짜 KOSPI200 지수 구성종목 200개와는 다르다. 응답 메타에 `universe` 명시.
+
     - growth : score 상위 10
-    - stable : Tier A·B + 최신 PBR < 1.5 → score 상위 10
+    - stable : Tier A·B + 최신 PBR이 **자기 섹터 평균 미만** → score 상위 10
+              (B12 fix: 이전 `pbr < 1.5` 단일 cutoff → IT(평균>3) 종목 거의 다 제외,
+               은행(평균<0.5) 거의 다 통과의 섹터 편향. 섹터 상대로 교체.)
     """
     from ..core.config import SEED_CSV
     ver        = _resolve_version(model_version)
@@ -844,33 +1047,51 @@ def get_kospi200_portfolio(
             raise RuntimeError(f"scores 데이터 없음 (model_version={ver})")
 
         if is_stable:
+            # B12: PBR 의 섹터 중앙값 대비 "더 낮은" 종목 선별.
             sql = f"""
                 WITH last_finance AS (
                     SELECT ticker, MAX(year * 10 + quarter) AS yq_max
                     FROM finance
                     WHERE pbr IS NOT NULL
                     GROUP BY ticker
+                ),
+                fin_latest AS (
+                    SELECT f.ticker, f.pbr
+                    FROM finance f
+                    INNER JOIN last_finance lf
+                       ON f.ticker = lf.ticker AND (f.year * 10 + f.quarter) = lf.yq_max
+                ),
+                kospi_universe AS (
+                    SELECT LPAD(CAST(seed.ticker AS VARCHAR), 6, '0') AS ticker
+                    FROM read_csv_auto('{seed_path}') seed
+                    WHERE seed.exchange = 'KOSPI'
+                ),
+                sector_pbr_med AS (
+                    SELECT s.sector, MEDIAN(fl.pbr) AS sec_pbr_med
+                    FROM scores s
+                    INNER JOIN kospi_universe ku ON s.ticker = ku.ticker
+                    INNER JOIN fin_latest fl     ON s.ticker = fl.ticker
+                    WHERE s.model_version = ? AND CAST(s.date AS VARCHAR) = ?
+                      AND fl.pbr > 0 AND fl.pbr < 30
+                    GROUP BY s.sector
                 )
                 SELECT s.ticker, s.name, s.sector,
-                       CAST(s.score AS FLOAT)  AS score,
+                       CAST(s.score AS FLOAT) AS score,
                        s.tier,
-                       CAST(f.pbr   AS FLOAT)  AS pbr
+                       CAST(fl.pbr   AS FLOAT) AS pbr,
+                       CAST(spm.sec_pbr_med AS FLOAT) AS sector_pbr_med
                 FROM scores s
-                INNER JOIN read_csv_auto('{seed_path}') seed
-                    ON s.ticker = LPAD(CAST(seed.ticker AS VARCHAR), 6, '0')
-                INNER JOIN last_finance lf
-                    ON s.ticker = lf.ticker
-                INNER JOIN finance f
-                    ON f.ticker = lf.ticker AND (f.year * 10 + f.quarter) = lf.yq_max
+                INNER JOIN kospi_universe ku ON s.ticker = ku.ticker
+                INNER JOIN fin_latest fl     ON s.ticker = fl.ticker
+                LEFT  JOIN sector_pbr_med spm ON s.sector = spm.sector
                 WHERE s.model_version = ?
                   AND CAST(s.date AS VARCHAR) = ?
-                  AND seed.exchange = 'KOSPI'
                   AND s.tier IN ('A', 'B')
-                  AND f.pbr < 1.5
+                  AND fl.pbr < COALESCE(spm.sec_pbr_med, 1.5)  -- 섹터 중앙값 미만, 매핑 부재 시 1.5 폴백
                 ORDER BY s.score DESC
                 LIMIT 10
             """
-            df = con.execute(sql, [ver, latest]).fetchdf()
+            df = con.execute(sql, [ver, latest, ver, latest]).fetchdf()
         else:  # growth
             sql = f"""
                 SELECT s.ticker, s.name, s.sector,
@@ -897,6 +1118,10 @@ def get_kospi200_portfolio(
                 "score":  float(r["score"]),
                 "tier":   r["tier"],
                 "pbr":    float(r["pbr"]) if is_stable and pd.notna(r.get("pbr")) else None,
+                # B26: SQL 이 sector_pbr_med 를 SELECT 하지만 이전 응답에 미부착이라
+                # 스키마 항상 None. stable 모드에서 노출 (FE 가 "섹터 평균 vs 본 종목" 비교 가능).
+                "sector_pbr_med": float(r["sector_pbr_med"])
+                    if is_stable and "sector_pbr_med" in r and pd.notna(r.get("sector_pbr_med")) else None,
             }
             items.append(item)
 
@@ -906,6 +1131,9 @@ def get_kospi200_portfolio(
             "model_version": ver,
             "total":         len(items),
             "items":         items,
+            # B13: 진짜 KOSPI200 지수 구성종목 200개가 아님을 명시.
+            "universe":      "KOSPI_all",
+            "universe_note": "KOSPI 전체 상장 종목(약 950개) 대상. 공식 KOSPI200 지수 구성과는 다름.",
         }
 
     return _cached(

@@ -18,6 +18,12 @@ interface ScoreRow {
   tier: 'A' | 'B' | 'C' | 'D';
   starRating: number;
   cumulativeReturn: number;
+  // B1: finance raw 지표 (sub-score 표시용)
+  rev_growth_yoy?: number;
+  roe?: number;
+  debt_ratio?: number;
+  op_margin?: number;
+  net_margin?: number;
 }
 
 export default function SmartScorePage() {
@@ -30,6 +36,11 @@ export default function SmartScorePage() {
     score: it.score ?? 0, tier: it.tier ?? 'C',
     starRating: it.star_rating ?? 0,
     cumulativeReturn: it.cumulative_return_pct ?? 0,
+    rev_growth_yoy: it.rev_growth_yoy,
+    roe: it.roe,
+    debt_ratio: it.debt_ratio,
+    op_margin: it.op_margin,
+    net_margin: it.net_margin,
   }));
   const allStocks: ScoreRow[] = apiList ?? [];
   const [selectedTicker, setSelectedTicker] = useState<string>('');
@@ -69,47 +80,67 @@ export default function SmartScorePage() {
     cashflow:      Math.round(radarData.cashflow ?? 0),
   };
 
-  // sub-score: 실데이터(fairValue / dividend) 우선, 부재 시 '-'
+  // sub-score: radar 점수 산출 근거(같은 metric)를 표시해 *모순처럼 보이는* 라벨을 제거.
+  // - 성장성/수익성/안전성/독점력/현금창출력 카드의 raw 값은 selectedStock.{rev_growth_yoy/roe/...}
+  //   (recommendations API에 B1 LEFT JOIN으로 부착) 사용.
+  // - 배당 정보는 별도 카드로 분리(현금창출력 ≠ 배당). FE 모순 해소.
   const fv = fairValue?.inputs;
+  const fmtPct = (v?: number) => v == null ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
   const scoreDetails = [
     {
       name: '성장성', key: 'growth' as const,
-      description: 'SHAP 기여도 — 매출·EPS 성장 관련 피처',
-      subScores: dividend?.scores ? [
-        { label: 'EPS 성장률 점수', value: dividend.scores.eps_growth_score ?? 0, description: (dividend.scores.eps_growth_score ?? 0) >= 70 ? '우수' : '보통', raw: false },
-      ] : [],
+      description: '재무 백분위 — 매출·영업이익 성장률 (전체 universe 대비)',
+      subScores: [
+        { label: '매출성장률 (YoY)', value: selectedStock.rev_growth_yoy, description: fmtPct(selectedStock.rev_growth_yoy), raw: true },
+      ],
       hasData: !!radar,
     },
     {
       name: '수익성', key: 'profitability' as const,
-      description: 'SHAP 기여도 — ROE·영업이익률 관련',
-      subScores: fv ? [
-        { label: 'EPS (원)', value: fv.eps, description: '주당순이익', raw: true },
-        { label: 'BPS (원)', value: fv.bps, description: '주당순자산', raw: true },
-      ] : [],
+      description: '재무 백분위 — ROE (전체 universe 대비)',
+      subScores: [
+        { label: 'ROE', value: selectedStock.roe, description: fmtPct(selectedStock.roe), raw: true },
+        ...(fv ? [
+          { label: 'EPS (원)', value: fv.eps, description: '주당순이익', raw: true },
+          { label: 'BPS (원)', value: fv.bps, description: '주당순자산', raw: true },
+        ] : []),
+      ],
       hasData: !!radar,
     },
     {
       name: '안전성', key: 'safety' as const,
-      description: 'SHAP 기여도 — 부채·유동비율 관련',
-      subScores: [],
+      description: '재무 백분위 — 부채비율(역순)·유동비율',
+      subScores: [
+        { label: '부채비율', value: selectedStock.debt_ratio, description: fmtPct(selectedStock.debt_ratio), raw: true },
+      ],
       hasData: !!radar,
     },
     {
       name: '독점력', key: 'monopoly' as const,
-      description: 'SHAP 기여도 — 영업이익 안정성 / 시장점유',
-      subScores: [],
+      description: '재무 백분위 — 영업이익률 (지속적 마진 = 경쟁우위 proxy)',
+      subScores: [
+        { label: '영업이익률', value: selectedStock.op_margin, description: fmtPct(selectedStock.op_margin), raw: true },
+      ],
       hasData: !!radar,
     },
     {
       name: '현금창출력', key: 'cashflow' as const,
-      description: 'SHAP 기여도 — FCF·영업현금흐름 관련',
-      subScores: dividend ? [
-        { label: '배당수익률', value: dividend.yield_pct, description: `${dividend.yield_pct?.toFixed(2) ?? '-'}%`, raw: true },
-        { label: '연속배당 년수', value: dividend.years_paid, description: `${dividend.years_paid ?? '-'}년`, raw: true },
-      ] : [],
+      description: '재무 백분위 — 순이익률 (이익의 현금 전환력 proxy)',
+      subScores: [
+        { label: '순이익률', value: selectedStock.net_margin, description: fmtPct(selectedStock.net_margin), raw: true },
+      ],
       hasData: !!radar,
     },
+    ...(dividend && (dividend.yield_pct ?? 0) > 0 ? [{
+      name: '배당', key: 'dividend' as const,
+      description: `종합 배당스코어 ${dividend.dividend_score ?? '-'} (5항목 평균: 수익률·연속·인상·배당성향·매출성장)`,
+      subScores: [
+        { label: '배당수익률', value: dividend.yield_pct, description: `${dividend.yield_pct?.toFixed(2) ?? '-'}%`, raw: true },
+        { label: '연속배당', value: dividend.years_paid, description: `${dividend.years_paid ?? '-'}년`, raw: true },
+        ...(dividend.payout_pct != null ? [{ label: '배당성향', value: dividend.payout_pct, description: `${dividend.payout_pct.toFixed(1)}%`, raw: true }] : []),
+      ],
+      hasData: true,
+    }] : []),
     ...(fairValue ? [{
       name: '밸류에이션', key: 'valuation' as const,
       description: `적정주가 ${fairValue.fair_value?.toLocaleString('ko-KR')}원 · ${fairValue.band_ko}`,
@@ -242,7 +273,7 @@ export default function SmartScorePage() {
 
               {category.subScores.length === 0 ? (
                 <div className="wp-t-sm text-[var(--text-tertiary)] p-3 rounded-lg bg-[var(--bg-elev-2)]">
-                  세부 지표 데이터 부재 — SHAP top_factors 적재 필요 (compute_shap.py)
+                  종합 점수는 재무 백분위로 산출되며, 세부 SHAP 기여 피처는 추후 적재 예정입니다.
                 </div>
               ) : (
                 <div className="space-y-4">

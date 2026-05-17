@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 from typing import Optional
 
@@ -24,20 +25,28 @@ router = APIRouter(prefix="/api/v1/board", tags=["board"])
 # ─────────────────────────────────────────────
 
 _pool: Optional[asyncpg.Pool] = None
+# 콜드 스타트에 동시 요청이 들어와도 pool 이 한 번만 생성되도록 직렬화.
+# 이전엔 lock 이 없어 두 개의 첫 요청이 각자 create_pool 을 호출해 pool 객체가
+# 두 개 만들어지고 한 쪽이 leak 되는 race 가 있었다.
+_pool_lock = asyncio.Lock()
 
 
 async def get_pool() -> asyncpg.Pool:
     global _pool
-    if _pool is None:
-        _pool = await asyncpg.create_pool(
-            host=os.getenv("DB_HOST", "127.0.0.1"),
-            port=int(os.getenv("DB_PORT", "5432")),
-            user=os.getenv("DB_USER", "postgres"),
-            password=os.getenv("DB_PASSWORD", ""),
-            database=os.getenv("DB_NAME", "capstone"),
-            min_size=2,
-            max_size=10,
-        )
+    if _pool is not None:
+        return _pool
+    async with _pool_lock:
+        # double-checked: lock 안에서 다시 확인 (다른 코루틴이 먼저 만들었을 수 있음)
+        if _pool is None:
+            _pool = await asyncpg.create_pool(
+                host=os.getenv("DB_HOST", "127.0.0.1"),
+                port=int(os.getenv("DB_PORT", "5432")),
+                user=os.getenv("DB_USER", "postgres"),
+                password=os.getenv("DB_PASSWORD", ""),
+                database=os.getenv("DB_NAME", "capstone"),
+                min_size=2,
+                max_size=10,
+            )
     return _pool
 
 
@@ -98,15 +107,20 @@ async def require_auth(
 # Pydantic 모델
 # ─────────────────────────────────────────────
 
+# DB Text 컬럼은 무제한이지만, 클라이언트 측 본문은 상한을 둬서 DoS·스팸 차단.
+POST_CONTENT_MAX    = 30_000
+COMMENT_CONTENT_MAX = 5_000
+
+
 class PostCreate(BaseModel):
     ticker: str = Field(..., max_length=20)
     title: str = Field(..., max_length=255)
-    content: str
+    content: str = Field(..., min_length=1, max_length=POST_CONTENT_MAX)
 
 
 class CommentCreate(BaseModel):
     post_id: int
-    content: str
+    content: str = Field(..., min_length=1, max_length=COMMENT_CONTENT_MAX)
 
 
 class LikeRequest(BaseModel):
@@ -205,23 +219,9 @@ async def list_posts(
         # 여기는 ticker가 없으므로 전달 인자 개수가 달라집니다.
         rows = await conn.fetch(query, page_size, author_id, offset)
 
-    rows = await conn.fetch(
-        """
-        SELECT
-            p.id, p.ticker, p.author_id, p.title, p.views, p.likes,
-            p.created_at,
-            (SELECT COUNT(*) FROM board_comments c WHERE c.post_id = p.id) AS comment_count,
-            CASE WHEN $3::int IS NOT NULL
-                 THEN EXISTS(SELECT 1 FROM board_likes l WHERE l.post_id = p.id AND l.author_id = $3)
-                 ELSE FALSE
-            END AS liked
-        FROM board_posts p
-        WHERE p.ticker = $1
-        ORDER BY p.created_at DESC
-        LIMIT $2 OFFSET $4
-        """,
-        ticker, page_size, author_id, offset,
-    )
+    # NOTE: 이전 구현에 위 if/else 직후 무조건 `WHERE p.ticker = $1` 로 한 번 더
+    # fetch 하는 dead block 이 있었음 — ticker 미지정 호출이 모두 빈 결과가 되어
+    # /api/v1/board/posts (전체 게시판) 가 항상 0건으로 보였다. 제거.
 
     items = [
         {

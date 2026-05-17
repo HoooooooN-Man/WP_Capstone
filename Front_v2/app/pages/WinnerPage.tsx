@@ -13,6 +13,10 @@ export default function WinnerPage() {
   const { data: winnerApi } = useWinnerHistory(21, 5);
   const dateGroups = winnerApi?.items ?? [];
 
+  // 시스템 today 가 아닌 *API 응답의 최신 일자* 기준 — 데이터 stale 시에도 일관된 lock 정책.
+  // 이전: 시스템 today(2026-05-17) - API 최신(2026-04-29) = 18일 > 7 → 모든 카드 blur.
+  const apiLatestDate = dateGroups.length > 0 ? dateGroups[0].date : null;
+
   const getDayOfWeek = (dateStr: string) => {
     const date = new Date(dateStr);
     const days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -20,11 +24,11 @@ export default function WinnerPage() {
   };
 
   const getDaysAgo = (dateStr: string) => {
+    if (!apiLatestDate) return 0;
     const date = new Date(dateStr);
-    const today = new Date();
-    const diffTime = Math.abs(today.getTime() - date.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    const ref  = new Date(apiLatestDate);
+    const diffTime = Math.abs(ref.getTime() - date.getTime());
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   };
 
   return (
@@ -95,9 +99,10 @@ export default function WinnerPage() {
                       ticker={stock.ticker}
                       recommendPrice={stock.recommend_price ?? 0}
                       score={stock.score ?? 0}
-                      targetPrice={0}
+                      targetPrice={stock.target_price ?? 0}
                       trend={stock.trend ?? { short: 'neutral', medium: 'neutral', long: 'neutral' }}
                       cumulativeReturn={stock.cumulative_return_pct ?? 0}
+                      daysSinceRec={daysAgo}
                       isLocked={isLocked}
                     />
                   ))}

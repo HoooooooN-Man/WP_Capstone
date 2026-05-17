@@ -92,8 +92,20 @@ def _normalize_ticker(raw: str) -> str:
 
 
 def _normalize_group(raw: Optional[str]) -> str:
+    """그룹명 정규화.
+
+    이전엔 `s[:50]` 으로 silent truncate → 50자 prefix 가 같은 두 그룹이 충돌.
+    이제 한계 초과면 400 으로 명확히 거절한다.
+    """
     s = (raw or "").strip()
-    return s[:MAX_GROUP_NAME_LEN] if s else DEFAULT_GROUP
+    if not s:
+        return DEFAULT_GROUP
+    if len(s) > MAX_GROUP_NAME_LEN:
+        raise HTTPException(
+            status_code=400,
+            detail=f"그룹명은 최대 {MAX_GROUP_NAME_LEN}자까지 입력 가능합니다.",
+        )
+    return s
 
 
 # ── 엔드포인트 ───────────────────────────────────────────────────────────────
@@ -199,15 +211,24 @@ def add_watchlist(
 
 @router.delete(
     "/{ticker}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="관심종목 삭제",
+    summary="관심종목 삭제 — group_name 미지정 시 모든 그룹에서 삭제",
 )
 def remove_watchlist(
     ticker: str,
-    group_name: Optional[str] = Query(None, description="그룹 지정 시 해당 그룹에서만 삭제. 미지정 시 모든 그룹."),
+    group_name: Optional[str] = Query(
+        None,
+        description=(
+            "그룹 지정 시 해당 그룹에서만 삭제. "
+            "미지정 시 모든 그룹에서 삭제 — 응답의 deleted_count·deleted_groups 로 확인."
+        ),
+    ),
     current_user: User = Depends(_require_current_user),
     db: Session = Depends(get_db),
 ):
+    """이전 구현은 204 No Content 만 반환해 클라이언트가 "한 그룹에서만 지워졌다"
+    고 오해할 수 있었다 — 실제로는 group_name 미지정 시 N개 그룹에서 동시 삭제.
+    이제 200 + 삭제된 그룹 목록을 명시적으로 반환한다.
+    """
     t = _normalize_ticker(ticker)
     q = db.query(UserWatchlist).filter(
         UserWatchlist.user_id == current_user.user_id,
@@ -215,11 +236,19 @@ def remove_watchlist(
     )
     if group_name is not None:
         q = q.filter(UserWatchlist.group_name == _normalize_group(group_name))
+
+    # 삭제 전 영향 그룹 캡처
+    affected = [(row.group_name or DEFAULT_GROUP) for row in q.all()]
     deleted = q.delete(synchronize_session=False)
     db.commit()
     if deleted == 0:
         raise HTTPException(status_code=404, detail="해당 관심종목이 없습니다.")
-    return None
+    return {
+        "ticker":         t,
+        "deleted_count":  int(deleted),
+        "deleted_groups": affected,
+        "scope":          "single_group" if group_name is not None else "all_groups",
+    }
 
 
 @router.patch(
@@ -258,27 +287,38 @@ def change_group(
     try:
         db.commit()
     except IntegrityError:
-        # 새 그룹에 이미 동일 ticker 존재 — 기존 row 를 삭제하고 종료.
+        # 새 그룹에 이미 동일 ticker 존재 — 409 로 반환해 클라이언트가 머지·교체를 결정.
+        # 이전 구현은 이동 row 를 silent 하게 삭제하고 200 으로 응답 → 사용자가
+        # "이동 성공" 으로 오해하지만 실제로는 데이터 한 건이 사라졌다.
         db.rollback()
-        db.query(UserWatchlist).filter(UserWatchlist.id == row.id).delete()
-        db.commit()
-    db.refresh(row) if row in db else None
-
-    target = (
-        db.query(UserWatchlist)
-        .filter(
-            UserWatchlist.user_id == current_user.user_id,
-            UserWatchlist.ticker == t,
-            UserWatchlist.group_name == new_g,
+        existing_target = (
+            db.query(UserWatchlist)
+            .filter(
+                UserWatchlist.user_id == current_user.user_id,
+                UserWatchlist.ticker == t,
+                UserWatchlist.group_name == new_g,
+            )
+            .first()
         )
-        .first()
-    )
-    if not target:
-        raise HTTPException(status_code=500, detail="그룹 변경 중 오류.")
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code":    "WATCHLIST_DUPLICATE",
+                "message": f"이미 '{new_g}' 그룹에 같은 종목이 있습니다. 원본은 그대로 유지됩니다.",
+                "existing": {
+                    "ticker":     t,
+                    "group_name": new_g,
+                    "added_at":   existing_target.created_at.isoformat() if existing_target and existing_target.created_at else None,
+                },
+            },
+        )
+
+    # 정상 commit — row 가 이동됨. refresh 후 반환.
+    db.refresh(row)
     return WatchlistEntry(
-        ticker=target.ticker,
-        group_name=target.group_name or DEFAULT_GROUP,
-        added_at=target.created_at,
+        ticker=row.ticker,
+        group_name=row.group_name or DEFAULT_GROUP,
+        added_at=row.created_at,
     )
 
 

@@ -63,16 +63,35 @@ def log(msg: str) -> None:
 
 def score_and_tier(df: pd.DataFrame, raw_col: str = "raw_score") -> pd.DataFrame:
     """
-    raw_col → 날짜별 백분위 → score 1~100 (1등 100, 최하위 0) + tier ABCD.
-    v9 precompute_scores.compute_scores 와 동일 정의.
+    raw_col -> score (백분위 1-100, 호환 유지) + tier (절대 임계 ABCD).
+
+    B52 (2026-05-17): 이전 tier 는 score 백분위 기반(상위 20% = A 항상 고정).
+    industry standard (Tipranks 10%, Seeking Alpha 5%, choicestock 15%) 대비 너무 관대.
+    → tier 를 *prob_ensemble 절대 임계* 로 재정의. 시장 강세/약세에 따라 자연 변동.
+
+    v11 lambdarank score 분포 (학습 universe ~2,341 종목 × 80일):
+       mean -0.56, std 0.18, p50 -0.60, p90 -0.40, p95 -0.24, max +1.12
+    임계 (현재 분포 기준 일별 비율):
+       A: prob >= -0.1   (~5%, Strong Buy 수준) — B58 백테스트 검증으로 0.0→-0.1 환원
+       B: prob >= -0.5   (~25%, steady winner 자연 포함) — -0.4→-0.5 환원
+       C: prob >= -0.65  (~30%)
+       D: < -0.65         (~40%)
+
+    B58 (2026-05-17 백테스트): A=prob≥0 단조성 깨짐 (B 20일 9.19% > A 5.13%).
+    A 임계 완화해 B steady winner 일부 흡수. A-D 변별력 유지 + 단조성 개선 목표.
+
+    score 컬럼은 *호환* 위해 백분위 그대로 (FE/외부 의존 다수). tier 만 절대 임계.
     """
+    # score: 백분위 (호환)
     df["rank_in_date"]  = df.groupby("date")[raw_col].rank(ascending=False, method="min").astype(int)
     df["total_in_date"] = df.groupby("date")[raw_col].transform("count").astype(int)
     pct = (df["rank_in_date"] - 1) / (df["total_in_date"] - 1).clip(lower=1)
     df["score"] = ((1.0 - pct) * 100).clip(0, 100).round(1)
-    df["tier"]  = pd.cut(
-        df["score"],
-        bins=[-0.1, 40, 60, 80, 100.1],
+
+    # tier: 절대 임계 (raw_col = prob_ensemble 직접 사용)
+    df["tier"] = pd.cut(
+        df[raw_col],
+        bins=[-float("inf"), -0.65, -0.5, -0.1, float("inf")],
         labels=["D", "C", "B", "A"],
     ).astype(str)
     return df

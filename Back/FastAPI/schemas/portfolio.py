@@ -44,6 +44,7 @@ class PortfolioItem(BaseModel):
     score:         float
     tier:          str
     pbr:           Optional[float] = None           # stable 타입에서만 반환
+    sector_pbr_med: Optional[float] = None          # B12: 섹터 상대 비교용
 
 
 class PortfolioResponse(BaseModel):
@@ -53,3 +54,6 @@ class PortfolioResponse(BaseModel):
     model_version: str
     total:         int
     items:         list[PortfolioItem]
+    # B13: 진짜 KOSPI200 지수가 아니라 KOSPI 전체임을 응답에 명시.
+    universe:      Optional[str]   = None
+    universe_note: Optional[str]   = None

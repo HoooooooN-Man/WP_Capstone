@@ -18,6 +18,12 @@ interface StockListRowProps {
   tier: 'A' | 'B' | 'C' | 'D';
   cumulativeReturn?: number;
   headline?: string;
+  // FE 평가 #6 — headline 부재 시 finance 한 줄 폴백 (왜 추천됐는지)
+  per?: number;
+  pbr?: number;
+  roe?: number;
+  revGrowthYoy?: number;
+  dividendYield?: number;
 }
 
 /**
@@ -42,7 +48,28 @@ function StockListRow({
   tier,
   cumulativeReturn,
   headline,
+  per,
+  pbr,
+  roe,
+  revGrowthYoy,
+  dividendYield,
 }: StockListRowProps) {
+  // FE 평가 #6 — headline 없을 때 finance 한 줄 폴백.
+  // 우선순위: 1) 매출성장 우수 2) 저PER 가치 3) 고ROE 4) 고배당 5) 저PBR 자산주
+  const fallbackReason: string | null = (() => {
+    if (revGrowthYoy != null && revGrowthYoy >= 15)
+      return `매출 성장 +${revGrowthYoy.toFixed(0)}% — 성장세 우량`;
+    if (per != null && per > 0 && per < 10)
+      return `PER ${per.toFixed(1)}배 — 저평가 가치주`;
+    if (roe != null && roe >= 15)
+      return `ROE ${roe.toFixed(1)}% — 자기자본 수익 우량`;
+    if (dividendYield != null && dividendYield >= 3)
+      return `배당수익률 ${dividendYield.toFixed(2)}% — 인컴 매력`;
+    if (pbr != null && pbr > 0 && pbr < 0.8)
+      return `PBR ${pbr.toFixed(2)}배 — 자산주`;
+    return null;
+  })();
+  const subText = headline || fallbackReason;
   const navigate = useNavigate();
 
   const formatPrice = (p: number | null | undefined) => {
@@ -98,9 +125,9 @@ function StockListRow({
           {sector && ` · ${sector}`}
           {marketCapLabel && ` · ${marketCapLabel}`}
         </div>
-        {headline && (
+        {subText && (
           <div className="wp-t-md text-[var(--text-secondary)] truncate">
-            {headline}
+            {subText}
           </div>
         )}
       </div>
@@ -125,12 +152,19 @@ function StockListRow({
         <div className="tabular-nums wp-t-xl font-bold text-[var(--text-primary)]">
           {formatPrice(price)}
         </div>
-        <div
-          className="tabular-nums wp-t-base font-bold"
-          style={{ color: isPositive ? 'var(--color-up)' : 'var(--color-down)' }}
-        >
-          {formatPercent(changePercent)}
-        </div>
+        {/* B60: 변동률 0 = 거래 발생했지만 호가 변동 없음 (소형주 패턴). 회색 "변동없음" 표시. */}
+        {changePercent === 0 ? (
+          <div className="tabular-nums wp-t-base text-[var(--text-tertiary)]">
+            변동없음
+          </div>
+        ) : (
+          <div
+            className="tabular-nums wp-t-base font-bold"
+            style={{ color: isPositive ? 'var(--color-up)' : 'var(--color-down)' }}
+          >
+            {formatPercent(changePercent)}
+          </div>
+        )}
       </div>
 
       {/* 5. 누적 수익 — 100px, 우측 정렬 */}

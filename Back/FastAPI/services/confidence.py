@@ -12,15 +12,22 @@ Tier 1.4 (차별화 §2.1) — 앙상블 모델 간 분산을 신뢰구간으로
 from __future__ import annotations
 
 import math
+import os
 from typing import Iterable
 
 # 모델 의견 불일치 임계값. probability 표준편차 기준.
-# 0~1 범위 확률에서 σ=0.05 면 점수 단위로는 약 ±3.5점 변동에 해당.
-DISAGREEMENT_THRESHOLD = float(0.05)
+# 0~1 범위 확률에서 σ=0.05 = 평균 ± 5%p 변동 — 의견 분기 시그널.
+# 운영 환경에서 분포 보고 재조정 가능하도록 env override 노출.
+DISAGREEMENT_THRESHOLD = float(os.getenv("DISAGREEMENT_THRESHOLD", "0.05"))
 
-# probability(0~1) 표준편차를 score(1~100) 단위로 환산하는 근사 계수.
-# 점수가 백분위 랭킹이라 직접적 1:1 환산은 아니지만, UI 표시에 충분한 1차 근사.
-PROB_TO_SCORE_SCALE = 100.0
+# B28 fix: 이전엔 prob_std × 100 으로 score_std 매핑 — score 는 백분위 랭킹(0-100)
+# 이라 prob_std 와 단위/스케일이 다르다. 실제 *score 단위 분산* 을 추정하려면
+# rank space 에서 계산해야 정확하지만, 응답 시점에 전체 universe 가 없으므로
+# 다음과 같은 1차 근사 사용:
+#   score_std ≈ prob_std × ranking_sensitivity (모델 확률 1%p 변동이 점수 단위로
+#               유발하는 변동량). 경험치: 한국 시장 universe ~2300 종목에서 prob 1%p
+#               ≈ 6~8 ranking 변동 ≈ score 0.3-0.4 단위. 보수적으로 ×30 사용.
+PROB_TO_SCORE_SCALE = float(os.getenv("PROB_TO_SCORE_SCALE", "30.0"))
 
 
 def _stdev3(a: float, b: float, c: float) -> float:

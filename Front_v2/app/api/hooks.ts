@@ -7,7 +7,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, setSessionToken } from './client';
+import { api, clearSession, setSessionNickname, setSessionToken } from './client';
 
 // ── 응답 타입 정의 ─────────────────────────────────────────────────────────
 
@@ -30,6 +30,15 @@ export interface StockItem {
   headline?: string;
   market_cap_label?: string;
   change_pct?: number;
+  // B1: cohort 가중치용 finance 지표 (recommendations 응답에 LEFT JOIN 부착).
+  per?: number;
+  pbr?: number;
+  dividend_yield?: number;
+  roe?: number;
+  debt_ratio?: number;
+  op_margin?: number;
+  net_margin?: number;
+  rev_growth_yoy?: number;
 }
 
 export interface MarketRegime {
@@ -81,6 +90,9 @@ export interface DividendScores {
   consecutive_score?: number;
   growth_score?: number;
   payout_score?: number;
+  /** B35: rev_growth_yoy 기반 매출성장 점수 (실제 EPS 데이터 부재로 매출 proxy). */
+  rev_growth_score?: number;
+  /** @deprecated B35 — rev_growth_score 와 동일값. 하위호환 alias. */
   eps_growth_score?: number;
 }
 export interface DividendResponse {
@@ -88,6 +100,8 @@ export interface DividendResponse {
   yield_pct?: number;
   dps?: number;
   years_paid?: number;
+  dps_growth_yoy?: number | null;
+  payout_pct?: number | null;
   scores?: DividendScores;
   investment_points?: string[];
 }
@@ -131,8 +145,10 @@ export interface OutcomeResponse {
 }
 
 export interface NewsItem {
-  id: number;
-  news_id?: number;
+  // 백엔드 news_normalized.news_id 는 해시 문자열(예: "a1b2…") — number 가 아님.
+  // (이전 타입은 number 였는데 런타임에 string 이 들어와 키/라우팅이 불일치했다.)
+  id: string | number;
+  news_id?: string | number;
   title?: string;
   summary?: string;
   content?: string;
@@ -291,6 +307,8 @@ export interface WinnerStock {
   score?: number;
   trend?: { short: 'up' | 'down' | 'neutral'; medium: 'up' | 'down' | 'neutral'; long: 'up' | 'down' | 'neutral' };
   cumulative_return_pct?: number;
+  /** B62: fairvalue API 의 적정가 (목표가). NULL 가능. */
+  target_price?: number | null;
 }
 export interface WinnerDateGroup {
   date: string;
@@ -427,7 +445,11 @@ export function useLogin() {
     mutationFn: (body: { email: string; password: string }) =>
       api.post<{ session_token: string; nickname: string }>('/auth/login', body),
     onSuccess: (data) => {
-      setSessionToken(data.session_token);
+      // legacy 헤더 토큰 (응답 본문). 향후 백엔드가 cookie-only 로 전환하면 제거.
+      // cookie 자체는 fetch credentials 'include' 가 자동 처리 — JS 가 set 할 필요 없음.
+      if (data.session_token) setSessionToken(data.session_token);
+      // cookie 모드용 nickname marker — JS 가 토큰을 못 읽으므로 별도 isLoggedIn 신호.
+      setSessionNickname(data.nickname || null);
       qc.invalidateQueries({ queryKey: ['me'] });
     },
   });
@@ -523,8 +545,10 @@ export function useSetCohort() {
 
 export function useLogout() {
   const qc = useQueryClient();
-  return () => {
-    setSessionToken(null);
+  return async () => {
+    // 서버 측 세션 폐기 (cookie 모드: Set-Cookie max-age=0). 실패해도 클라이언트는 정리.
+    try { await api.post('/auth/logout'); } catch { /* idempotent */ }
+    clearSession();
     qc.clear();
   };
 }

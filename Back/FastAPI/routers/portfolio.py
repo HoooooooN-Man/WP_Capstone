@@ -75,16 +75,19 @@ def run_custom_backtest(req: BacktestRequest):
     summary="KOSPI 200 맞춤형 자동 포트폴리오 (Top 10)",
 )
 def get_kospi200_portfolio(
-    type: Literal["growth", "stable"] = Query("growth", description="growth=공격형, stable=안정형(PBR<1.5)"),
+    type: Literal["growth", "stable"] = Query("growth", description="growth=공격형, stable=안정형(PBR<섹터중앙값)"),
     model_version: str = Query("latest", description="모델 버전 (예: v8, latest)"),
 ):
     """
-    사용자 성향별 **KOSPI 200 Top 10 자동 포트폴리오**를 제공합니다.
+    사용자 성향별 **KOSPI Top 10 자동 포트폴리오**.
 
     | type   | 선정 기준                                                  |
     |--------|------------------------------------------------------------|
     | growth | 단순 AI score 상위 10                                       |
-    | stable | Tier A·B + 최신 분기 PBR < 1.5 + score 상위 10              |
+    | stable | Tier A·B + 최신 분기 PBR < **자기 섹터 PBR 중앙값** + score 상위 10 (B12) |
+
+    응답에 `universe` ("KOSPI_all") + `universe_note` 포함 — 진짜 KOSPI200 지수가
+    아니라 KOSPI 전체 상장종목 풀임 (B13). stable 항목엔 `sector_pbr_med` 부착.
 
     - **캐시**: 5분 TTL (Redis 없으면 DuckDB 직접 조회)
     """

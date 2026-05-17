@@ -279,12 +279,20 @@ def _is_same_origin(
     current_user: Optional[User],
     body_session_id: Optional[str],
 ) -> bool:
-    """impression 을 만든 주체 == 현재 요청 주체 인가?"""
-    # 로그인 사용자: user_id 일치.
-    if current_user and imp.user_id is not None:
-        return imp.user_id == current_user.user_id
-    # 비로그인 또는 anonymous-impression 로그인: session_id 일치.
+    """impression 을 만든 주체 == 현재 요청 주체 인가?
+
+    이전 구현 취약점: imp.user_id 가 set 인 (로그인 사용자가 만든) impression 도,
+    호출자가 비로그인 + body 의 session_id 만 알면 patch 가능했다. session_id 는
+    request body 의 자가-주장 문자열이라 신뢰 경계 밖. → analytics 오염.
+
+    수정: imp.user_id 가 있으면 반드시 같은 user 의 인증된 요청만 허용.
+    session_id 매칭은 imp 가 anonymous (user_id NULL) 인 경우에만 의미가 있다.
+    """
+    if imp.user_id is not None:
+        # 로그인 사용자 소유 — 본인 인증된 요청만.
+        return current_user is not None and imp.user_id == current_user.user_id
+    # 비로그인 (anonymous) impression — session_id 양쪽 모두 존재할 때 매칭.
     if imp.session_id is not None and body_session_id is not None:
         return imp.session_id == body_session_id
-    # 둘 다 user_id NULL 이고 양쪽 session_id 도 부재 — 서버 운영자 적재 등 예외.
+    # 둘 다 부재 — 운영자 적재 등 예외 — 거절.
     return False

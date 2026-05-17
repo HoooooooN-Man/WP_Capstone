@@ -499,8 +499,8 @@ def get_peers(
     limit:         int = Query(8, ge=2, le=20, description="반환 종목 수"),
 ):
     """
-    기준 종목의 같은 섹터·시가총액(close 프록시) ±50% 종목을 ML 점수 순으로 반환.
-    동일 섹터 우선, 부족하면 mid_sector 단계로 자동 확대.
+    기준 종목의 같은 섹터·**시가총액**(prices.market_cap, B2 fix) ±50% 종목을 ML 점수
+    순으로 반환. 동일 섹터 우선, 부족하면 mid_sector 단계로 자동 확대.
 
     각 종목에는 signal_label (매수/보유/매도/관망) 라벨이 함께 부착됩니다 (P0-1).
     """

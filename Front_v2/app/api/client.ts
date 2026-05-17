@@ -4,42 +4,97 @@
  * 두 백엔드 (8001 ML / 8000 Auth) 공통 fetch 클라이언트.
  * vite.config.ts 의 proxy 가 /api/v1 → 8001, /auth /users → 8000 으로 라우팅.
  *
- * 인증 토큰 자동 부착 (PRD §6 — Backend_Spec):
- *   - 8000 서버는 `session-token` 헤더로 인증
- *   - localStorage 'session-token' 에 저장됨
+ * 인증 (H#27 후 dual-mode):
+ *   - **신규(권장)**: 8000 이 `wp_session` HttpOnly 쿠키를 set. 브라우저가 자동 첨부.
+ *     credentials: 'include' + dev proxy 가 같은 origin 이므로 쿠키 그대로 전달.
+ *     세션 상태는 `/auth/session` 으로 확인 (토큰 값은 JS 에서 읽을 수 없음).
+ *   - **legacy**: localStorage 'session-token' 헤더 — 쿠키 미지원 환경 호환용.
+ *     점진 deprecate. 둘 다 보내면 백엔드가 cookie 우선.
  */
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 const SESSION_KEY = 'session-token';
 
-// ── 세션 토큰 외부 스토어 ────────────────────────────────────────────────
-// localStorage 는 React 밖의 상태이므로 useSyncExternalStore 로 구독한다.
-// setSessionToken 호출 시 모든 구독 컴포넌트가 즉시 리렌더 → 헤더/레일이
-// 로그인·로그아웃에 반응형으로 갱신된다.
+// ── 세션 상태 외부 스토어 ─────────────────────────────────────────────────
+// 쿠키 기반 인증은 JS 에서 토큰을 직접 못 읽으므로 nickname 등 식별 정보를 별도 관리.
+// localStorage 의 'session-token' (legacy) 또는 'wp_session_nick' (cookie 모드 marker)
+// 중 하나라도 있으면 isLoggedIn=true.
+const NICK_KEY = 'wp_session_nick';
 const sessionListeners = new Set<() => void>();
 
-export function getSessionToken(): string | null {
+interface SessionSnapshot {
+  /** legacy 헤더 모드의 토큰. cookie 모드에서는 항상 null. */
+  token: string | null;
+  /** 로그인 사용자 nickname (cookie 모드에서는 /auth/session 결과로 hydrate). */
+  nickname: string | null;
+  /** true = 둘 중 하나라도 로그인. */
+  isLoggedIn: boolean;
+}
+
+function readSnapshot(): SessionSnapshot {
   try {
-    return localStorage.getItem(SESSION_KEY);
+    const token = localStorage.getItem(SESSION_KEY);
+    const nickname = localStorage.getItem(NICK_KEY);
+    return { token, nickname, isLoggedIn: !!(token || nickname) };
   } catch {
-    return null;
+    return { token: null, nickname: null, isLoggedIn: false };
   }
 }
 
-export function setSessionToken(token: string | null) {
+// 안정된 reference — useSyncExternalStore 가 같은 값이면 리렌더 안 함.
+let _cachedSnap: SessionSnapshot = readSnapshot();
+function refreshSnapshot(): void {
+  const next = readSnapshot();
+  // shallow equal check
+  if (
+    next.token === _cachedSnap.token &&
+    next.nickname === _cachedSnap.nickname &&
+    next.isLoggedIn === _cachedSnap.isLoggedIn
+  ) return;
+  _cachedSnap = next;
+  sessionListeners.forEach((l) => l());
+}
+
+export function getSessionToken(): string | null {
+  return _cachedSnap.token;
+}
+
+export function getSessionNickname(): string | null {
+  return _cachedSnap.nickname;
+}
+
+/** Legacy 헤더 모드 — 로그인 응답의 session_token 을 저장. cookie 모드면 null 호출. */
+export function setSessionToken(token: string | null): void {
   try {
     if (token) localStorage.setItem(SESSION_KEY, token);
     else localStorage.removeItem(SESSION_KEY);
   } catch { /* ignore */ }
-  sessionListeners.forEach((l) => l());
+  refreshSnapshot();
+}
+
+/** 로그인 상태 marker. cookie 모드에서는 token 없이 nickname 만 set. */
+export function setSessionNickname(nickname: string | null): void {
+  try {
+    if (nickname) localStorage.setItem(NICK_KEY, nickname);
+    else localStorage.removeItem(NICK_KEY);
+  } catch { /* ignore */ }
+  refreshSnapshot();
+}
+
+/** 클라이언트 측 로그아웃 — 둘 다 정리. 서버 `/auth/logout` 은 별도 호출. */
+export function clearSession(): void {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(NICK_KEY);
+  } catch { /* ignore */ }
+  refreshSnapshot();
 }
 
 function subscribeSession(cb: () => void): () => void {
   sessionListeners.add(cb);
-  // 다른 탭에서의 로그인/로그아웃도 반영
   const onStorage = (e: StorageEvent) => {
-    if (e.key === SESSION_KEY) cb();
+    if (e.key === SESSION_KEY || e.key === NICK_KEY) refreshSnapshot();
   };
   window.addEventListener('storage', onStorage);
   return () => {
@@ -48,10 +103,25 @@ function subscribeSession(cb: () => void): () => void {
   };
 }
 
-/** 세션 토큰을 반응형으로 구독 — 로그인 상태 분기는 이 훅을 쓴다 */
-export function useSession(): { token: string | null; isLoggedIn: boolean } {
-  const token = useSyncExternalStore(subscribeSession, getSessionToken, () => null);
-  return { token, isLoggedIn: !!token };
+/** 세션 상태를 반응형으로 구독 — UI 분기는 이 훅을 쓴다. */
+export function useSession(): SessionSnapshot {
+  return useSyncExternalStore(
+    subscribeSession,
+    () => _cachedSnap,
+    () => _cachedSnap,
+  );
+}
+
+/** 앱 부팅 시 1회 호출 — 쿠키 모드에서 nickname hydrate. */
+export function useSessionBootstrap(): void {
+  useEffect(() => {
+    // 이미 nickname 가 있으면 skip — 토큰 만료라면 401 시 자동 정리됨.
+    if (_cachedSnap.nickname || _cachedSnap.token) return;
+    fetch('/auth/session', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.nickname) setSessionNickname(d.nickname); })
+      .catch(() => { /* unauthenticated — 무시 */ });
+  }, []);
 }
 
 export interface ApiError extends Error {
@@ -83,7 +153,8 @@ async function request<T>(
     if (qsStr) url += (path.includes('?') ? '&' : '?') + qsStr;
   }
 
-  // 인증 헤더 자동 부착 (auth 라우트가 아닐 때)
+  // legacy 헤더 모드: localStorage 토큰이 있으면 첨부.
+  // cookie 모드: credentials 'include' 가 브라우저에 위임 — JS 가 토큰을 못 읽음.
   const token = getSessionToken();
   const finalHeaders: HeadersInit = {
     'Content-Type': 'application/json',
@@ -91,12 +162,21 @@ async function request<T>(
     ...headers,
   };
 
-  const res = await fetch(url, { ...init, headers: finalHeaders });
+  const res = await fetch(url, {
+    ...init,
+    headers: finalHeaders,
+    // H#27: 모든 요청에 쿠키 포함 — 같은 origin 이라 dev/prod 둘 다 정상.
+    credentials: 'include',
+  });
 
   if (!res.ok) {
     type ErrPayload = { message?: string; code?: string; request_id?: string };
     let payload: ErrPayload | null = null;
     try { payload = (await res.json()) as ErrPayload; } catch { /* not JSON */ }
+    // 401 자동 정리 — 만료/위변조 시 클라이언트 상태도 비움.
+    if (res.status === 401 && !path.startsWith('/auth/')) {
+      clearSession();
+    }
     const err: ApiError = Object.assign(new Error(payload?.message ?? `HTTP ${res.status}`), {
       status: res.status,
       code: payload?.code,

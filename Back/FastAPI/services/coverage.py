@@ -19,7 +19,13 @@ import os
 from pathlib import Path
 from typing import Iterable, Optional
 
-DEFAULT_MIN_DAYS = 60   # 영업일. 시장 이벤트 1주차 + α (60≈3개월).
+# B29: 신규 상장 종목 제외 기준 (영업일 수).
+# 60 영업일 ≈ 3개월. 근거:
+#   - IPO 후 2~4주 보호예수 + 초기 변동성 안정화 1~2개월 → 합산 ~3개월.
+#   - ML 피처 중 rolling 60d momentum/vol 이 핵심 신호 → 60일 미만은 피처 신뢰도 ↓.
+#   - 한국거래소 KOSPI200 편입 기준 (상장 후 6개월) 대비 절반 → 보수적 안전선.
+# 운영 조정 필요 시 env COVERAGE_MIN_DAYS 로 override.
+DEFAULT_MIN_DAYS = int(os.getenv("COVERAGE_MIN_DAYS", "60"))
 
 
 def coverage_status(available_days: int, *, min_days: int = DEFAULT_MIN_DAYS) -> str:

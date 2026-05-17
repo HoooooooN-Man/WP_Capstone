@@ -99,7 +99,7 @@ export default function MyPage() {
           </div>
         </div>
 
-        {menuSections.map((section) => (
+        {isLoggedIn && menuSections.map((section) => (
           <div key={section.title} className="mb-6">
             <div className="wp-t-base font-bold text-[var(--text-secondary)] mb-3 pl-1">
               {section.title}
@@ -160,17 +160,19 @@ export default function MyPage() {
           </div>
         ))}
 
-        <button
-          onClick={() => {
-            logout();
-            window.location.href = '/login';
-          }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl transition-colors cursor-pointer
-            bg-[var(--bg-elev-1)] hover:bg-[var(--bg-elev-2)] border border-[var(--border-default)] text-[var(--color-down)]"
-        >
-          <LogOut size={20} />
-          <span className="wp-t-base font-bold">로그아웃</span>
-        </button>
+        {isLoggedIn && (
+          <button
+            onClick={() => {
+              logout();
+              window.location.href = '/login';
+            }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl transition-colors cursor-pointer
+              bg-[var(--bg-elev-1)] hover:bg-[var(--bg-elev-2)] border border-[var(--border-default)] text-[var(--color-down)]"
+          >
+            <LogOut size={20} />
+            <span className="wp-t-base font-bold">로그아웃</span>
+          </button>
+        )}
     </AppLayout>
   );
 }

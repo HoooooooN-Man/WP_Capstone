@@ -252,8 +252,26 @@ export default function StockDetailPage() {
               sub: '원',
             },
             { label: '거래량', value: latest?.volume != null ? fmtKRW(latest.volume) : '-', sub: '주' },
-            { label: 'PER', value: fin?.per != null ? `${fin.per.toFixed(1)}배` : '-' },
-            { label: 'PBR', value: fin?.pbr != null ? `${fin.pbr.toFixed(2)}배` : '-' },
+            // PER/PBR — fairValue API 의 TTM EPS·BPS + 현재가 기반 (분기 stale 회피).
+            // 폴백: financials 의 분기 종가 기준 컬럼.
+            {
+              label: 'PER',
+              value: (() => {
+                const curPx = selectedStock?.price;
+                const eps = fairValue?.inputs?.eps;
+                if (curPx && eps && eps > 0) return `${(curPx / eps).toFixed(1)}배`;
+                return fin?.per != null ? `${fin.per.toFixed(1)}배` : '-';
+              })(),
+            },
+            {
+              label: 'PBR',
+              value: (() => {
+                const curPx = selectedStock?.price;
+                const bps = fairValue?.inputs?.bps;
+                if (curPx && bps && bps > 0) return `${(curPx / bps).toFixed(2)}배`;
+                return fin?.pbr != null ? `${fin.pbr.toFixed(2)}배` : '-';
+              })(),
+            },
             {
               label: '외국인 비중',
               value: latest?.foreign_ratio != null ? `${Number(latest.foreign_ratio).toFixed(1)}%` : '-',

@@ -12,6 +12,7 @@ interface WinnerCardProps {
   targetPrice: number;
   trend: TrendMarker;
   cumulativeReturn: number;
+  daysSinceRec?: number;
   isLocked?: boolean;
 }
 
@@ -23,6 +24,7 @@ export default function WinnerCard({
   targetPrice,
   trend,
   cumulativeReturn,
+  daysSinceRec = 0,
   isLocked = false,
 }: WinnerCardProps) {
   const getTrendIcon = (direction: 'up' | 'neutral' | 'down') => {
@@ -104,33 +106,56 @@ export default function WinnerCard({
         </div>
 
         <div>
-          <div style={{ fontSize: '12px', lineHeight: '16px', color: 'var(--text-tertiary)', marginBottom: '4px' }}>
-            추세
+          <div style={{ fontSize: '12px', lineHeight: '16px', color: 'var(--text-tertiary)', marginBottom: '4px' }}
+               title="추세: 추천일 이후 5/20/60거래일 수익률. 회색 = 아직 미경과">
+            추세 (5/20/60일)
           </div>
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>단</span>
-            <span style={{ fontSize: '14px', color: getTrendColor(trend.short) }}>{getTrendIcon(trend.short)}</span>
-            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>중</span>
-            <span style={{ fontSize: '14px', color: getTrendColor(trend.medium) }}>{getTrendIcon(trend.medium)}</span>
-            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>장</span>
-            <span style={{ fontSize: '14px', color: getTrendColor(trend.long) }}>{getTrendIcon(trend.long)}</span>
-          </div>
+          {daysSinceRec < 5 ? (
+            <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
+              추천 후 {daysSinceRec}일 — 추세 미산출
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>단</span>
+              <span style={{ fontSize: '14px', color: getTrendColor(trend.short) }}>{getTrendIcon(trend.short)}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>중</span>
+              <span style={{ fontSize: '14px', color: getTrendColor(trend.medium) }}>{getTrendIcon(trend.medium)}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>장</span>
+              <span style={{ fontSize: '14px', color: getTrendColor(trend.long) }}>{getTrendIcon(trend.long)}</span>
+            </div>
+          )}
         </div>
 
         <div className="pt-3" style={{ borderTop: '1px solid var(--border-default)' }}>
-          <div
-            className="tabular-nums"
-            style={{
-              fontSize: '16px',
-              fontWeight: 700,
-              lineHeight: '24px',
-              color: returnColor,
-              textAlign: 'center',
-            }}
-          >
-            추천 후 {cumulativeReturn >= 0 ? '+' : ''}
-            {cumulativeReturn.toFixed(1)}%
-          </div>
+          {/* C: 당일 추천은 "추천 당일" 안내, 그 외 누적 수익률 */}
+          {daysSinceRec === 0 ? (
+            <div
+              className="tabular-nums"
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                lineHeight: '20px',
+                color: 'var(--text-tertiary)',
+                textAlign: 'center',
+              }}
+            >
+              추천 당일 — 변동 없음
+            </div>
+          ) : (
+            <div
+              className="tabular-nums"
+              style={{
+                fontSize: '16px',
+                fontWeight: 700,
+                lineHeight: '24px',
+                color: returnColor,
+                textAlign: 'center',
+              }}
+            >
+              추천 후 {cumulativeReturn >= 0 ? '+' : ''}
+              {cumulativeReturn.toFixed(1)}%
+            </div>
+          )}
         </div>
       </div>
 

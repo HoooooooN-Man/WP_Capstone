@@ -18,8 +18,8 @@ import datetime
 import uuid
 
 from sqlalchemy import (
-    Column, Integer, String, Boolean, Text, ForeignKey, DateTime,
-    UniqueConstraint, Index,
+    Column, Integer, String, SmallInteger, Boolean, Text, ForeignKey, DateTime,
+    Numeric, UniqueConstraint, Index,
 )
 from sqlalchemy import Date as SQLDate
 from sqlalchemy.dialects.postgresql import ARRAY, REAL, UUID, JSONB
@@ -89,6 +89,9 @@ class Notification(Base):
 
 
 # ── 3-1. user_holdings (사용자 보유 종목 — PRD §3.6 신규) ─────────────────────
+# 2026-05-16 마이그레이션:
+#   M#36 — avg_price INTEGER → NUMERIC(20,4) (외국 종목 USD 소수 + 머지 잘림 방지)
+#   L#54 — deleted_at TIMESTAMP NULL (soft delete) + user_holdings_history audit
 class UserHolding(Base):
     __tablename__ = "user_holdings"
     __table_args__ = (
@@ -100,14 +103,37 @@ class UserHolding(Base):
     user_id    = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     ticker     = Column(String(20), nullable=False)
     quantity   = Column(Integer, nullable=False, default=0)              # 보유 수량 (주)
-    avg_price  = Column(Integer, nullable=False, default=0)              # 평균 매수가 (원)
+    avg_price  = Column(Numeric(20, 4), nullable=False, default=0)        # 평균 매수가 (원/USD, NUMERIC)
     bought_at  = Column(SQLDate, nullable=True)                          # 첫 매수일
     memo       = Column(String(200), nullable=True)                      # 메모
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    deleted_at = Column(DateTime, nullable=True)                          # soft delete marker
+
+
+class UserHoldingHistory(Base):
+    """user_holdings 변경 이력 (audit trail).
+
+    action ∈ {created, updated, deleted, restored}.
+    snapshot 은 변경 직후 row 의 JSONB 스냅샷 — 컴플라이언스용.
+    """
+    __tablename__ = "user_holdings_history"
+    __table_args__ = (
+        Index("idx_hold_hist_holding", "holding_id"),
+        Index("idx_hold_hist_user",    "user_id", "changed_at"),
+    )
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    holding_id  = Column(Integer, nullable=False)
+    user_id     = Column(Integer, nullable=False)
+    action      = Column(String(20), nullable=False)
+    snapshot    = Column(JSONB, nullable=False)
+    changed_at  = Column(DateTime, nullable=False, server_default=func.now())
 
 
 # ── 3-2. user_notes (사용자 투자노트 — NewsPage 투자노트 탭) ──────────────────
+# 2026-05-16 마이그레이션 M#37:
+#   tags 콤마조인 String(200) 폐기 → user_note_tags 정규화 테이블로 분리.
+#   기존 tags 컬럼은 안전을 위해 legacy_tags 로 RENAME (다음 사이클에서 DROP).
 class UserNote(Base):
     __tablename__ = "user_notes"
     __table_args__ = (
@@ -118,9 +144,27 @@ class UserNote(Base):
     user_id    = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     title      = Column(String(200), nullable=False)
     content    = Column(Text, nullable=False)
-    tags       = Column(String(200), nullable=True)                      # 쉼표 구분 태그
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    tag_items  = relationship("UserNoteTag", back_populates="note",
+                              cascade="all, delete-orphan", order_by="UserNoteTag.ordering")
+
+
+class UserNoteTag(Base):
+    """user_notes 의 태그 — 노트 1개 ↔ 태그 N개."""
+    __tablename__ = "user_note_tags"
+    __table_args__ = (
+        UniqueConstraint("note_id", "tag_text", name="user_note_tags_note_id_tag_text_key"),
+        Index("idx_note_tags_note", "note_id"),
+        Index("idx_note_tags_text", "tag_text"),
+    )
+    id        = Column(Integer, primary_key=True, autoincrement=True)
+    note_id   = Column(Integer, ForeignKey("user_notes.id", ondelete="CASCADE"), nullable=False)
+    tag_text  = Column(String(30), nullable=False)
+    ordering  = Column(SmallInteger, nullable=False, default=0)
+
+    note = relationship("UserNote", back_populates="tag_items")
 
 
 # ── 4. board_posts ────────────────────────────────────────────────────────────

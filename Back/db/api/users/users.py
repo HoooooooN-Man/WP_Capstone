@@ -12,42 +12,52 @@ from __future__ import annotations
 from typing import List, Optional
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Query
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Header, Query, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
+import redis as _redis  # 예외 타입 catch 용
+
 from db.database import get_db
 from db.models import User, UserWatchlist, Notification
-from api.auth.auth import rd  # Redis 연결 공유
+from api.auth.auth import (
+    rd, get_current_user as _get_current_email,
+)  # Redis + 통합 토큰 해석 (cookie + header + fingerprint)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
 # ── 인증 헬퍼 ─────────────────────────────────────────────────────────────────
+# H#27 + IP/UA fingerprint: 모든 토큰 해석은 auth.get_current_user 로 위임.
+# 호출자는 헤더(session-token) 또는 쿠키(wp_session) 중 어느 쪽이든 그대로 전달.
 
 def _get_current_user_or_none(
+    request: Request,
     session_token: Optional[str] = Header(None),
+    wp_session: Optional[str] = Cookie(None),
     db: Session = Depends(get_db),
 ) -> Optional[User]:
-    """세션 토큰이 있으면 User 객체 반환, 없으면 None."""
-    if not session_token:
+    """토큰 있으면 User 반환, 없거나 만료/위변조면 None.
+
+    fingerprint 불일치도 None 으로 처리 (Optional 시그니처 — 비로그인 동작).
+    """
+    if not session_token and not wp_session:
         return None
-    email = rd.get(f"session:{session_token}")
-    if not email:
+    try:
+        email = _get_current_email(request, session_token, wp_session)
+    except HTTPException:
         return None
     return db.query(User).filter(User.email == email).first()
 
 
 def _require_current_user(
+    request: Request,
     session_token: Optional[str] = Header(None),
+    wp_session: Optional[str] = Cookie(None),
     db: Session = Depends(get_db),
 ) -> User:
-    """세션 토큰이 없거나 만료됐으면 401."""
-    if not session_token:
-        raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
-    email = rd.get(f"session:{session_token}")
-    if not email:
-        raise HTTPException(status_code=401, detail="세션이 만료됐습니다. 다시 로그인해주세요.")
+    """세션이 없거나 만료/fingerprint 불일치면 401, Redis 장애면 503."""
+    email = _get_current_email(request, session_token, wp_session)  # 내부에서 401/503 raise
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=401, detail="사용자를 찾을 수 없습니다.")
@@ -60,6 +70,9 @@ class NotificationItem(BaseModel):
     id:              int
     ticker:          Optional[str] = None
     title:           Optional[str] = None
+    # body 는 현재 DB 모델에 존재하지 않아 항상 None.
+    # 이전 구현은 sentiment_label 을 body 에 그대로 복사해 알림 본문이
+    # "positive"/"neutral" 만 표시되는 placeholder 버그가 있었다.
     body:            Optional[str] = None
     sentiment_label: Optional[str] = None
     is_read:         bool
@@ -110,7 +123,9 @@ class MeResponse(BaseModel):
     nickname:    str
     cohort:      Optional[str] = None
     is_verified: bool = False
-    created_at:  Optional[str] = None
+    # DB 컬럼이 server_default=func.now() 라 row 가 존재하는 한 항상 set.
+    # 이전 Optional[str] 은 불필요해 FE 가 매번 null 체크를 하게 만들었다.
+    created_at:  str
 
     class Config:
         from_attributes = True
@@ -125,7 +140,8 @@ def get_me(current_user: User = Depends(_require_current_user)):
         nickname=current_user.nickname,
         cohort=current_user.cohort,
         is_verified=bool(current_user.is_verified),
-        created_at=current_user.created_at.isoformat() if current_user.created_at else None,
+        # server_default 가 있어 NULL 인 경우는 사실상 없지만 legacy row 방어용 "".
+        created_at=current_user.created_at.isoformat() if current_user.created_at else "",
     )
 
 
@@ -158,7 +174,8 @@ def get_notifications(
                 id=n.id,
                 ticker=n.ticker,
                 title=n.title,
-                body=n.sentiment_label,
+                # body 는 DB 컬럼 부재 — None 고정. FE 는 sentiment_label 또는 title 사용.
+                body=None,
                 sentiment_label=n.sentiment_label,
                 is_read=n.is_read,
                 created_at=n.created_at,

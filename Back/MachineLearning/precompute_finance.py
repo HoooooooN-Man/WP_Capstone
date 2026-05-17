@@ -77,7 +77,12 @@ LOWER_IS_BETTER = {"debt_ratio", "pbr"}
 
 
 def percentile_rank(series: pd.Series, lower_is_better: bool = False) -> pd.Series:
-    """0~100 백분위 순위. NaN은 50으로 채움."""
+    """0~100 백분위 순위. NaN → 50 (중립) 폴백.
+
+    B32: services/feature_groups._finance_radar_table 의 radar 점수도 동일한
+    원칙(누락 metric → 50 중립) 으로 정렬됨. 데이터 누락 종목이 0(최악) 으로
+    분류되어 우량주가 페널티 받는 버그(B22) 수정 후 일치.
+    """
     ranks = series.rank(pct=True, ascending=not lower_is_better, na_option="keep") * 100
     return ranks.fillna(50.0)
 

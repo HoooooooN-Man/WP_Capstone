@@ -9,6 +9,7 @@ Tier 1B 4.5 — `data.py` 분할 결과물.
 
 from __future__ import annotations
 
+import os
 import pandas as pd
 
 from ._core import (
@@ -16,6 +17,19 @@ from ._core import (
     cached as _cached,
     resolve_version as _resolve_version,
 )
+
+
+# B30: drift/cluster 임계값 — 운영 환경 분포 보고 재조정 가능.
+#   DRIFT_SIGMA_K     : 최근 평균이 전체 평균 ± Kσ 벗어나면 drift_alert=True.
+#                       2.0 = 표준 정규분포에서 약 5% false-positive 기대치.
+#   PROB_STD_FLOOR    : 일평균 prob_std 가 이 값 미만이면 모델 클러스터링 경고.
+#                       0.03 = 확률 3%p 미만 분산 → 종목 변별력 약화 신호.
+#   PROB_CLUSTER_LO/HI: prob_ensemble 클러스터 모니터 (0.28~0.32 = 학습 시 양성
+#                       클래스 비율 근처) 모델 default-fallback 패턴 감지.
+DRIFT_SIGMA_K      = float(os.getenv("DRIFT_SIGMA_K", "2.0"))
+PROB_STD_FLOOR     = float(os.getenv("PROB_STD_FLOOR", "0.03"))
+PROB_CLUSTER_LO    = float(os.getenv("PROB_CLUSTER_LO", "0.28"))
+PROB_CLUSTER_HI    = float(os.getenv("PROB_CLUSTER_HI", "0.32"))
 
 
 def get_model_metrics(
@@ -95,9 +109,10 @@ def get_model_metrics(
                 STDDEV_POP(CAST(prob_ensemble AS DOUBLE))  AS prob_std,
                 MIN(CAST(prob_ensemble AS DOUBLE))         AS prob_min,
                 MAX(CAST(prob_ensemble AS DOUBLE))         AS prob_max,
-                -- prob 클러스터 비율: 0.28~0.32 범위에 몰린 종목 비율 (%)
+                -- prob 클러스터 비율: B30 임계 (PROB_CLUSTER_LO ~ HI 범위 = 모델
+                -- default-fallback 패턴 — 학습 양성 비율 ~30% 근처에 응답이 몰리는 현상) 비율 (%)
                 ROUND(
-                    SUM(CASE WHEN prob_ensemble BETWEEN 0.28 AND 0.32 THEN 1 ELSE 0 END)
+                    SUM(CASE WHEN prob_ensemble BETWEEN {pc_lo} AND {pc_hi} THEN 1 ELSE 0 END)
                     * 100.0 / COUNT(*), 1
                 ) AS prob_cluster_pct
             FROM scores
@@ -105,7 +120,8 @@ def get_model_metrics(
               AND CAST(date AS VARCHAR) IN ({plc})
             GROUP BY date
             ORDER BY date ASC
-            """.format(plc=",".join("?" * len(dates))),
+            """.format(plc=",".join("?" * len(dates)),
+                       pc_lo=PROB_CLUSTER_LO, pc_hi=PROB_CLUSTER_HI),
             [ver, *dates],
         ).fetchdf()
 
@@ -144,10 +160,10 @@ def get_model_metrics(
             mean_of_means = float(means_series.mean())
             stddev_of_means = float(means_series.std(ddof=0)) or 1e-9
             latest_mean = float(means_series.iloc[-1])
-            drift_alert = abs(latest_mean - mean_of_means) > (2.0 * stddev_of_means)
-            # prob_std 기준 신호 품질 (< 0.03이면 클러스터링 경고)
+            drift_alert = abs(latest_mean - mean_of_means) > (DRIFT_SIGMA_K * stddev_of_means)
+            # prob_std 기준 신호 품질 (PROB_STD_FLOOR 미만이면 클러스터링 경고)
             avg_prob_std = float(prob_std_series.mean()) if len(prob_std_series) else None
-            prob_signal_ok = avg_prob_std > 0.03 if avg_prob_std is not None else None
+            prob_signal_ok = avg_prob_std > PROB_STD_FLOOR if avg_prob_std is not None else None
             summary = {
                 "mean_of_means":  round(mean_of_means, 2),
                 "stddev_of_means": round(stddev_of_means, 2),

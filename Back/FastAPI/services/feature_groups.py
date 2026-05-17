@@ -123,35 +123,67 @@ def _finance_radar_table() -> dict:
     """
     def fetch():
         con = _con()
+        # B22+B23 fix: 이전엔 base CTE 가 "any non-null" 조건이라 일부 metric NULL row 가
+        # rn=1 로 잡혀 NULLS FIRST → percentile=0 → 우량주가 최악 점수.
+        # 새 설계: metric 별로 최근 non-null 값을 따로 추출 (LATEST_NONNULL_PER_METRIC),
+        # 누락 metric 은 *percent_rank 에 포함시키지 않음* → NaN → Python 측에서 폴백 평균만 사용.
         rows = con.execute(
             """
-            WITH base AS (
+            WITH ranked AS (
                 SELECT
                     f.ticker,
-                    COALESCE(st.wics_mid_name, '기타') AS sector,
+                    f.year, f.quarter,
                     f.rev_growth_yoy, f.op_growth_yoy, f.roe,
                     f.debt_ratio, f.current_ratio, f.op_margin, f.net_margin,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY f.ticker ORDER BY f.year DESC, f.quarter DESC
-                    ) AS rn
+                    ROW_NUMBER() OVER (PARTITION BY f.ticker, (f.rev_growth_yoy IS NULL) ORDER BY f.year DESC, f.quarter DESC) AS rn_rev,
+                    ROW_NUMBER() OVER (PARTITION BY f.ticker, (f.op_growth_yoy  IS NULL) ORDER BY f.year DESC, f.quarter DESC) AS rn_opg,
+                    ROW_NUMBER() OVER (PARTITION BY f.ticker, (f.roe            IS NULL) ORDER BY f.year DESC, f.quarter DESC) AS rn_roe,
+                    ROW_NUMBER() OVER (PARTITION BY f.ticker, (f.debt_ratio     IS NULL) ORDER BY f.year DESC, f.quarter DESC) AS rn_debt,
+                    ROW_NUMBER() OVER (PARTITION BY f.ticker, (f.current_ratio  IS NULL) ORDER BY f.year DESC, f.quarter DESC) AS rn_curr,
+                    ROW_NUMBER() OVER (PARTITION BY f.ticker, (f.op_margin      IS NULL) ORDER BY f.year DESC, f.quarter DESC) AS rn_opm,
+                    ROW_NUMBER() OVER (PARTITION BY f.ticker, (f.net_margin     IS NULL) ORDER BY f.year DESC, f.quarter DESC) AS rn_netm
                 FROM finance f
-                LEFT JOIN stocks st ON f.ticker = st.ticker
-                -- 최신 분기에 전 지표가 NULL 인 placeholder 행(예: 2026 Q1) 제외
-                WHERE f.roe IS NOT NULL OR f.op_margin IS NOT NULL
-                   OR f.net_margin IS NOT NULL OR f.rev_growth_yoy IS NOT NULL
-                   OR f.debt_ratio IS NOT NULL
             ),
-            lq AS (SELECT * FROM base WHERE rn = 1)
+            latest_metrics AS (
+                SELECT
+                    ticker,
+                    MAX(CASE WHEN rn_rev  = 1 AND rev_growth_yoy IS NOT NULL THEN rev_growth_yoy END) AS rev_growth_yoy,
+                    MAX(CASE WHEN rn_opg  = 1 AND op_growth_yoy  IS NOT NULL THEN op_growth_yoy  END) AS op_growth_yoy,
+                    MAX(CASE WHEN rn_roe  = 1 AND roe            IS NOT NULL THEN roe            END) AS roe,
+                    MAX(CASE WHEN rn_debt = 1 AND debt_ratio     IS NOT NULL THEN debt_ratio     END) AS debt_ratio,
+                    MAX(CASE WHEN rn_curr = 1 AND current_ratio  IS NOT NULL THEN current_ratio  END) AS current_ratio,
+                    MAX(CASE WHEN rn_opm  = 1 AND op_margin      IS NOT NULL THEN op_margin      END) AS op_margin,
+                    MAX(CASE WHEN rn_netm = 1 AND net_margin     IS NOT NULL THEN net_margin     END) AS net_margin
+                FROM ranked
+                GROUP BY ticker
+            )
             SELECT
-                ticker, sector,
-                PERCENT_RANK() OVER (ORDER BY rev_growth_yoy   NULLS FIRST) * 100 AS p_rev,
-                PERCENT_RANK() OVER (ORDER BY op_growth_yoy    NULLS FIRST) * 100 AS p_op_g,
-                PERCENT_RANK() OVER (ORDER BY roe              NULLS FIRST) * 100 AS p_roe,
-                PERCENT_RANK() OVER (ORDER BY debt_ratio DESC  NULLS FIRST) * 100 AS p_debt_inv,
-                PERCENT_RANK() OVER (ORDER BY current_ratio    NULLS FIRST) * 100 AS p_curr,
-                PERCENT_RANK() OVER (ORDER BY op_margin        NULLS FIRST) * 100 AS p_opm,
-                PERCENT_RANK() OVER (ORDER BY net_margin       NULLS FIRST) * 100 AS p_netm
-            FROM lq
+                lm.ticker,
+                COALESCE(st.wics_mid_name, '기타') AS sector,
+                COALESCE(st.wics_large_name, st.wics_mid_name, '기타') AS sector_large,
+                -- B22: NULLS FIRST 제거. NULL 은 percent_rank 가 NULL 반환 → Python 측에서 제외.
+                CASE WHEN lm.rev_growth_yoy IS NULL THEN NULL
+                     ELSE PERCENT_RANK() OVER (ORDER BY lm.rev_growth_yoy) * 100 END AS p_rev,
+                CASE WHEN lm.op_growth_yoy IS NULL THEN NULL
+                     ELSE PERCENT_RANK() OVER (ORDER BY lm.op_growth_yoy) * 100 END AS p_op_g,
+                CASE WHEN lm.roe IS NULL THEN NULL
+                     ELSE PERCENT_RANK() OVER (ORDER BY lm.roe) * 100 END AS p_roe,
+                -- B48: 부채비율은 *섹터 내* 백분위. 금융업은 본업이 부채라 전체 universe 에서 항상 0점
+                -- (하나금융 safety=0.6 같은 비현실 결과). PARTITION BY sector_large 로 섹터 내 비교.
+                CASE WHEN lm.debt_ratio IS NULL THEN NULL
+                     ELSE PERCENT_RANK() OVER (
+                         PARTITION BY COALESCE(st.wics_large_name, st.wics_mid_name, '기타')
+                         ORDER BY lm.debt_ratio DESC) * 100 END AS p_debt_inv,
+                CASE WHEN lm.current_ratio IS NULL THEN NULL
+                     ELSE PERCENT_RANK() OVER (
+                         PARTITION BY COALESCE(st.wics_large_name, st.wics_mid_name, '기타')
+                         ORDER BY lm.current_ratio) * 100 END AS p_curr,
+                CASE WHEN lm.op_margin IS NULL THEN NULL
+                     ELSE PERCENT_RANK() OVER (ORDER BY lm.op_margin) * 100 END AS p_opm,
+                CASE WHEN lm.net_margin IS NULL THEN NULL
+                     ELSE PERCENT_RANK() OVER (ORDER BY lm.net_margin) * 100 END AS p_netm
+            FROM latest_metrics lm
+            LEFT JOIN stocks st ON lm.ticker = st.ticker
             """
         ).fetchall()
 
@@ -159,16 +191,29 @@ def _finance_radar_table() -> dict:
         sector_sums: dict[str, dict] = {}
         sector_cnt: dict[str, int] = {}
 
-        for (tk, sector, p_rev, p_op_g, p_roe, p_debt_inv, p_curr, p_opm, p_netm) in rows:
-            def _avg(*xs):
-                vals = [x for x in xs if x is not None]
-                return round(sum(vals) / len(vals), 1) if vals else 0.0
+        def _avg_with_fallback(present, fallback=50.0):
+            """non-null 값들 평균. 전부 None 이면 fallback(중립 50)."""
+            vals = [float(x) for x in present if x is not None]
+            return round(sum(vals) / len(vals), 1) if vals else fallback
+
+        # B49 + B51: 금융업 safety — debt_ratio 무의미라 ROE 안정성 + 자본총계 percentile 사용.
+        # 은행/보험은 *ROE 안정성* (지난 분기 ROE 변동성 낮음 = 안전) + *자본 규모* 가 본업 안전 proxy.
+        # 본 모듈은 분기 시계열 미접근이라 단순화: 금융섹터에서 ROE percentile 자체를 safety proxy 로 사용
+        # (ROE 가 안정적으로 양수면 본업 건전성 양호 시그널).
+        FINANCIAL_SECTORS = {'금융', '은행', '증권', '보험'}
+        for (tk, sector, sector_large, p_rev, p_op_g, p_roe, p_debt_inv, p_curr, p_opm, p_netm) in rows:
+            is_financial = sector_large in FINANCIAL_SECTORS
+            if is_financial:
+                # 금융: safety = ROE percentile (수익 안정성 = 본업 건전성 proxy). 데이터 없으면 50.
+                safety_val = _avg_with_fallback([p_roe], fallback=50.0)
+            else:
+                safety_val = _avg_with_fallback([p_debt_inv, p_curr])
             g = {
-                "growth":        _avg(p_rev, p_op_g),
-                "profitability": _avg(p_roe),
-                "safety":        _avg(p_debt_inv, p_curr),
-                "moat":          _avg(p_opm),
-                "cashflow":      _avg(p_netm),
+                "growth":        _avg_with_fallback([p_rev, p_op_g]),
+                "profitability": _avg_with_fallback([p_roe]),
+                "safety":        safety_val,
+                "moat":          _avg_with_fallback([p_opm]),
+                "cashflow":      _avg_with_fallback([p_netm]),
             }
             by_ticker[str(tk).zfill(6)] = g
             sec = sector or "기타"
@@ -235,7 +280,9 @@ def get_radar(ticker: str, model_version: str = "latest") -> Optional[dict]:
         return {
             "ticker":         t,
             "name":           name,
-            "sector":         sector or sec_key,
+            # scores 에 sector 가 없으면 wics_mid_name 를 폴백으로 사용.
+            # 이전엔 정의되지 않은 sec_key 를 참조해 미존재 ticker 호출이 NameError → 500.
+            "sector":         sector or wics_sector or "",
             "score":          float(score) if score is not None else None,
             "tier":           tier,
             "model_version":  ver,

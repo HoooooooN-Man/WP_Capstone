@@ -150,7 +150,13 @@ def make_correlation_sim(
         date_max = con.execute("SELECT MAX(date) FROM prices").fetchone()[0]
         if date_max is None:
             return lambda a, b: 1.0
-        cutoff = int(date_max) - period_days * 100   # 단순 cutoff (W3.5 sanity 와 동일)
+        # B14 fix: 이전 `int(date_max) - period_days * 100` 은 YYYYMMDD 정수 산술이라
+        # 월 경계에서 잘못된 날짜(예: 20194901) 가 나옴. 실제 날짜로 환산 후 다시 INTEGER.
+        from datetime import datetime as _dt, timedelta as _td
+        d_max = _dt.strptime(str(int(date_max)), "%Y%m%d")
+        # 영업일 ≈ 달력일 × 1.4 (주말 흡수) — 안전 마진 포함.
+        d_cut = d_max - _td(days=int(period_days * 1.5))
+        cutoff = int(d_cut.strftime("%Y%m%d"))
         tlist = ",".join(f"'{t}'" for t in tickers)
         df = con.execute(f"""
             SELECT date, ticker, close
@@ -175,20 +181,31 @@ def make_correlation_sim(
         returns[t] = ret[-period_days:]
 
     # 매트릭스 (sparse dict).
+    # zero-variance 시계열 페어는 corrcoef 결과가 NaN + numpy 가 stderr 에
+    # "RuntimeWarning: invalid value encountered in divide" 를 매번 찍어 운영 로그
+    # 가 도배된다. np.errstate 로 해당 RuntimeWarning 만 억제하고, 후처리에서
+    # np.isfinite 로 NaN→0.0 폴백.
     corr_mat: dict[tuple[str, str], float] = {}
     keys = list(returns.keys())
-    for i, a in enumerate(keys):
-        ra = returns[a]
-        for b in keys[i:]:
-            rb = returns[b]
-            n = min(len(ra), len(rb))
-            if n < 10:
-                continue
-            c = float(np.corrcoef(ra[-n:], rb[-n:])[0, 1])
-            if not np.isfinite(c):
-                c = 0.0
-            corr_mat[(a, b)] = c
-            corr_mat[(b, a)] = c
+    with np.errstate(invalid="ignore", divide="ignore"):
+        for i, a in enumerate(keys):
+            ra = returns[a]
+            ra_std = float(np.std(ra[-len(ra):])) if len(ra) else 0.0
+            for b in keys[i:]:
+                rb = returns[b]
+                n = min(len(ra), len(rb))
+                if n < 10:
+                    continue
+                # 분산 0 인 시계열은 corrcoef 가 정의 안 됨 — 즉시 0 으로 폴백.
+                rb_std = float(np.std(rb[-n:]))
+                if ra_std == 0.0 or rb_std == 0.0:
+                    c = 0.0
+                else:
+                    c = float(np.corrcoef(ra[-n:], rb[-n:])[0, 1])
+                    if not np.isfinite(c):
+                        c = 0.0
+                corr_mat[(a, b)] = c
+                corr_mat[(b, a)] = c
 
     def sim(a: str, b: str) -> float:
         if a == b:

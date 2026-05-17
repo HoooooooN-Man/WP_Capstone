@@ -11,12 +11,19 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import threading
 import time as _time
 from typing import Any, Callable
 
 import duckdb
+
+# 운영 디버깅용 로거.
+# 본 모듈의 `except Exception: pass` 들은 의도적인 graceful fallback (Redis 캐시 미스,
+# 워밍업 실패 등) 이지만 silent 한 것이 문제일 때가 있다. 필요 시 .debug → .warning
+# 으로만 격상해도 추적 가능하도록 로거를 표준화한다.
+logger = logging.getLogger(__name__)
 
 try:
     import redis as _redis_lib
@@ -62,7 +69,8 @@ def get_redis():
             socket_timeout=1,
         )
         _redis_client.ping()
-    except Exception:
+    except Exception as e:
+        logger.debug("[redis] connect/ping failed (will fall back to no-cache): %s", e)
         _redis_client = None
         _redis_last_fail = _time.time()
     return _redis_client
@@ -89,12 +97,12 @@ def cached(fn_name: str, fetch_fn: Callable[[], Any], ttl: int = REDIS_CACHE_TTL
                 if parsed == [] and fn_name in _REDIS_BYPASS_EMPTY_LIST:
                     try:
                         r.delete(key)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("[cache] bypass-delete failed for %s: %s", fn_name, e)
                 else:
                     return parsed
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[cache] get/parse failed for %s: %s", fn_name, e)
 
     result = fetch_fn()
 
@@ -103,8 +111,8 @@ def cached(fn_name: str, fetch_fn: Callable[[], Any], ttl: int = REDIS_CACHE_TTL
             # 빈 리스트는 TTL 동안 버전/데이터가 바뀌어도 갱신되지 않는 문제를 막기 위해 저장하지 않음.
             if result != []:
                 r.setex(key, ttl, json.dumps(result, default=str))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[cache] setex failed for %s: %s", fn_name, e)
     return result
 
 
@@ -168,8 +176,9 @@ def init_duckdb() -> None:
                        ORDER BY score DESC LIMIT 50""",
                     [ver, latest_date],
                 ).fetchdf()
-    except Exception:
-        pass  # 워밍업 실패는 무시
+    except Exception as e:
+        # 워밍업 실패는 무시하되 어디서 깨졌는지는 로그에 남긴다.
+        logger.warning("[duckdb] warmup query failed: %s", e)
 
 
 def con() -> duckdb.DuckDBPyConnection:
