@@ -23,10 +23,14 @@ PRD §3.6 / FE §4.13 — 사용자 포트폴리오 (보유 종목) CRUD.
 
 from __future__ import annotations
 
+import logging
+import os
 from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
 from typing import List, Optional
 
+import duckdb
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
@@ -35,6 +39,8 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from db.models import User, UserHolding, UserHoldingHistory
 from .users import _require_current_user
+
+logger = logging.getLogger(__name__)
 
 
 # ── audit history helper ─────────────────────────────────────────────────────
@@ -77,9 +83,12 @@ class HoldingItem(BaseModel):
     bought_at:  Optional[date] = None
     memo:       Optional[str] = None
     invested:   float       # quantity * avg_price
-    current_price: Optional[float] = None       # FE 가 enrich (선택)
-    return_amount: Optional[float] = None
-    return_pct:    Optional[float] = None
+    current_price: Optional[float] = None       # 백엔드 enrich (market_data.duckdb prices 최신가)
+    current_price_as_of: Optional[str] = None   # 최신 종가 일자 (YYYY-MM-DD)
+    return_amount: Optional[float] = None       # (current_price - avg_price) * quantity
+    return_pct:    Optional[float] = None       # 추천 후 누적 수익률 — (current/avg - 1) * 100
+    days_since_bought: Optional[int] = None     # 매수일 ~ 현재 경과 일수
+    split_event_suspected: bool = False         # B61: |ret_pct| > 300% = 액면분할/감자 의심
     signal_label:  Optional[str] = None
 
     class Config:
@@ -131,6 +140,79 @@ def _to_decimal(v) -> Decimal:
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────────────────
 
+# B61: 분할/감자 의심 임계 — outcomes_svc.py / winners_svc.py 동일.
+SPLIT_RETURN_PCT_THRESHOLD = 300.0
+
+_CAPSTONE_ROOT = Path(os.getenv("CAPSTONE_ROOT", r"E:\Capstone Data"))
+_MARKET_DB_PATH = _CAPSTONE_ROOT / "project_data" / "db" / "market_data.duckdb"
+_duck_con = None
+
+
+def _get_market_con():
+    """8000 서버에서 market_data.duckdb 를 read-only 로 접근.
+
+    ML(8001) 서버와 같은 DB 를 공유하지만 별도 connection — write 방지 read_only=True.
+    모듈-level 캐시로 connection 재사용 (보유 N=11 기준 N+1 비용 무시 가능).
+    """
+    global _duck_con
+    if _duck_con is None:
+        try:
+            _duck_con = duckdb.connect(str(_MARKET_DB_PATH), read_only=True)
+        except Exception as e:
+            logger.warning("market_data.duckdb 연결 실패: %s", e)
+            return None
+    return _duck_con
+
+
+def _fetch_latest_prices(tickers: list[str]) -> dict[str, tuple[float, str]]:
+    """ticker → (latest_close, latest_date_yyyy_mm_dd) 매핑. 실패 시 빈 dict."""
+    if not tickers:
+        return {}
+    con = _get_market_con()
+    if con is None:
+        return {}
+    try:
+        ph = ",".join(["?"] * len(tickers))
+        rows = con.execute(
+            f"""
+            SELECT ticker, close, CAST(date AS VARCHAR) FROM (
+                SELECT ticker, close, date,
+                       ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) rn
+                FROM prices WHERE ticker IN ({ph})
+            ) WHERE rn = 1
+            """,
+            list(tickers),
+        ).fetchall()
+        out = {}
+        for t, c, d in rows:
+            iso = f"{d[:4]}-{d[4:6]}-{d[6:8]}" if d and len(d) == 8 and d.isdigit() else d
+            out[t] = (float(c) if c is not None else 0.0, iso)
+        return out
+    except Exception as e:
+        logger.warning("prices 조회 실패: %s", e)
+        return {}
+
+
+def _enrich_holding(item: HoldingItem, latest: Optional[tuple[float, str]], bought_at: Optional[date]) -> None:
+    """item 에 current_price / return_pct / days_since_bought / split_event_suspected 채움 (in-place)."""
+    if latest:
+        cur, latest_date = latest
+        item.current_price = round(cur, 4)
+        item.current_price_as_of = latest_date
+        if item.avg_price > 0:
+            ret_pct = (cur / item.avg_price - 1.0) * 100.0
+            if abs(ret_pct) > SPLIT_RETURN_PCT_THRESHOLD:
+                # B61: 분할/감자 의심 → 수익률 NULL + 플래그
+                item.split_event_suspected = True
+                item.return_pct = None
+                item.return_amount = None
+            else:
+                item.return_pct = round(ret_pct, 2)
+                item.return_amount = round((cur - item.avg_price) * item.quantity, 2)
+    if bought_at:
+        item.days_since_bought = (date.today() - bought_at).days
+
+
 def _normalize_ticker(raw: str) -> str:
     s = (raw or "").strip()
     if not s:
@@ -175,11 +257,38 @@ def list_holdings(
         .all()
     )
     items = [_to_item(r) for r in rows]
+
+    # 2026-05-19: 추천 후 누적 수익률 백트래킹 — market_data.duckdb 의 prices 최신가로 enrich.
+    # 각 holding 별로 current_price / return_pct / days_since_bought / split_event_suspected 채움.
+    tickers = list({r.ticker for r in rows})
+    price_map = _fetch_latest_prices(tickers)
+    for h_row, item in zip(rows, items):
+        _enrich_holding(item, price_map.get(h_row.ticker), h_row.bought_at)
+
+    # Summary — current_value 는 채워진 종목만 (none 인 종목은 invested 로 대체)
     total_invested = sum(it.invested for it in items)
+    enriched = [it for it in items if it.current_price is not None and not it.split_event_suspected]
+    if enriched:
+        current_value = sum(
+            (it.current_price or it.avg_price) * it.quantity for it in items
+        )
+        total_return_amount = current_value - total_invested
+        total_return_pct = (
+            (total_return_amount / total_invested * 100.0) if total_invested > 0 else 0.0
+        )
+        summary = HoldingsSummary(
+            total_invested=total_invested,
+            current_value=round(current_value, 2),
+            total_return_amount=round(total_return_amount, 2),
+            total_return_pct=round(total_return_pct, 2),
+        )
+    else:
+        summary = HoldingsSummary(total_invested=total_invested)
+
     return HoldingsResponse(
         total=len(items),
         items=items,
-        summary=HoldingsSummary(total_invested=total_invested),
+        summary=summary,
     )
 
 

@@ -36,24 +36,33 @@ OVERVALUED_BANDS = frozenset({"very_overvalued"})
 UNDERVALUED_BANDS = frozenset({"very_undervalued", "undervalued"})
 
 
+# B65 (2026-05-19): 30거래일 모멘텀이 음수면 BUY → HOLD 강등.
+# "떨어지는 종목을 계속 BUY 추천" 약점 차단. 임계값은 0%.
+# 단, momentum 정보가 없으면 (cumulative_return_pct=None) 룰 미적용 (graceful).
+MOMENTUM_BUY_FLOOR_PCT = 0.0
+
+
 def compute_signal_label(
     score: float | None,
     tier: str | None,
     fair_band: str | None = None,
+    momentum_pct: float | None = None,
 ) -> str:
-    """점수 + 티어 + fair_value band → 4단계 행동 라벨 (multi-factor).
+    """점수 + 티어 + fair_value band + 모멘텀 → 4단계 행동 라벨 (multi-factor).
 
-    B15 + B52 + B54 + B59: tier 절대 임계 + fair_value band 통합.
+    B15 + B52 + B54 + B59 + B65: tier 절대 임계 + fair_value band + 30d 모멘텀.
 
       BUY   : tier=A AND score ≥ 80 AND fair_band ∉ {very_overvalued}
+              AND (momentum_pct ≥ 0 OR momentum_pct is None)
       WATCH : fair_band='very_overvalued' (거품경고 — A티어라도 매수 아님)
               OR (tier=C 또는 점수 50~60 ambiguous)
       SELL  : tier=D AND score < 35  (ML 모두 약할 때만 — 보수)
       HOLD  : tier ∈ (A,B) AND score ≥ 60
+              OR (BUY 조건이지만 momentum_pct < 0 — B65 강등)
 
-    B59 (2026-05-17 FE 평가 반영): 이전 룰은 거품주 (PBR>10) tier=A 임에도 SELL →
-    "A티어 100점 우수 + 매도" 모순. 거품주는 WATCH(관망) 가 정직. SELL 은 ML 모두
-    약한 종목 (tier=D AND score<35) 에 한정 — 사용자 신뢰 보존.
+    B59 (2026-05-17): 거품주는 WATCH(관망) 가 정직. SELL 은 ML 모두 약한 종목에 한정.
+    B65 (2026-05-19): 모델은 월별 rebal 가정 학습 → 최근 30일 하락한 종목은 BUY 부적격.
+    paper trade backfill α -33% (강세장 KOSPI 대비 underperform) 결과 반영.
     """
     if score is None:
         return SIGNAL_WATCH
@@ -73,8 +82,18 @@ def compute_signal_label(
     if t == "D" and s < 35:
         return SIGNAL_SELL
 
-    # BUY — ML 강한 신호 + 거품 아님.
-    if t == "A" and s >= 80:
+    # BUY 후보 — ML 강한 신호 + 거품 아님.
+    buy_candidate = (t == "A" and s >= 80)
+    if buy_candidate:
+        # B65: 30일 모멘텀 음수면 BUY → HOLD 강등.
+        # momentum_pct None 이면 정보 없음 = 적용 안 함 (기존 동작 보존).
+        if momentum_pct is not None:
+            try:
+                m = float(momentum_pct)
+                if m < MOMENTUM_BUY_FLOOR_PCT:
+                    return SIGNAL_HOLD
+            except (TypeError, ValueError):
+                pass
         return SIGNAL_BUY
 
     # HOLD — 긍정 신호 (BUY 못 미치는 경우).
@@ -85,10 +104,16 @@ def compute_signal_label(
 
 
 def attach_signal_labels(items: list[dict]) -> list[dict]:
-    """signal_label / signal_label_ko 필드 부착 (in-place). row['fair_band'] 있으면 multi-factor."""
+    """signal_label / signal_label_ko 필드 부착 (in-place).
+    row['fair_band'] 있으면 fair-value multi-factor, row['cumulative_return_pct'] 있으면
+    30d 모멘텀 룰 (B65) 적용. 둘 다 없어도 graceful (기존 동작 보존).
+    """
     for r in items:
         label = compute_signal_label(
-            r.get("score"), r.get("tier"), r.get("fair_band"),
+            r.get("score"),
+            r.get("tier"),
+            r.get("fair_band"),
+            r.get("cumulative_return_pct"),
         )
         r["signal_label"] = label
         r["signal_label_ko"] = SIGNAL_LABELS_KO[label]

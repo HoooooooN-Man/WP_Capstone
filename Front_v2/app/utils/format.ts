@@ -35,3 +35,11 @@ export function formatMarketCap(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return '—';
   return formatLargeNumber(n);
 }
+
+/**
+ * 수익률 색상 (CSS 변수) — 양수=up / 음수=down / null=down (안전).
+ * 5+ 페이지 중복 패턴 통일 (StockListRow / WinnerCard / SignalPage / SmartScorePage / ComparePage).
+ */
+export function getReturnColor(value: number | null | undefined): string {
+  return value != null && value >= 0 ? 'var(--color-up)' : 'var(--color-down)';
+}

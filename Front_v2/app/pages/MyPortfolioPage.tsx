@@ -10,6 +10,7 @@ import EmptyState from '../components/EmptyState';
 import { useMyPortfolio, useAddHolding, useDeleteHolding, useRecommendations, type StockItem, type HoldingItem } from '../api/hooks';
 import PageErrorState from '../components/PageErrorState';
 import { useSession } from '../api/client';
+import { getReturnColor } from '../utils/format';
 
 interface Holding {
   id: number;
@@ -19,6 +20,12 @@ interface Holding {
   avgPrice: number;
   currentPrice: number;
   signal: 'BUY' | 'HOLD' | 'SELL' | 'WATCH';
+  /** 백엔드 enrich — 추천 후 누적 수익률 (분할 의심 시 null). */
+  returnPct?: number | null;
+  /** 매수 후 경과 일수 (백엔드 enrich). */
+  daysSinceBought?: number;
+  /** B61: 액면분할/감자 의심. */
+  splitEventSuspected?: boolean;
 }
 
 export default function MyPortfolioPage() {
@@ -37,14 +44,19 @@ export default function MyPortfolioPage() {
   );
   const apiHoldings: Holding[] | undefined = portfolioApi?.items?.map((h: HoldingItem): Holding => {
     const m = stockMap.get(h.ticker);
+    // 백엔드 enrich (return_pct / days_since_bought / split_event) 가 우선,
+    // 없으면 stockMap 의 추천 응답 close 로 fallback.
     return {
       id: h.id,
       ticker: h.ticker,
       name: m?.name ?? h.name ?? h.ticker,
       quantity: h.quantity ?? 0,
       avgPrice: h.avg_price ?? 0,
-      currentPrice: m?.close ?? h.current_price ?? h.avg_price ?? 0,
+      currentPrice: h.current_price ?? m?.close ?? h.avg_price ?? 0,
       signal: (m?.signal_label ?? h.signal_label ?? 'WATCH') as 'BUY' | 'HOLD' | 'SELL' | 'WATCH',
+      returnPct: h.return_pct,
+      daysSinceBought: h.days_since_bought,
+      splitEventSuspected: h.split_event_suspected ?? false,
     };
   });
 
@@ -56,13 +68,18 @@ export default function MyPortfolioPage() {
   const totalReturn = currentValue - totalInvestment;
   const totalReturnPercent = totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
 
-  const holdingsWithReturn = holdings.map((h) => ({
-    ...h,
-    investmentAmount: h.avgPrice * h.quantity,
-    currentAmount: h.currentPrice * h.quantity,
-    returnAmount: (h.currentPrice - h.avgPrice) * h.quantity,
-    returnPercent: ((h.currentPrice - h.avgPrice) / h.avgPrice) * 100,
-  }));
+  const holdingsWithReturn = holdings.map((h) => {
+    // 백엔드 returnPct 가 있으면 그걸 사용, 없으면 FE 자체 계산 (avg/current 기준).
+    const feReturnPct =
+      h.avgPrice > 0 ? ((h.currentPrice - h.avgPrice) / h.avgPrice) * 100 : 0;
+    return {
+      ...h,
+      investmentAmount: h.avgPrice * h.quantity,
+      currentAmount: h.currentPrice * h.quantity,
+      returnAmount: (h.currentPrice - h.avgPrice) * h.quantity,
+      returnPercent: h.returnPct ?? feReturnPct,
+    };
+  });
 
   // 평가금액 추이를 0-100 점수로 정규화하여 LineChart 형식에 맞춤
   const safeBase = totalInvestment > 0 ? totalInvestment : 1;
@@ -81,12 +98,20 @@ export default function MyPortfolioPage() {
             내 포트폴리오
           </h1>
           {isLoggedIn && (
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1 px-4 py-2 rounded-lg wp-t-base font-bold text-white bg-[var(--accent-blue)]"
-            >
-              <Plus size={16} /> 종목 추가
-            </button>
+            <div className="flex items-center gap-2">
+              <a
+                href="/my/cohort-portfolio"
+                className="flex items-center gap-1 px-4 py-2 rounded-lg wp-t-base font-bold border border-[var(--border-default)] text-[var(--text-primary)]"
+              >
+                코호트 자동 구성
+              </a>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-1 px-4 py-2 rounded-lg wp-t-base font-bold text-white bg-[var(--accent-blue)]"
+              >
+                <Plus size={16} /> 종목 추가
+              </button>
+            </div>
           )}
         </div>
         {!isLoggedIn && (
@@ -215,20 +240,40 @@ export default function MyPortfolioPage() {
                       </div>
                     </td>
                     <td className="px-4 py-4 text-right">
-                      <div
-                        className="tabular-nums wp-t-base font-bold"
-                        style={{ color: stock.returnAmount >= 0 ? 'var(--color-up)' : 'var(--color-down)' }}
-                      >
-                        {stock.returnAmount >= 0 ? '+' : ''}
-                        {stock.returnAmount.toLocaleString('ko-KR')}
-                      </div>
-                      <div
-                        className="tabular-nums wp-t-xs"
-                        style={{ color: stock.returnPercent >= 0 ? 'var(--color-up)' : 'var(--color-down)' }}
-                      >
-                        {stock.returnPercent >= 0 ? '+' : ''}
-                        {stock.returnPercent.toFixed(2)}%
-                      </div>
+                      {stock.splitEventSuspected ? (
+                        <div
+                          className="wp-t-xs"
+                          style={{ color: 'var(--text-tertiary)' }}
+                          title="액면분할/감자 의심 (|수익률| > 300%)으로 수익률을 표시하지 않음"
+                        >
+                          분할 의심 — 미표시
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            className="tabular-nums wp-t-base font-bold"
+                            style={{ color: getReturnColor(stock.returnAmount) }}
+                          >
+                            {stock.returnAmount >= 0 ? '+' : ''}
+                            {stock.returnAmount.toLocaleString('ko-KR')}
+                          </div>
+                          <div
+                            className="tabular-nums wp-t-xs"
+                            style={{ color: getReturnColor(stock.returnPercent) }}
+                          >
+                            {stock.returnPercent >= 0 ? '+' : ''}
+                            {stock.returnPercent.toFixed(2)}%
+                          </div>
+                          {stock.daysSinceBought != null && stock.daysSinceBought > 0 && (
+                            <div
+                              className="wp-t-xs"
+                              style={{ color: 'var(--text-tertiary)', marginTop: '2px' }}
+                            >
+                              매수 후 {stock.daysSinceBought}일
+                            </div>
+                          )}
+                        </>
+                      )}
                     </td>
                     <td className="px-4 py-4 text-center">
                       <div className="inline-block">

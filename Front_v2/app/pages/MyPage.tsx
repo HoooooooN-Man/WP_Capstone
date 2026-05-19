@@ -99,6 +99,35 @@ export default function MyPage() {
           </div>
         </div>
 
+        {/* 포트폴리오 진입 카드 — 마이 페이지의 핵심 동선 */}
+        {isLoggedIn && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+            <a
+              href="/my/portfolio"
+              className="p-5 rounded-xl border transition-colors"
+              style={{
+                backgroundColor: 'var(--bg-elev-1)',
+                borderColor: 'var(--border-default)',
+              }}
+            >
+              <div className="wp-t-base font-bold text-[var(--text-primary)] mb-1">내 포트폴리오</div>
+              <div className="wp-t-xs text-[var(--text-tertiary)]">직접 등록한 보유 종목 · 수익률 추적</div>
+            </a>
+            <a
+              href="/my/cohort-portfolio"
+              className="p-5 rounded-xl border transition-colors"
+              style={{
+                backgroundColor: 'var(--accent-blue)',
+                borderColor: 'var(--accent-blue)',
+                color: 'white',
+              }}
+            >
+              <div className="wp-t-base font-bold mb-1">코호트 자동 추천 포트폴리오</div>
+              <div className="wp-t-xs opacity-90">ML 5코호트 × 10종목 추천 · 직접 빼거나 추가 · 수익률 확인</div>
+            </a>
+          </div>
+        )}
+
         {isLoggedIn && menuSections.map((section) => (
           <div key={section.title} className="mb-6">
             <div className="wp-t-base font-bold text-[var(--text-secondary)] mb-3 pl-1">

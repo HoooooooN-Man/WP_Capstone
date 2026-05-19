@@ -23,6 +23,7 @@ from api.users.users import router as users_router
 from api.users.watchlist import router as watchlist_router
 from api.users.cohort    import router as cohort_router
 from api.users.portfolio import router as portfolio_router
+from api.users.cohort_portfolio import router as cohort_portfolio_router
 from api.users.notes import router as notes_router
 from api.events.events import router as events_router
 
@@ -140,6 +141,7 @@ app.include_router(users_router)
 app.include_router(watchlist_router)  # Tier 1.6 — /users/me/watchlist CRUD
 app.include_router(cohort_router)     # W2C — /users/me/cohort GET·PUT
 app.include_router(portfolio_router)  # PRD §3.6 — /users/me/portfolio/holdings CRUD
+app.include_router(cohort_portfolio_router)  # 2026-05-19 — /users/me/portfolio/cohort/* 자동 포트폴리오
 app.include_router(notes_router)      # /users/me/notes — 투자노트 CRUD
 app.include_router(events_router)     # W1B — /events impressions·clicks·outcomes
 

@@ -5,16 +5,21 @@ P0-2 (PRD §8.1) — 종목별 추천 후 누적 상승률 트래킹.
 
 DuckDB 의 `scores` 테이블과 `prices` 테이블을 기반으로 한 read-only 집계.
 별도 OLTP 테이블 없이도 다음 정보를 산출:
-  - first_recommended_date : 해당 종목이 처음 A 티어로 진입한 날짜
-  - price_at_first_rec     : 그 날의 종가 (prices.close)
+  - first_recommended_date : 해당 종목이 처음 A 티어로 진입한 날짜 (참고용)
+  - price_anchor           : 앵커 종가 (ROLLING_WINDOW 거래일 전)
   - latest_price           : 가장 최신 종가
-  - cumulative_return_pct  : (latest_price / price_at_first_rec - 1) * 100
-  - days_since_rec         : 추천 후 경과 일수
+  - cumulative_return_pct  : (latest_price / price_anchor - 1) * 100
+  - days_since_rec         : 첫 A 진입 후 경과 일수 (참고용)
 
 운영 시 정확도를 높이려면 신규 테이블 `recommendation_outcomes` 를 일별 cron 으로
 갱신하는 방식이 권장되나 (TODO §8.4), 본 read-only 구현으로도 평가용 노출 가능.
 
 본 모듈은 추천/검색/종목상세 응답에 cumulative_return_pct 필드를 부착하는 후처리에 사용됨.
+
+## 2026-05-19 변경: 앵커를 "첫 A 진입가" → "ROLLING_WINDOW 거래일 전 종가"
+모델은 월별 rebal (fwd_return_20d) 가정으로 학습 — 첫 A 진입 후 buy-and-hold 는
+모델 가정과 mismatch. 4~5개월 누적 손실이 표시되는 문제를 해결하기 위해
+*최근 30 거래일* (≈ 한 달) 수익률로 전환. paper trade hit rate 87.5% PASS 와 정합.
 """
 
 from __future__ import annotations
@@ -28,8 +33,12 @@ from ._core import (
     resolve_version as _resolve_version,
     get_latest_date as _get_latest_date,
 )
+from ._helpers import parse_yyyymmdd
 
 logger = logging.getLogger(__name__)
+
+# 롤링 윈도우 (거래일). 30 = 모델의 fwd_return_20d 와 근접 (월 단위 rebal).
+ROLLING_WINDOW = 30
 
 
 def get_recommendation_outcome(
@@ -42,7 +51,7 @@ def get_recommendation_outcome(
 
     def fetch():
         con = _con()
-        # 첫 A 티어 진입 날짜 + 종가
+        # 첫 A 티어 진입 날짜 (참고용 노출 — 앵커 계산엔 미사용)
         row = con.execute(
             """
             SELECT CAST(MIN(date) AS VARCHAR) AS first_date
@@ -54,16 +63,18 @@ def get_recommendation_outcome(
         if not row or not row[0]:
             return None
         first_date = row[0]
-        first_int = int(first_date.replace("-", ""))
 
-        price_first = con.execute(
+        # 앵커 = 최근 ROLLING_WINDOW 거래일 전 종가, 최신가 = 가장 최근 종가.
+        # OFFSET ROLLING_WINDOW - 1 이면 1번째(최신) 빼고 그 다음 ROLLING_WINDOW 번째.
+        # 예: ROLLING_WINDOW=30 → 최신 종가 vs 30 거래일 전 종가.
+        price_anchor = con.execute(
             """
-            SELECT close FROM prices WHERE ticker=? AND date <= ?
-            ORDER BY date DESC LIMIT 1
+            SELECT close FROM prices WHERE ticker=?
+            ORDER BY date DESC LIMIT 1 OFFSET ?
             """,
-            [t, first_int],
+            [t, ROLLING_WINDOW - 1],
         ).fetchone()
-        if not price_first:
+        if not price_anchor:
             return None
 
         price_latest = con.execute(
@@ -77,7 +88,7 @@ def get_recommendation_outcome(
         if not price_latest:
             return None
 
-        p0 = float(price_first[0] or 0)
+        p0 = float(price_anchor[0] or 0)
         p1 = float(price_latest[0] or 0)
         latest_date = price_latest[1]
         if p0 <= 0:
@@ -85,19 +96,9 @@ def get_recommendation_outcome(
 
         return_pct = round((p1 / p0 - 1.0) * 100.0, 2)
 
-        # 경과 일수.
-        # DuckDB 의 scores.date / prices.date 는 BIGINT 이고 CAST(... AS VARCHAR) 결과는
-        # "20260429" 형식이다. 이전 구현은 "%Y-%m-%d" 로 파싱해 항상 ValueError 가 났고
-        # bare except 가 삼켜 days_since_rec 이 모두 null 이 되었다. 두 포맷 모두 허용.
-        def _parse_date(s: str):
-            from datetime import datetime as _dt
-            s = (s or "").replace("-", "")
-            if not s.isdigit() or len(s) != 8:
-                return None
-            return _dt.strptime(s, "%Y%m%d")
-
-        d_latest = _parse_date(latest_date)
-        d_first  = _parse_date(first_date)
+        # 경과 일수 (첫 A 진입일 ~ 최신 종가일). 두 포맷 (YYYYMMDD / YYYY-MM-DD) 모두 허용.
+        d_latest = parse_yyyymmdd(latest_date)
+        d_first  = parse_yyyymmdd(first_date)
         days = (d_latest - d_first).days if (d_latest and d_first) else None
 
         # 응답에 노출되는 날짜는 사람 친화적 ISO 로 정규화 (YYYY-MM-DD).
@@ -108,11 +109,12 @@ def get_recommendation_outcome(
             "ticker":                  t,
             "model_version":           ver,
             "first_recommended_date":  first_iso,
-            "price_at_first_rec":      round(p0, 2),
+            "price_anchor":            round(p0, 2),     # ROLLING_WINDOW 거래일 전
             "latest_price":            round(p1, 2),
             "latest_date":             latest_iso,
-            "cumulative_return_pct":   return_pct,
-            "days_since_rec":          days,
+            "cumulative_return_pct":   return_pct,       # 최근 ROLLING_WINDOW 거래일 수익률
+            "return_window_days":      ROLLING_WINDOW,
+            "days_since_rec":          days,             # 첫 A 진입 후 경과일 (참고)
         }
 
     return _cached("outcome_single", fetch, ttl=600, ticker=t, model_version=ver)
@@ -160,7 +162,8 @@ def attach_outcomes_batch(items: list[dict], model_version: str = "latest") -> l
     try:
         con = _con()
         ph = ",".join(["?"] * len(tickers))
-        # 각 ticker 의 첫 A티어 진입일 + 그 날의 종가 + 가장 최신 종가 → 누적 수익률.
+        # 각 ticker 의 첫 A진입일 (참고) + 최근 ROLLING_WINDOW 거래일 전 종가 (앵커)
+        # + 가장 최신 종가 → ROLLING_WINDOW 일 수익률.
         rows = con.execute(
             f"""
             WITH first_a AS (
@@ -171,38 +174,30 @@ def attach_outcomes_batch(items: list[dict], model_version: str = "latest") -> l
                   AND tier = 'A'
                 GROUP BY ticker
             ),
-            first_px AS (
-                SELECT fa.ticker, fa.first_date,
-                       (SELECT close FROM prices
-                         WHERE ticker = fa.ticker
-                           AND date <= CAST(REPLACE(fa.first_date, '-', '') AS INTEGER)
-                         ORDER BY date DESC LIMIT 1) AS p0
-                FROM first_a fa
+            ranked AS (
+                SELECT ticker, close, date,
+                       ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) rn
+                FROM prices WHERE ticker IN ({ph})
             ),
             latest_px AS (
                 SELECT ticker, close AS p1, CAST(date AS VARCHAR) AS latest_date
-                FROM (
-                    SELECT ticker, close, date,
-                           ROW_NUMBER() OVER (PARTITION BY ticker ORDER BY date DESC) rn
-                    FROM prices WHERE ticker IN ({ph})
-                ) WHERE rn = 1
+                FROM ranked WHERE rn = 1
+            ),
+            anchor_px AS (
+                SELECT ticker, close AS p0
+                FROM ranked WHERE rn = ?
             )
-            SELECT fp.ticker, fp.first_date, fp.p0, lp.p1, lp.latest_date
-            FROM first_px fp
-            LEFT JOIN latest_px lp ON fp.ticker = lp.ticker
-            WHERE fp.p0 IS NOT NULL AND lp.p1 IS NOT NULL
+            SELECT fa.ticker, fa.first_date, ap.p0, lp.p1, lp.latest_date
+            FROM first_a fa
+            LEFT JOIN anchor_px ap ON fa.ticker = ap.ticker
+            LEFT JOIN latest_px lp ON fa.ticker = lp.ticker
+            WHERE ap.p0 IS NOT NULL AND lp.p1 IS NOT NULL
             """,
-            [ver] + tickers + tickers,
+            [ver] + tickers + tickers + [ROLLING_WINDOW],
         ).fetchall()
     except Exception as e:
         logger.debug("[outcomes] batch query failed, fallback to per-ticker: %s", e)
         return attach_outcomes(items, model_version=model_version)
-
-    def _parse(s):
-        from datetime import datetime as _dt
-        if not s: return None
-        s = s.replace("-", "")
-        return _dt.strptime(s, "%Y%m%d") if len(s) == 8 and s.isdigit() else None
 
     by_ticker: dict[str, dict] = {}
     for ticker, first_date, p0, p1, latest_date in rows:
@@ -210,7 +205,7 @@ def attach_outcomes_batch(items: list[dict], model_version: str = "latest") -> l
             p0f, p1f = float(p0 or 0), float(p1 or 0)
             if p0f <= 0:
                 continue
-            df, dl = _parse(first_date), _parse(latest_date)
+            df, dl = parse_yyyymmdd(first_date), parse_yyyymmdd(latest_date)
             days = (dl - df).days if (df and dl) else None
             ret_pct = round((p1f / p0f - 1.0) * 100.0, 2)
             # B61: 비현실적 수익률 (±300% 이상) → 액면분할/감자 의심.
@@ -222,6 +217,7 @@ def attach_outcomes_batch(items: list[dict], model_version: str = "latest") -> l
                 "cumulative_return_pct":  None if split_suspected else ret_pct,
                 "first_recommended_date": df.strftime("%Y-%m-%d") if df else first_date,
                 "days_since_rec":         days,
+                "return_window_days":     ROLLING_WINDOW,
                 "split_event_suspected":  split_suspected,
             }
         except Exception:

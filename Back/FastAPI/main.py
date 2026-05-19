@@ -42,7 +42,7 @@ from .core.errors import register_exception_handlers
 from .core.middleware import RequestIDMiddleware
 # 8001 = ML 분석 서버. 게시판/뉴스/사용자/인증은 8000 (Back/db/server.py) 가 담당.
 # (board/news/users_stub 코드 파일은 보관하되 본 서버에서는 등록하지 않음.)
-from .routers import stocks, portfolio, chart, finance, screener, compare, market, realtime, transparency, playground, winners, admin
+from .routers import stocks, portfolio, chart, finance, screener, compare, market, realtime, transparency, playground, winners, admin, cohort_backtest
 from .schemas.health import (
     RootResponse,
     HealthResponse,
@@ -166,6 +166,7 @@ app.include_router(compare.router,   prefix=API_PREFIX)
 app.include_router(transparency.router, prefix=API_PREFIX)  # Tier 1.5 — holdout 박제 read-only
 app.include_router(playground.router,   prefix=API_PREFIX)  # Tier 2.5 — 정책 grid playground
 app.include_router(admin.router,        prefix=API_PREFIX)  # M#35 — cron_runs 텔레메트리 조회
+app.include_router(cohort_backtest.router, prefix=API_PREFIX)  # 19_cohort_variants — 백테 성과 노출
 
 # 실시간 시세 WebSocket (no /api/v1 prefix — wss:// 표준 경로)
 app.include_router(realtime.router)

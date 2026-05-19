@@ -6,6 +6,7 @@ import StockLogo from '../components/StockLogo';
 import SignalLabelChip from '../components/SignalLabelChip';
 import StarRating from '../components/StarRating';
 import { useRecommendations, useStockRadar, useStockFairValue, useStockDividend, type StockItem } from '../api/hooks';
+import { getReturnColor } from '../utils/format';
 
 interface ScoreRow {
   ticker: string;
@@ -218,10 +219,10 @@ export default function SmartScorePage() {
                 <StarRating rating={selectedStock.starRating} size="sm" showNumber={true} />
               </div>
               <div className="flex items-center justify-between">
-                <span className="wp-t-sm text-[var(--text-tertiary)]">추천 후 누적수익</span>
+                <span className="wp-t-sm text-[var(--text-tertiary)]">최근 30일</span>
                 <span
                   className="tabular-nums wp-t-base font-bold"
-                  style={{ color: (selectedStock.cumulativeReturn ?? 0) >= 0 ? 'var(--color-up)' : 'var(--color-down)' }}
+                  style={{ color: getReturnColor(selectedStock.cumulativeReturn) }}
                 >
                   {selectedStock.cumulativeReturn != null && Number.isFinite(selectedStock.cumulativeReturn)
                     ? `${selectedStock.cumulativeReturn >= 0 ? '+' : ''}${selectedStock.cumulativeReturn.toFixed(1)}%`

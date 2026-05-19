@@ -86,3 +86,6 @@ htmlcov/
 playwright-report/
 test-results/
 e2e/.cache/
+
+# ML 추론 cache (50M+) — push 제외, 로컬만
+Back/MachineLearning/report/backtest/_signal_cache/

@@ -5,6 +5,7 @@ import SignalLabelChip from '../components/SignalLabelChip';
 import StockLogo from '../components/StockLogo';
 import BottomDisclaimer from '../components/BottomDisclaimer';
 import { useRecommendations, useMarketRegime, type StockItem } from '../api/hooks';
+import { getReturnColor } from '../utils/format';
 
 const PAGE_SIZE = 30;
 
@@ -125,7 +126,7 @@ export default function SignalPage() {
                 <th scope="col" className={`text-right ${th}`}>현재가</th>
                 <th scope="col" className={`text-right ${th}`}>등락</th>
                 <th scope="col" className={`text-center ${th}`}>신호</th>
-                <th scope="col" className={`text-right ${th}`}>누적수익</th>
+                <th scope="col" className={`text-right ${th}`}>최근 30일</th>
               </tr>
             </thead>
             <tbody>
@@ -167,7 +168,7 @@ export default function SignalPage() {
                   <td className="px-4 py-4 text-right">
                     <div
                       className="tabular-nums wp-t-base font-bold"
-                      style={{ color: (stock.cumulativeReturn ?? 0) >= 0 ? 'var(--color-up)' : 'var(--color-down)' }}
+                      style={{ color: getReturnColor(stock.cumulativeReturn) }}
                     >
                       {stock.cumulativeReturn != null && Number.isFinite(stock.cumulativeReturn)
                         ? `${stock.cumulativeReturn >= 0 ? '+' : ''}${stock.cumulativeReturn.toFixed(1)}%`

@@ -5,6 +5,7 @@ import RadarChart from '../components/RadarChart';
 import SignalLabelChip from '../components/SignalLabelChip';
 import EmptyState from '../components/EmptyState';
 import { useCompare, useStockSearch, useStockRadar, type StockItem } from '../api/hooks';
+import { getReturnColor } from '../utils/format';
 
 interface CompareRow {
   ticker: string;
@@ -225,7 +226,7 @@ export default function ComparePage() {
                       <td
                         key={stock.ticker}
                         className="px-4 py-3 text-center tabular-nums wp-t-base font-bold"
-                        style={{ color: stock.cumulativeReturn >= 0 ? 'var(--color-up)' : 'var(--color-down)' }}
+                        style={{ color: getReturnColor(stock.cumulativeReturn) }}
                       >
                         {stock.cumulativeReturn >= 0 ? '+' : ''}
                         {stock.cumulativeReturn.toFixed(1)}%

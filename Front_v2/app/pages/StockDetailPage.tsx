@@ -22,6 +22,7 @@ import {
 } from '../api/hooks';
 import { useSession } from '../api/client';
 import { pushRecentStock } from '../utils/recent';
+import { getReturnColor } from '../utils/format';
 
 // 종목 상세 — 토스 레퍼런스 기반 5탭 (종목홈 / 진단 / 밸류·재무 / 뉴스 / 경쟁사)
 // Home / Diagnosis / Value 탭 콘텐츠는 ./stock-detail/{Home,Diagnosis,Value}Tab.tsx 분리
@@ -227,9 +228,9 @@ export default function StockDetailPage() {
 
         <Card>
           <StatTile
-            label="누적수익률 (추천 후)"
+            label="최근 30일 수익률"
             valueSize={36}
-            valueColor={selectedStock.cumulativeReturn >= 0 ? 'var(--color-up)' : 'var(--color-down)'}
+            valueColor={getReturnColor(selectedStock.cumulativeReturn)}
             value={`${selectedStock.cumulativeReturn >= 0 ? '+' : ''}${selectedStock.cumulativeReturn.toFixed(1)}%`}
           />
         </Card>

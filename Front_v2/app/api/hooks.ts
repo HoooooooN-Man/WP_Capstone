@@ -197,7 +197,20 @@ export interface HoldingItem {
   name?: string;
   quantity?: number;
   avg_price?: number;
+  bought_at?: string;
+  memo?: string;
+  invested?: number;
   current_price?: number;
+  /** 최신 종가 일자 (YYYY-MM-DD). */
+  current_price_as_of?: string;
+  /** 추천 후 누적 수익률 — (current/avg - 1) * 100. 분할 의심 시 null. */
+  return_pct?: number | null;
+  /** (current - avg_price) * quantity. */
+  return_amount?: number | null;
+  /** 매수일 ~ 현재 경과 일수. */
+  days_since_bought?: number;
+  /** B61: |return_pct| > 300% = 액면분할/감자 의심. true 시 수익률 미표시 권장. */
+  split_event_suspected?: boolean;
   signal_label?: 'BUY' | 'HOLD' | 'SELL' | 'WATCH';
 }
 
@@ -306,9 +319,11 @@ export interface WinnerStock {
   recommend_price?: number;
   score?: number;
   trend?: { short: 'up' | 'down' | 'neutral'; medium: 'up' | 'down' | 'neutral'; long: 'up' | 'down' | 'neutral' };
-  cumulative_return_pct?: number;
+  cumulative_return_pct?: number | null;
   /** B62: fairvalue API 의 적정가 (목표가). NULL 가능. */
   target_price?: number | null;
+  /** B61: 액면분할/감자 의심 시 true — cumulative_return_pct 는 null. */
+  split_event_suspected?: boolean;
 }
 export interface WinnerDateGroup {
   date: string;
@@ -391,6 +406,145 @@ export function useDeleteHolding() {
   return useMutation({
     mutationFn: (id: number) => api.delete<unknown>(`/users/me/portfolio/holdings/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my_portfolio'] }),
+  });
+}
+
+// ── 코호트 종목 추천 + 사용자 편집 (2026-05-19 v3) ──────────────────────────
+
+export type CohortName = 'balanced' | 'conservative' | 'growth' | 'dividend' | 'value';
+
+export interface CohortPick {
+  ticker: string;
+  name?: string;
+  sector?: string;
+  score?: number;
+  tier?: string;
+  signal_label?: 'BUY' | 'HOLD' | 'SELL' | 'WATCH';
+  current_price: number;
+}
+
+export interface CohortPreview {
+  cohort: CohortName;
+  n_picks: number;
+  picks: CohortPick[];
+  is_advice: false;
+}
+
+export interface CohortHoldingItem {
+  id: number;
+  ticker: string;
+  name?: string;
+  sector?: string;
+  /** 선정 시점 가격 (user_holdings.avg_price) */
+  entry_price: number;
+  entry_date?: string;
+  current_price: number;
+  /** (current/entry - 1) × 100. 분할 의심 시 null. */
+  return_pct?: number | null;
+  days_since_pick?: number;
+  split_event_suspected?: boolean;
+  score?: number | null;
+  signal_label?: 'BUY' | 'HOLD' | 'SELL' | 'WATCH' | null;
+  in_ml_recommendation: boolean;
+  added_at?: string;
+}
+
+export interface CohortPortfolioSummary {
+  n_picks: number;
+  n_valid_returns: number;
+  avg_return_pct: number | null;
+  best_pick: { ticker: string; name?: string; return_pct: number } | null;
+  worst_pick: { ticker: string; name?: string; return_pct: number } | null;
+  win_rate_pct: number | null;
+}
+
+export function useCohortPreview(cohort: CohortName | null, days_ago: number = 0) {
+  return useQuery({
+    queryKey: ['cohort_preview', cohort, days_ago],
+    queryFn: () =>
+      api.get<CohortPreview>(
+        `/users/me/portfolio/cohort/${cohort}/preview`,
+        days_ago > 0 ? { days_ago } : {},
+      ),
+    enabled: cohort != null,
+    staleTime: 60_000,
+  });
+}
+
+export function useCohortPortfolio(cohort: CohortName | null) {
+  return useQuery({
+    queryKey: ['cohort_portfolio', cohort],
+    queryFn: () =>
+      api.get<{
+        cohort: CohortName;
+        total: number;
+        items: CohortHoldingItem[];
+        summary: CohortPortfolioSummary;
+      }>(`/users/me/portfolio/cohort/${cohort}`),
+    enabled: cohort != null,
+    staleTime: 30_000,
+  });
+}
+
+export function useApplyCohort() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ cohort, tickers }: { cohort: CohortName; tickers?: string[] }) =>
+      api.post<{ cohort: CohortName; n_picks: number; picks: CohortPick[] }>(
+        `/users/me/portfolio/cohort/${cohort}/apply`,
+        { tickers: tickers ?? null },
+      ),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['cohort_portfolio', vars.cohort] });
+      qc.invalidateQueries({ queryKey: ['my_portfolio'] });
+    },
+  });
+}
+
+// 백테스트 결과 — K10·H20 5코호트 16개월
+export interface CohortBacktestSummary {
+  n_months: number;
+  avg_return_pct: number;
+  cum_return_pct: number;
+  win_rate_pct: number;
+  best_month?: { date: string; return_pct: number };
+  worst_month?: { date: string; return_pct: number };
+}
+export interface CohortBacktestMonthly {
+  rebalance_date: string;
+  cohort: CohortName;
+  port_return_net_pct: number;
+  kospi_return_pct: number;
+}
+export interface CohortBacktestResponse {
+  variant: string;
+  description: string;
+  monthly: CohortBacktestMonthly[];
+  summary: Record<string, CohortBacktestSummary>;
+  kospi_summary: CohortBacktestSummary | null;
+}
+
+export function useCohortBacktest() {
+  return useQuery({
+    queryKey: ['cohort_backtest_regime_dep'],
+    queryFn: () => api.get<CohortBacktestResponse>('/api/v1/cohort-backtest/regime-dep'),
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** 데모/검증용: N일 전 가격으로 시뮬 적용 — 수익률을 의미 있게 채워줌. */
+export function useCohortHistoricalTest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ cohort, days_ago }: { cohort: CohortName; days_ago: number }) =>
+      api.post<{ cohort: CohortName; as_of: string; days_ago: number; n_picks: number; message: string }>(
+        `/users/me/portfolio/cohort/${cohort}/historical-test?days_ago=${days_ago}`,
+        {},
+      ),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['cohort_portfolio', vars.cohort] });
+      qc.invalidateQueries({ queryKey: ['my_portfolio'] });
+    },
   });
 }
 

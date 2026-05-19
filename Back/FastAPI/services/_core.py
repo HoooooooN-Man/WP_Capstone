@@ -213,7 +213,7 @@ def news_con() -> duckdb.DuckDBPyConnection | None:
                 _news_con_obj = duckdb.connect(str(NEWS_DUCKDB_PATH), read_only=True)
                 return _news_con_obj
             except Exception as e:
-                print(f"[WARN] news DuckDB 연결 실패: {e}")
+                logger.warning("news DuckDB 연결 실패: %s", e)
         # 2순위: 메인 DB 폴백 (news_* 테이블이 존재하는지 확인)
         try:
             main = con()
@@ -224,7 +224,7 @@ def news_con() -> duckdb.DuckDBPyConnection | None:
                 _news_con_obj = main
                 return _news_con_obj
         except Exception as e:
-            print(f"[WARN] news 메인 DB 폴백 실패: {e}")
+            logger.warning("news 메인 DB 폴백 실패: %s", e)
         return None
 
 

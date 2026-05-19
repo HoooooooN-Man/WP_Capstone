@@ -106,6 +106,9 @@ class UserHolding(Base):
     avg_price  = Column(Numeric(20, 4), nullable=False, default=0)        # 평균 매수가 (원/USD, NUMERIC)
     bought_at  = Column(SQLDate, nullable=True)                          # 첫 매수일
     memo       = Column(String(200), nullable=True)                      # 메모
+    # 2026-05-19: ML 자동 코호트 포트폴리오 marker.
+    # NULL = 사용자 수동 매수, 값(balanced/conservative/growth/dividend/value) = 자동 구성.
+    cohort     = Column(String(20), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     deleted_at = Column(DateTime, nullable=True)                          # soft delete marker

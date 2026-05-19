@@ -20,6 +20,7 @@ from ._core import (
     cached as _cached,
     resolve_version as _resolve_version,
 )
+from ._helpers import parse_yyyymmdd
 
 # B9: 단일 ±3% 임계는 기간별로 부적합.
 #   5일 ±3%  — 너무 넓음 (대부분 neutral)
@@ -123,6 +124,7 @@ def get_winners(days_back: int = 21, top_k: int = 5, model_version: str = "lates
                 SELECT *, ROW_NUMBER() OVER (PARTITION BY d ORDER BY score DESC, ticker) AS rnk
                 FROM sec_filtered
             ),
+            -- B66: top_k * 5 candidates pool → Python cooldown filter 에서 사용
             win AS (SELECT * FROM ranked WHERE rnk <= ?),
             latest_px AS (
                 SELECT ticker, close, date FROM (
@@ -140,8 +142,36 @@ def get_winners(days_back: int = 21, top_k: int = 5, model_version: str = "lates
             LEFT JOIN latest_px lp ON w.ticker = lp.ticker
             ORDER BY w.d DESC, w.rnk
             """,
-            [ver, days_back, ver, top_k],
+            [ver, days_back, ver, top_k * 5],
         ).fetchall()
+
+        # B66 (2026-05-19): 같은 종목이 일주일 내내 winners 로 등장하는 문제 차단.
+        # cooldown_days = 7 calendar 일. 한 ticker 등장 후 7 calendar 일은 다음 등장 차단.
+        # 일자 ASC 순회 (직전 등장 기준) → 결과 일자별 rank 재할당.
+        COOLDOWN_DAYS = 7
+
+        rows_asc = sorted(rows, key=lambda r: (r[0], r[1]))  # (date ASC, rnk ASC)
+        last_seen: dict[str, str] = {}
+        chosen_by_day: dict[str, list] = {}
+        for row in rows_asc:
+            d, rnk, ticker = row[0], row[1], row[2]
+            if len(chosen_by_day.get(d, [])) >= top_k:
+                continue
+            last_d = last_seen.get(ticker)
+            if last_d is not None:
+                dt_now, dt_prev = parse_yyyymmdd(d), parse_yyyymmdd(last_d)
+                if dt_now and dt_prev and (dt_now - dt_prev).days < COOLDOWN_DAYS:
+                    continue
+            chosen_by_day.setdefault(d, []).append(row)
+            last_seen[ticker] = d
+
+        # 일자별 rank 재할당 (1..top_k) — 같은 일자 내에선 score DESC 보존.
+        rows = []
+        for d, rs in chosen_by_day.items():
+            for new_rnk, row in enumerate(rs, start=1):
+                row_list = list(row)
+                row_list[1] = new_rnk
+                rows.append(tuple(row_list))
 
         if not rows:
             return {"model_version": ver, "items": []}
@@ -206,11 +236,16 @@ def get_winners(days_back: int = 21, top_k: int = 5, model_version: str = "lates
                 continue
 
         scores_latest_int = max(int(r[0].replace("-", "")) for r in rows) if rows else 0
+        # B61 동일 룰 적용: |cumulative_return_pct| > 300% = 액면분할/감자 의심 → NULL.
+        # outcomes_svc.py L220 과 동일 임계값. 알티캐스트 437→2465 (+464%) 같은 케이스.
+        SPLIT_RETURN_PCT = 300.0
         grouped: dict[str, list] = {}
         for d, rnk, ticker, nm, sector, score, tier, close, cur_close, cur_date, cum_ret in rows:
             cur_date_int = int(cur_date) if cur_date else 0
             # 5 거래일 이상 차이 → stale (거래정지·신규상장 직전 등)
             is_stale = bool(cur_date) and (scores_latest_int - cur_date_int) > 5
+            cum_ret_f = float(cum_ret) if cum_ret is not None else 0.0
+            split_suspected = abs(cum_ret_f) > SPLIT_RETURN_PCT
             grouped.setdefault(d, []).append({
                 "rank":                  int(rnk),
                 "ticker":                ticker,
@@ -222,7 +257,8 @@ def get_winners(days_back: int = 21, top_k: int = 5, model_version: str = "lates
                 "current_price":         float(cur_close) if cur_close is not None else None,
                 "current_price_as_of":   cur_date if cur_date else None,
                 "current_price_is_stale": is_stale,
-                "cumulative_return_pct": float(cum_ret) if cum_ret is not None else 0.0,
+                "cumulative_return_pct": None if split_suspected else cum_ret_f,
+                "split_event_suspected": split_suspected,
                 "trend":                 _trend(ticker, d),
                 # B62: 적정주가 (fairvalue API). None 이면 FE 가 "-" 표시.
                 "target_price":          target_map.get(ticker),

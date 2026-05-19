@@ -16,6 +16,7 @@ const ComparePage = lazy(() => import('./pages/ComparePage'));
 const WatchlistPage = lazy(() => import('./pages/WatchlistPage'));
 const MyPage = lazy(() => import('./pages/MyPage'));
 const MyPortfolioPage = lazy(() => import('./pages/MyPortfolioPage'));
+const CohortPortfolioPage = lazy(() => import('./pages/CohortPortfolioPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 
@@ -51,6 +52,7 @@ export default function App() {
           {/* 마이 (우상단 아바타) */}
           <Route path="/my" element={<MyPage />} />
           <Route path="/my/portfolio" element={<MyPortfolioPage />} />
+          <Route path="/my/cohort-portfolio" element={<CohortPortfolioPage />} />
 
           {/* fallback */}
           <Route path="*" element={<Navigate to="/recommend" replace />} />

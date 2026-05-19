@@ -1,3 +1,5 @@
+import { getReturnColor } from '../utils/format';
+
 interface TrendMarker {
   short: 'up' | 'neutral' | 'down';
   medium: 'up' | 'neutral' | 'down';
@@ -11,8 +13,9 @@ interface WinnerCardProps {
   score: number;
   targetPrice: number;
   trend: TrendMarker;
-  cumulativeReturn: number;
+  cumulativeReturn: number | null;
   daysSinceRec?: number;
+  splitEventSuspected?: boolean;
   isLocked?: boolean;
 }
 
@@ -25,6 +28,7 @@ export default function WinnerCard({
   trend,
   cumulativeReturn,
   daysSinceRec = 0,
+  splitEventSuspected = false,
   isLocked = false,
 }: WinnerCardProps) {
   const getTrendIcon = (direction: 'up' | 'neutral' | 'down') => {
@@ -39,7 +43,7 @@ export default function WinnerCard({
     return 'var(--color-neutral)';
   };
 
-  const returnColor = cumulativeReturn >= 0 ? 'var(--color-up)' : 'var(--color-down)';
+  const returnColor = getReturnColor(cumulativeReturn);
 
   return (
     <div
@@ -140,6 +144,19 @@ export default function WinnerCard({
               }}
             >
               추천 당일 — 변동 없음
+            </div>
+          ) : splitEventSuspected || cumulativeReturn == null ? (
+            <div
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                lineHeight: '20px',
+                color: 'var(--text-tertiary)',
+                textAlign: 'center',
+              }}
+              title="액면분할/감자 의심 (|수익률| > 300%)으로 수익률을 표시하지 않음"
+            >
+              분할 의심 — 수익률 미표시
             </div>
           ) : (
             <div

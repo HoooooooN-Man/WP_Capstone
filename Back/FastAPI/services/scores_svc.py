@@ -12,7 +12,6 @@ scores 테이블 + KOSPI 레짐 + 자동 포트폴리오 도메인.
 
 from __future__ import annotations
 
-import json
 import pandas as pd
 
 from ._core import (
@@ -21,6 +20,7 @@ from ._core import (
     resolve_version as _resolve_version,
     get_latest_date as _get_latest_date,
 )
+from ._helpers import mark_bubble_stocks
 from .signal_label import attach_signal_labels
 from .star_rating import attach_star_ratings
 from .headline import attach_headlines
@@ -240,30 +240,15 @@ def get_recommendations(
                 r["position_scale"] = 1.0 if regime == 1 else 0.5
 
         # B54: signal_label multi-factor — fair_value band 부착 후 attach_signal_labels.
-        # 거품주 (very_overvalued) 매수 추천 차단. row 별 직접 fairvalue 호출은 N+1 비용.
-        # 대안: 전 ticker 의 finance 최신 분기 multiple 만 가져와 빠른 band 추정.
-        # 정확한 fairvalue 는 stocks/{ticker}/fairvalue 엔드포인트 사용 권장.
-        try:
-            from .fairvalue_svc import compute_fair_value, classify_valuation
-            # 대량 호출 회피: row 에 이미 per/pbr 있으니 간단 추정.
-            # band 정확하려면 sector multiple 필요한데 비용 ↑. 우선 self-only multiple 로 근사.
-            # (recommendations 응답 sort 영향 받지 않음 — 라벨만 변경)
-            for r in result:
-                eps = r.get("close")  # close = current price (not EPS)
-                # 정확한 band 는 stocks/{t}/fairvalue 에서. 여기선 PER 단순 신호로 거품 감지:
-                # PER > 100 또는 PBR > 10 = 매우 거품 → very_overvalued 마킹.
-                per_v = r.get("per")
-                pbr_v = r.get("pbr")
-                try:
-                    if (per_v is not None and float(per_v) > 100) or \
-                       (pbr_v is not None and float(pbr_v) > 10):
-                        r["fair_band"] = "very_overvalued"
-                except (TypeError, ValueError):
-                    pass
-        except Exception:
-            pass
+        # 정확한 band 는 stocks/{ticker}/fairvalue 엔드포인트. 여기선 PER>100 or PBR>10 단순 추정.
+        mark_bubble_stocks(result)
 
-        # P0-1 (PRD §8.1): score+tier+fair_band → 4단계 행동 라벨 부착 (B54)
+        # B10: 단일 SQL 로 모든 ticker 의 outcome 부착 — N+1 회피.
+        # B65: outcomes (cumulative_return_pct = 30d 모멘텀) 를 signal_label 보다 먼저 부착.
+        # signal_label 이 모멘텀 음수면 BUY → HOLD 강등하기 위해 순서 중요.
+        from .outcomes_svc import attach_outcomes_batch as _attach_outcomes
+        _attach_outcomes(result, model_version=ver)
+        # P0-1 (PRD §8.1): score+tier+fair_band+momentum → 4단계 행동 라벨 부착 (B54+B65)
         attach_signal_labels(result)
         # P1-7 (PRD §8.1): 별점 + 동종 섹터 백분위
         attach_star_ratings(result, model_version=ver)
@@ -271,10 +256,6 @@ def get_recommendations(
         attach_headlines(result)
         # 정합성 보강: 전일 대비 등락률 (FE change_pct 매핑)
         _attach_change_pct(result)
-        # B10: 단일 SQL 로 모든 ticker 의 outcome 부착 — N+1 회피.
-        # attach_outcomes_batch 가 실패 시 자동으로 per-ticker 폴백.
-        from .outcomes_svc import attach_outcomes_batch as _attach_outcomes
-        _attach_outcomes(result, model_version=ver)
 
         return result
 
@@ -457,10 +438,10 @@ def batch_diagnosis(
                     except Exception:
                         r["top_factors"] = None
 
-        # P0-1 라벨 / P0-2 누적 수익률 / P1-7 별점 + 상위% 부착
+        # B65: outcomes 먼저 → signal_label 이 30d 모멘텀 음수면 BUY → HOLD 강등.
+        attach_outcomes(items, model_version=ver)
         attach_signal_labels(items)
         attach_star_ratings(items, model_version=ver)
-        attach_outcomes(items, model_version=ver)
 
         # 요약 통계
         found_tickers = {r["ticker"] for r in items}
@@ -697,14 +678,7 @@ def search_stocks(
         rows = con.execute(sql, [ver, ver, keyword, keyword, limit]).fetchdf()
         result = rows.to_dict(orient="records")
         # B64: 거품주 마킹
-        for r in result:
-            try:
-                per_v = r.get("per"); pbr_v = r.get("pbr")
-                if (per_v is not None and float(per_v) > 100) or \
-                   (pbr_v is not None and float(pbr_v) > 10):
-                    r["fair_band"] = "very_overvalued"
-            except (TypeError, ValueError):
-                pass
+        mark_bubble_stocks(result)
         _attach_change_pct(result)     # 전일 대비 등락률
         # B68: search — change_pct=0 (illiquid 의심) 종목도 WATCH 처리.
         # search 는 사용자 검색이라 종목 자체 제외하지 않고 signal 만 다운.
@@ -829,14 +803,7 @@ def screen_stocks(
         rows = con.execute(sql, params).fetchdf()
         result = rows.to_dict(orient="records")
         # B64-bis: cross-page mismatch fix — 스크리너도 거품주 fair_band 마킹 후 attach.
-        for r in result:
-            try:
-                per_v = r.get("per"); pbr_v = r.get("pbr")
-                if (per_v is not None and float(per_v) > 100) or \
-                   (pbr_v is not None and float(pbr_v) > 10):
-                    r["fair_band"] = "very_overvalued"
-            except (TypeError, ValueError):
-                pass
+        mark_bubble_stocks(result)
         attach_signal_labels(result)   # P0-1 (multi-factor)
         _attach_change_pct(result)     # 전일 대비 등락률
         return result

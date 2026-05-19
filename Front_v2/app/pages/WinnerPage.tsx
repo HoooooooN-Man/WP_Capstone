@@ -101,8 +101,9 @@ export default function WinnerPage() {
                       score={stock.score ?? 0}
                       targetPrice={stock.target_price ?? 0}
                       trend={stock.trend ?? { short: 'neutral', medium: 'neutral', long: 'neutral' }}
-                      cumulativeReturn={stock.cumulative_return_pct ?? 0}
+                      cumulativeReturn={stock.cumulative_return_pct ?? null}
                       daysSinceRec={daysAgo}
+                      splitEventSuspected={stock.split_event_suspected ?? false}
                       isLocked={isLocked}
                     />
                   ))}

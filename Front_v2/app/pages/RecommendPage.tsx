@@ -145,7 +145,7 @@ export default function RecommendPage() {
           {[
             { value: 'score' as const,                 label: '점수' },
             { value: 'change_pct' as const,            label: '등락률' },
-            { value: 'cumulative_return_pct' as const, label: '누적수익' },
+            { value: 'cumulative_return_pct' as const, label: '최근 30일' },
           ].map(opt => {
             const active = sortBy === opt.value;
             return (

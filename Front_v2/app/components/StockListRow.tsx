@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import StarRating from './StarRating';
 import StockLogo from './StockLogo';
 import ScoreBadge from './ScoreBadge';
+import { getReturnColor } from '../utils/format';
 
 interface StockListRowProps {
   rank: number;
@@ -167,13 +168,13 @@ function StockListRow({
         )}
       </div>
 
-      {/* 5. 누적 수익 — 100px, 우측 정렬 */}
+      {/* 5. 최근 30일 수익률 — 100px, 우측 정렬 (모델 월별 rebal 가정 정합) */}
       <div className="flex-shrink-0 text-right w-[100px]">
-        <div className="wp-t-xs text-[var(--text-tertiary)]">추천 후</div>
+        <div className="wp-t-xs text-[var(--text-tertiary)]">최근 30일</div>
         {cumulativeReturn != null && Number.isFinite(cumulativeReturn) ? (
           <div
             className="tabular-nums wp-t-xl font-bold"
-            style={{ color: isReturnPositive ? 'var(--color-up)' : 'var(--color-down)' }}
+            style={{ color: getReturnColor(cumulativeReturn) }}
           >
             {isReturnPositive ? '+' : ''}
             {cumulativeReturn.toFixed(1)}%
