@@ -681,11 +681,15 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { LucidePlus, LucideCheck, LucideChevronRight, LucideChevronLeft, LucideBarChart2 } from 'lucide-vue-next';
-// TODO: 아래 mock import를 실제 API 호출(pinia store 등)로 교체
-import { MOCK_COMPANIES, generateMockOHLC } from '@/mock/data.js';
-import StockChartModal from './StockChartModal.vue';
+import { ref, computed, watch, onMounted } from 'vue'
+import { LucidePlus, LucideCheck, LucideChevronRight, LucideChevronLeft, LucideBarChart2 } from 'lucide-vue-next'
+import { MOCK_COMPANIES, generateMockOHLC } from '@/mock/data.js'
+import StockChartModal from '@/components/modal/StockChartModal.vue'
+import { stocksApi } from '@/api/stocks.js'
+import { chartApi } from '@/api/chart.js'
+import { financeApi } from '@/api/finance.js'
+import { useStocksStore } from '@/stores/stocks.js'
+import { useMarketStore } from '@/stores/market.js'
 
 const props = defineProps({
   replaceMode:  { type: Boolean, default: false },
@@ -694,8 +698,37 @@ const props = defineProps({
 });
 const emit = defineEmits(['select-company', 'add-company', 'back', 'sell-replace']);
 
-// TODO: [API] GET /api/companies?market=KOSPI 로 교체
-const companies = MOCK_COMPANIES;
+const stocksStore = useStocksStore()
+const marketStore = useMarketStore()
+
+// 실제 API 데이터 우선 사용, fallback → 목업
+const companies = computed(() => {
+  if (stocksStore.items.length > 0) {
+    return stocksStore.items.map(s => ({
+      id:          s.ticker,
+      name:        s.name ?? s.ticker,
+      ticker:      s.ticker,
+      sector:      s.sector ?? '',
+      price:       s.close_price ?? s.price ?? 0,
+      change:      s.change_rate ?? s.change ?? 0,
+      color:       '#4A90E2',
+      marketCap:   s.market_cap_str ?? '',
+      per:         s.per ?? null,
+      pbr:         s.pbr ?? null,
+      dividend:    s.dividend_yield ?? null,
+      quantScore:  Math.round(s.score ?? 0),
+      description: s.description ?? '',
+    }))
+  }
+  return MOCK_COMPANIES
+})
+
+onMounted(async () => {
+  if (stocksStore.items.length === 0) {
+    await stocksStore.initVersionsAndDates()
+    await stocksStore.fetchRecommendations()
+  }
+})
 
 const addedIds      = ref(new Set());
 const detailCompany = ref(null);
@@ -710,7 +743,7 @@ const comparePrice     = ref(0);
 const compareQty       = ref(1);
 
 const currentStockInfo = computed(() =>
-  props.replaceStock ? companies.find(c => c.ticker === props.replaceStock.ticker) : null
+  props.replaceStock ? companies.value.find(c => c.ticker === props.replaceStock.ticker) : null
 );
 
 const openCompare = (company) => {
@@ -751,12 +784,29 @@ const confirmCompareOrder = () => {
 };
 
 // ── 상세 차트 ─────────────────────────────────
-// [API] detailChartData → GET /api/stocks/{ticker}/ohlcv 로 교체
-const showChart = ref(false);
+const showChart      = ref(false)
+const apiChartData   = ref([])
+const chartLoading   = ref(false)
+
 const detailChartData = computed(() => {
-  if (!detailCompany.value) return [];
-  return generateMockOHLC(detailCompany.value.ticker, detailCompany.value.price);
-});
+  if (apiChartData.value.length > 0) return apiChartData.value
+  if (!detailCompany.value) return []
+  // fallback: 목업 데이터
+  return generateMockOHLC(detailCompany.value.ticker, detailCompany.value.price ?? 50000)
+})
+
+async function fetchChart(ticker) {
+  chartLoading.value = true
+  apiChartData.value = []
+  try {
+    const { data } = await chartApi.getCandles(ticker, '1y')
+    apiChartData.value = (data.items ?? []).map(c => ({ close: c.close ?? c.price ?? 0, ...c }))
+  } catch {
+    // fallback to mock
+  } finally {
+    chartLoading.value = false
+  }
+}
 
 // 개요 스파크라인용: 마지막 60일 종가
 const overviewPrices = computed(() => detailChartData.value.slice(-60).map(d => d.close));
@@ -845,15 +895,19 @@ const mockHoldings = computed(() => {
 
 // ── 상세 뷰 ────────────────────────────────────
 watch(() => props.viewTicker, (ticker) => {
-  if (ticker) detailCompany.value = companies.find(c => c.ticker === ticker) ?? null;
-}, { immediate: true });
+  if (ticker) {
+    detailCompany.value = companies.value.find(c => c.ticker === ticker) ?? null
+    if (ticker) fetchChart(ticker)
+  }
+}, { immediate: true })
 
-const openDetail  = (company) => {
-  detailCompany.value = company;
-  showChart.value     = false;
-  showFinancial.value = false;
-  finTab.value        = 'income';
-};
+const openDetail = (company) => {
+  detailCompany.value = company
+  showChart.value     = false
+  showFinancial.value = false
+  finTab.value        = 'income'
+  fetchChart(company.ticker)
+}
 const closeDetail = () => {
   detailCompany.value = null;
   showChart.value     = false;

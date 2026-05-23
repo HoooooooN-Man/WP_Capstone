@@ -121,41 +121,40 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { LucideLock } from 'lucide-vue-next';
-import AuthLogin  from './AuthLogin.vue';
-import AuthSignup from './AuthSignup.vue';
-import AuthFind   from './AuthFind.vue';
+import { ref } from 'vue'
+import { LucideLock } from 'lucide-vue-next'
+import AuthLogin  from '@/components/auth/AuthLogin.vue'
+import AuthSignup from '@/components/auth/AuthSignup.vue'
+import AuthFind   from '@/components/auth/AuthFind.vue'
 
-const emit = defineEmits(['login']);
-
-const authView    = ref('login');   // 'login' | 'signup' | 'find'
-const step        = ref(0);
-const shakeActive = ref(false);
-const authLoginRef = ref(null);
+const authView     = ref('login')
+const step         = ref(0)
+const shakeActive  = ref(false)
+const authLoginRef = ref(null)
 
 const triggerShake = () => {
-  shakeActive.value = true;
-  setTimeout(() => { shakeActive.value = false; }, 500);
-};
+  shakeActive.value = true
+  setTimeout(() => { shakeActive.value = false }, 500)
+}
 
-const submitLogin = () => {
-  if (step.value !== 0 || authView.value !== 'login') return;
+const submitLogin = async () => {
+  if (step.value !== 0 || authView.value !== 'login') return
 
-  const valid = authLoginRef.value?.validate();
-  if (!valid) {
-    triggerShake();
-    return;
-  }
+  // 1. 폼 유효성 검사
+  const valid = authLoginRef.value?.validate()
+  if (!valid) { triggerShake(); return }
 
-  const credentials = authLoginRef.value.getCredentials();
-  step.value = 1;
-  setTimeout(() => { step.value = 2; }, 300);
-  setTimeout(() => { step.value = 3; }, 1700);
-  setTimeout(() => {
-    emit('login', { name: 'User', style: '보수형', totalAsset: '12,500,000원', ...credentials });
-  }, 2700);
-};
+  // 2. 실제 API 로그인 (authStore.login() 내부에서 호출됨)
+  const success = await authLoginRef.value?.login()
+  if (!success) { triggerShake(); return }
+
+  // 3. 성공 → 지갑 닫기 애니메이션
+  // authStore.isLoggedIn = true가 되었으므로 App.vue가 자동 전환하기 전에 애니메이션
+  step.value = 1
+  setTimeout(() => { step.value = 2 }, 300)
+  setTimeout(() => { step.value = 3 }, 1700)
+  // App.vue는 authStore.isLoggedIn을 감시하여 CardWallet으로 자동 전환
+}
 </script>
 
 <style scoped>

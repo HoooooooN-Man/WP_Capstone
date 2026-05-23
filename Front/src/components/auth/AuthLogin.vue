@@ -19,9 +19,6 @@
           <p v-if="emailError" class="text-[9px] text-red-400/80 flex items-center gap-1">
             <LucideAlertCircle class="w-2.5 h-2.5 flex-shrink-0"/>{{ emailError }}
           </p>
-          <p v-else-if="email && !email.includes('@')" class="text-[9px] text-[#c9a227]/70 flex items-center gap-1">
-            <LucideInfo class="w-2.5 h-2.5 flex-shrink-0"/>이메일에는 @ 가 필요합니다
-          </p>
         </div>
       </div>
       <div>
@@ -32,6 +29,9 @@
         <div class="min-h-[14px] mt-0.5 px-1">
           <p v-if="passwordError" class="text-[9px] text-red-400/80 flex items-center gap-1">
             <LucideAlertCircle class="w-2.5 h-2.5 flex-shrink-0"/>{{ passwordError }}
+          </p>
+          <p v-else-if="apiError" class="text-[9px] text-red-400/80 flex items-center gap-1">
+            <LucideAlertCircle class="w-2.5 h-2.5 flex-shrink-0"/>{{ apiError }}
           </p>
         </div>
       </div>
@@ -44,17 +44,7 @@
         <span class="text-[8px] text-[#7a5c20]/70 uppercase tracking-[0.3em] font-semibold">or</span>
         <div class="flex-1 h-px bg-gradient-to-l from-transparent to-white/10"></div>
       </div>
-      <div class="flex gap-3">
-        <button type="button" class="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:border-[#c9a227]/30 hover:bg-black/60 transition-all">
-          <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" class="w-[15px] h-[15px]" />
-        </button>
-        <button type="button" class="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:border-[#c9a227]/30 hover:bg-black/60 transition-all">
-          <svg viewBox="0 0 24 24" fill="#03C75A" class="w-[15px] h-[15px]"><path d="M15.5 12.4L8.5 3H6v18h3.5V8.6L16.5 18H19V3h-3.5z"/></svg>
-        </button>
-        <button type="button" class="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:border-[#c9a227]/30 hover:bg-black/60 transition-all">
-          <svg viewBox="0 0 24 24" fill="#FEE500" class="w-[16px] h-[16px]"><path d="M12 3.5C6.75 3.5 2.5 7.05 2.5 11.45c0 2.76 1.8 5.2 4.54 6.64l-.96 3.97 4.28-2.6c.51.07 1.05.11 1.64.11 5.25 0 9.5-3.55 9.5-7.95S17.25 3.5 12 3.5z"/></svg>
-        </button>
-      </div>
+      <SocialLoginButtons @done="emit('login-success')" />
     </div>
 
     <!-- 하단 링크 -->
@@ -74,49 +64,68 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { LucideAlertCircle, LucideInfo } from 'lucide-vue-next';
+import { ref, computed } from 'vue'
+import { LucideAlertCircle } from 'lucide-vue-next'
+import authApi from '@/api/auth.js'
+import { useAuthStore } from '@/stores/auth.js'
+import SocialLoginButtons from './SocialLoginButtons.vue'
 
-const emit = defineEmits(['go-signup', 'go-find']);
+const emit = defineEmits(['go-signup', 'go-find', 'login-success'])
 
-const email    = ref('');
-const password = ref('');
-const emailTouched    = ref(false);
-const passwordTouched = ref(false);
+const authStore = useAuthStore()
+
+const email           = ref('')
+const password        = ref('')
+const emailTouched    = ref(false)
+const passwordTouched = ref(false)
+const apiError        = ref('')
 
 const emailError = computed(() => {
-  if (!emailTouched.value) return null;
-  if (!email.value)               return '이메일을 입력해주세요';
-  if (!email.value.includes('@'))  return '이메일 형식이 올바르지 않습니다 (@ 필요)';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))
-                                   return '올바른 이메일 형식을 입력해주세요';
-  return null;
-});
+  if (!emailTouched.value) return null
+  if (!email.value)                                        return '이메일을 입력해주세요'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))   return '올바른 이메일 형식을 입력해주세요'
+  return null
+})
 
 const passwordError = computed(() => {
-  if (!passwordTouched.value)       return null;
-  if (!password.value)              return '비밀번호를 입력해주세요';
-  if (password.value.length < 6)   return '비밀번호는 6자 이상이어야 합니다';
-  return null;
-});
+  if (!passwordTouched.value) return null
+  if (!password.value)        return '비밀번호를 입력해주세요'
+  if (password.value.length < 6) return '비밀번호는 6자 이상이어야 합니다'
+  return null
+})
 
 const isFormValid = computed(() =>
   email.value && password.value &&
-  !emailError.value && !passwordError.value &&
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value) &&
-  password.value.length >= 6
-);
+  !emailError.value && !passwordError.value
+)
 
-defineExpose({
-  validate() {
-    emailTouched.value    = true;
-    passwordTouched.value = true;
-    return isFormValid.value;
-  },
-  getCredentials() {
-    return { email: email.value, password: password.value };
-  },
-});
+function validate() {
+  emailTouched.value    = true
+  passwordTouched.value = true
+  apiError.value        = ''
+  return isFormValid.value
+}
+
+async function login() {
+  if (!validate()) return false
+  try {
+    const { data } = await authApi.login({ email: email.value, password: password.value })
+    authStore.login(data.session_token, data.nickname, data.user_id)
+    return true
+  } catch (err) {
+    const status = err.response?.status
+    if (status === 401 || status === 400) {
+      apiError.value = '이메일 또는 비밀번호가 올바르지 않습니다'
+    } else if (status === 429) {
+      apiError.value = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요'
+    } else {
+      apiError.value = err.response?.data?.detail ?? '로그인에 실패했습니다'
+    }
+    return false
+  }
+}
+
+defineExpose({ validate, login })
 </script>
 
 <style scoped>

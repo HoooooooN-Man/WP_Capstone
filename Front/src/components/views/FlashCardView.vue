@@ -136,7 +136,7 @@
               <span class="text-[7px] text-right uppercase" style="color:rgba(255,255,255,0.22)">A</span>
             </div>
 
-            <div v-for="s in MOCK_SECTORS" :key="s.name"
+            <div v-for="s in sectors" :key="s.name"
                  class="grid py-1 border-b px-0.5"
                  style="grid-template-columns:1fr 2.2rem 2.8rem 2.2rem 1.8rem; gap:0 4px; border-color:rgba(255,255,255,0.06)">
               <span class="text-[10px] truncate" style="color:rgba(255,255,255,0.72)">{{ s.name }}</span>
@@ -155,7 +155,7 @@
           <div class="px-3 pt-2.5 pb-3">
             <p class="text-[8px] font-mono tracking-widest uppercase mb-2" style="color:rgba(255,255,255,0.35)">오늘의 Top 5</p>
 
-            <div v-for="(stock, idx) in MOCK_TOP5" :key="stock.code"
+            <div v-for="(stock, idx) in top5" :key="stock.code"
                  class="flex items-center gap-2 py-1.5 border-b"
                  style="border-color:rgba(255,255,255,0.06)">
               <span class="text-[9px] font-mono w-3.5 flex-shrink-0" style="color:rgba(255,255,255,0.25)">{{ idx + 1 }}</span>
@@ -202,15 +202,75 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue'
+import { useMarketStore } from '@/stores/market.js'
+import { useNewsFeed } from '@/composables/useStockQuery.js'
 
-const front = ref('A');
-const newsFilter = ref('전체');
+const front = ref('A')
+const newsFilter = ref('전체')
+const marketStore = useMarketStore()
 
-const flip = () => {
-  front.value = front.value === 'A' ? 'B' : 'A';
-};
+const flip = () => { front.value = front.value === 'A' ? 'B' : 'A' }
 
+// ── 카드 A: 시장 데이터 ─────────────────────────
+onMounted(async () => {
+  if (!marketStore.sectorSummary.length) await marketStore.fetchSectorSummary()
+  if (!marketStore.topStocks.length)     await marketStore.fetchTopStocks(5)
+})
+
+const sectors = computed(() => {
+  if (marketStore.sectorSummary.length) {
+    return marketStore.sectorSummary
+      .sort((a, b) => b.avg_score - a.avg_score)
+      .slice(0, 10)
+      .map(s => ({
+        name:   s.sector,
+        count:  s.total_count ?? 0,
+        avg:    s.avg_score ?? 0,
+        max:    s.max_score ?? 0,
+        tierA:  s.a_tier_count ?? 0,
+      }))
+  }
+  return MOCK_SECTORS
+})
+
+const top5 = computed(() => {
+  if (marketStore.topStocks.length) {
+    return marketStore.topStocks.slice(0, 5).map(s => ({
+      name:  s.name ?? s.ticker,
+      code:  s.ticker,
+      score: Math.round(s.score ?? s.composite_score ?? 0),
+    }))
+  }
+  return MOCK_TOP5
+})
+
+// ── 카드 B: 뉴스 피드 ──────────────────────────
+const newsFeedParams = ref({ limit: 20 })
+const { data: newsFeedData } = useNewsFeed(newsFeedParams)
+
+const newsList = computed(() => {
+  const raw = newsFeedData.value?.items ?? newsFeedData.value ?? []
+  if (raw.length) {
+    return raw.map((n, i) => ({
+      id:         n.id ?? i,
+      source:     n.source ?? n.publisher ?? '',
+      sentiment:  n.sentiment_label ?? (n.sentiment_score > 0.5 ? '긍정' : n.sentiment_score < -0.5 ? '부정' : '중립'),
+      title:      n.title ?? '',
+      date:       n.published_at ? new Date(n.published_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) : '',
+      confidence: Math.round((n.sentiment_confidence ?? Math.abs(n.sentiment_score ?? 0)) * 100),
+    }))
+  }
+  return MOCK_NEWS
+})
+
+const filteredNews = computed(() =>
+  newsFilter.value === '전체'
+    ? newsList.value
+    : newsList.value.filter(n => n.sentiment === newsFilter.value)
+)
+
+// ── Fallback 목업 데이터 ─────────────────────────
 const MOCK_SECTORS = [
   { name: '에너지',       count: 38,  avg: 61.2, max: 99.5,  tierA: 12  },
   { name: 'IT',           count: 645, avg: 59.5, max: 100.0, tierA: 170 },
@@ -222,7 +282,7 @@ const MOCK_SECTORS = [
   { name: '유틸리티',     count: 18,  avg: 38.3, max: 94.0,  tierA: 1   },
   { name: '필수소비재',   count: 98,  avg: 32.4, max: 98.2,  tierA: 9   },
   { name: '금융',         count: 155, avg: 31.0, max: 97.2,  tierA: 13  },
-];
+]
 
 const MOCK_TOP5 = [
   { name: '제이케이시냅스',  code: '060230', score: 100 },
@@ -230,26 +290,15 @@ const MOCK_TOP5 = [
   { name: '티엔알바이오팹',  code: '246710', score: 100 },
   { name: '캐리',            code: '313760', score: 100 },
   { name: '엑셀세라퓨틱스',  code: '373110', score: 100 },
-];
+]
 
 const MOCK_NEWS = [
-  { id: 1,  source: '중앙일보',     sentiment: '긍정', title: '융인대, AI 기본교육과정 개발 지원 사업 선정',                       date: '4월 27일', confidence: 100 },
-  { id: 2,  source: '한국NGO신문',  sentiment: '중립', title: '글로벌경제문화포럼(GECF), 4월 정기모임 성황리 개최',               date: '4월 27일', confidence: 0   },
-  { id: 3,  source: 'cio.com',      sentiment: '중립', title: '"보도자료도 AI 친화적으로" 행안부, 마크다운 도입 추진',            date: '4월 27일', confidence: 0   },
-  { id: 4,  source: '디일렉',       sentiment: '중립', title: 'AI 추론 시대, 하이퍼스케일러 자체 칩 승부수 띄운다',              date: '4월 27일', confidence: 0   },
-  { id: 5,  source: '한겨레',       sentiment: '중립', title: '하정우 AI수석, 사의 표명...부산 복귀 출마선언 \'조읽기\'',         date: '4월 27일', confidence: 0   },
-  { id: 6,  source: '농민신문',     sentiment: '긍정', title: 'NH아문디 HANARO Fn K-반도체 ETF 순자산 2조원 돌파',               date: '4월 27일', confidence: 100 },
-  { id: 7,  source: '연합뉴스',     sentiment: '중립', title: '한국·일본·대만 증시, 일제히 사상 최고치 다시 써',                 date: '4월 27일', confidence: 1   },
-  { id: 8,  source: 'blog.google',  sentiment: '중립', title: '구글 딥마인드와 과기정통부, 국가 AI 파트너십 발표',               date: '4월 27일', confidence: 0   },
-  { id: 9,  source: 'BBS 불교방송', sentiment: '긍정', title: '[포토뉴스] 농어촌공사, 한국정책대상서 \'우수정책상\' 수상',       date: '4월 27일', confidence: 100 },
-  { id: 10, source: '연합인포맥스', sentiment: '긍정', title: 'BNP파리바, 韓 성장률 2.7%로 상향..."한은, 이른 금리인상 검토"',   date: '4월 27일', confidence: 94  },
-];
-
-const filteredNews = computed(() =>
-  newsFilter.value === '전체'
-    ? MOCK_NEWS
-    : MOCK_NEWS.filter(n => n.sentiment === newsFilter.value)
-);
+  { id: 1,  source: '중앙일보',     sentiment: '긍정', title: '융인대, AI 기본교육과정 개발 지원 사업 선정',               date: '4월 27일', confidence: 100 },
+  { id: 2,  source: '한국NGO신문',  sentiment: '중립', title: '글로벌경제문화포럼(GECF), 4월 정기모임 성황리 개최',       date: '4월 27일', confidence: 0   },
+  { id: 3,  source: 'cio.com',      sentiment: '중립', title: '"보도자료도 AI 친화적으로" 행안부, 마크다운 도입 추진',    date: '4월 27일', confidence: 0   },
+  { id: 4,  source: '연합뉴스',     sentiment: '중립', title: '한국·일본·대만 증시, 일제히 사상 최고치 다시 써',         date: '4월 27일', confidence: 1   },
+  { id: 5,  source: '연합인포맥스', sentiment: '긍정', title: 'BNP파리바, 韓 성장률 2.7%로 상향..."한은, 이른 금리인상 검토"', date: '4월 27일', confidence: 94 },
+]
 
 const scoreColor = (avg) => {
   if (avg >= 55) return '#34d399';

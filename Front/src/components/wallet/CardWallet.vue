@@ -160,14 +160,18 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { LucideUser, LucideSparkles, LucideBuilding2, LucideFolder } from 'lucide-vue-next';
-import ProfileView   from './ProfileView.vue';
-import FlashCardView from './FlashCardView.vue';
-import CompanyView   from './CompanyView.vue';
-import PortfolioView from './PortfolioView.vue';
-// TODO: 아래 mock import를 실제 API 호출(pinia store 등)로 교체
-import { MOCK_PORTFOLIOS, MOCK_COMPANIES } from '@/mock/data.js';
+import { ref, computed } from 'vue'
+import { LucideUser, LucideSparkles, LucideBuilding2, LucideFolder } from 'lucide-vue-next'
+import ProfileView   from '@/components/views/ProfileView.vue'
+import FlashCardView from '@/components/views/FlashCardView.vue'
+import CompanyView   from '@/components/views/CompanyView.vue'
+import PortfolioView from '@/components/views/PortfolioView.vue'
+import { useAuthStore } from '@/stores/auth.js'
+import { useStocksStore } from '@/stores/stocks.js'
+import { MOCK_PORTFOLIOS, MOCK_COMPANIES } from '@/mock/data.js'
+
+const authStore   = useAuthStore()
+const stocksStore = useStocksStore()
 
 const props = defineProps({
   user: { type: Object, required: true, default: () => ({ name: '', style: '', totalAsset: '' }) }
@@ -285,17 +289,20 @@ const runAutoTrade = () => {
     }
   }
 
-  // 높은 점수 미보유 종목 매수
+  // 높은 점수 미보유 종목 매수 (실제 API 데이터 우선, fallback: 목업)
   const currentTickers = new Set(stocks.map(s => s.ticker));
-  for (const c of MOCK_COMPANIES) {
-    if (c.quantScore >= BUY_THRESHOLD && !currentTickers.has(c.ticker)) {
-      bought.push(c.name);
+  const candidateList  = stocksStore.items.length > 0 ? stocksStore.items : MOCK_COMPANIES
+  for (const c of candidateList) {
+    const score = c.quantScore ?? c.score ?? 50
+    const name  = c.name ?? c.company ?? c.ticker
+    if (score >= BUY_THRESHOLD && !currentTickers.has(c.ticker)) {
+      bought.push(name)
       stocks.push({
-        id: Date.now() + c.id,
-        company: c.name, ticker: c.ticker, sector: c.sector,
-        shares: 10, avgPrice: c.price, currentPrice: c.price,
-        change: c.change, color: c.color, weight: 10,
-        quantScore: c.quantScore,
+        id: Date.now() + Math.random(),
+        company: name, ticker: c.ticker, sector: c.sector ?? '',
+        shares: 10, avgPrice: c.price ?? 0, currentPrice: c.price ?? 0,
+        change: c.change ?? 0, color: c.color ?? '#4A90E2', weight: 10,
+        quantScore: score,
       });
     }
   }
