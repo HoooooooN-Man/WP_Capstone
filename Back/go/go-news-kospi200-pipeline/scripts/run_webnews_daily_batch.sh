@@ -92,7 +92,71 @@ mkdir -p "$ROOT_DIR/data/webnews/archive"
     echo
 
     echo "------------------------------------------------------------"
-    echo "[8/8] prune after batch"
+    
+echo
+echo "------------------------------------------------------------"
+echo "[LLM] resolve Google News URLs"
+echo "------------------------------------------------------------"
+
+rm -rf data/webnews/current/llm_resolved
+
+./bin/webnews_url_resolver \
+  --current-dir data/webnews/current \
+  --output-dir data/webnews/current/llm_resolved \
+  --max-items-per-category "${WEBNEWS_LLM_MAX_ITEMS_PER_CATEGORY:-10}" \
+  --timeout-seconds "${WEBNEWS_LLM_RESOLVE_TIMEOUT_SECONDS:-10}" \
+  --delay-ms "${WEBNEWS_LLM_RESOLVE_DELAY_MS:-700}"
+
+echo
+echo "------------------------------------------------------------"
+echo "[LLM] fetch article bodies"
+echo "------------------------------------------------------------"
+
+rm -rf data/webnews/current/llm_input
+
+./bin/webnews_body_fetcher \
+  --resolved-dir data/webnews/current/llm_resolved \
+  --output-dir data/webnews/current/llm_input \
+  --max-items-per-category "${WEBNEWS_LLM_MAX_ITEMS_PER_CATEGORY:-10}" \
+  --timeout-seconds "${WEBNEWS_LLM_BODY_TIMEOUT_SECONDS:-10}" \
+  --max-body-chars "${WEBNEWS_LLM_MAX_BODY_CHARS:-2500}" \
+  --delay-ms "${WEBNEWS_LLM_BODY_DELAY_MS:-700}"
+
+echo
+echo "------------------------------------------------------------"
+echo "[LLM] generate Gemini summaries"
+echo "------------------------------------------------------------"
+
+if [ -f configs/llm.env ]; then
+  set -a
+  source configs/llm.env
+  set +a
+fi
+
+rm -rf data/webnews/current/summaries
+
+./bin/webnews_summary \
+  --body-dir data/webnews/current/llm_input \
+  --summary-dir data/webnews/current/summaries \
+  --model "${GEMINI_MODEL:-gemini-3.5-flash}" \
+  --min-body-chars "${WEBNEWS_SUMMARY_MIN_BODY_CHARS:-500}" \
+  --max-body-chars-per-item "${WEBNEWS_SUMMARY_MAX_BODY_CHARS_PER_ITEM:-1800}" \
+  --timeout-seconds "${WEBNEWS_SUMMARY_TIMEOUT_SECONDS:-60}" \
+  --delay-ms "${WEBNEWS_SUMMARY_DELAY_MS:-1000}"
+
+echo
+echo "------------------------------------------------------------"
+echo "[LLM] publish summaries to Redis"
+echo "------------------------------------------------------------"
+
+./bin/webnews_summary_publish \
+  --current-dir data/webnews/current \
+  --summary-dir data/webnews/current/summaries \
+  --env-file "${APP_ENV_FILE:-configs/webnews.env}" \
+  --ttl-seconds "${WEBNEWS_SUMMARY_REDIS_TTL_SECONDS:-172800}"
+
+
+echo "[8/8] prune after batch"
     echo "------------------------------------------------------------"
     ./bin/webnews_prune \
       --phase after \
@@ -115,3 +179,12 @@ mkdir -p "$ROOT_DIR/data/webnews/archive"
   } 2>&1 | tee -a "$LOG_FILE"
 
 ) 9>"$LOCK_FILE"
+echo
+echo "------------------------------------------------------------"
+echo "[LLM cleanup] remove temporary LLM inputs"
+echo "------------------------------------------------------------"
+
+rm -rf data/webnews/current/llm_resolved
+rm -rf data/webnews/current/llm_input
+
+echo "[LLM cleanup] done"

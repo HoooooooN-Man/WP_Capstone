@@ -41,6 +41,16 @@ Learning/__pycache__/
 Learning/*.pyc
 Learning/.ipynb_checkpoints/
 
+configs/llm.env
+
+data/webnews/current/llm_resolved/
+data/webnews/current/llm_input/
+data/webnews/current/summaries/*.json
+data/webnews/current/*.json
+
+data/webnews/staging/
+data/webnews/archive/
+
 # General
 .vscode/
 .idea/

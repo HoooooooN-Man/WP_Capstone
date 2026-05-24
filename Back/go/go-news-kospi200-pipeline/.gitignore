@@ -27,3 +27,8 @@ data/webnews/current/
 
 # root-level Go build outputs
 /webnews_*
+# LLM local secrets and temporary inputs
+configs/llm.env
+data/webnews/current/llm_resolved/
+data/webnews/current/llm_input/
+data/webnews/current/summaries/
