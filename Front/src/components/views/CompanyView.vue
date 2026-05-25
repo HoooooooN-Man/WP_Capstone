@@ -22,15 +22,37 @@
         <div v-if="replaceMode && !detailCompany" class="px-2.5 py-1 bg-emerald-500/25 rounded-full border border-emerald-500/40">
           <span class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">교체 선택 중</span>
         </div>
-        <!-- 재무제표 버튼: 상세 뷰 + 일반 모드에서만 -->
+        <!-- 재무제표 버튼: 상세 뷰 + 일반 모드 -->
         <button v-if="detailCompany && !replaceMode"
                 @click="showFinancial = true"
                 class="ml-auto px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/15 text-[10px] text-white/55 hover:bg-white/14 hover:text-white/80 transition-all font-bold tracking-wide flex-shrink-0 flex items-center gap-1">
           <LucideBarChart2 class="w-3 h-3" />
           재무제표
         </button>
+        <!-- 검색 버튼: 리스트 뷰에서만 -->
+        <button v-if="!detailCompany"
+                @click="showSearch = true"
+                class="ml-auto w-8 h-8 flex items-center justify-center rounded-xl bg-white/8 border border-white/12 text-white/50 hover:bg-white/14 hover:text-white/80 transition-all flex-shrink-0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </button>
       </div>
       <p v-if="replaceMode && !detailCompany" class="text-[10px] text-white/35 mt-1">교체할 종목을 선택하세요</p>
+    </div>
+
+    <!-- 탭 바: 리스트 뷰에서만 -->
+    <div v-if="!detailCompany" class="px-4 pt-2.5 pb-2 flex-shrink-0">
+      <div class="flex gap-1 p-1 rounded-xl" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.07)">
+        <button v-for="tab in STOCK_TABS" :key="tab.key"
+                @click="switchTab(tab.key)"
+                class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150"
+                :class="activeTab === tab.key
+                  ? 'bg-white/15 text-white shadow-sm'
+                  : 'text-white/38 hover:text-white/65'">
+          {{ tab.label }}
+        </button>
+      </div>
     </div>
 
     <!-- 기업 상세 뷰 — 좌우 분할 레이아웃 -->
@@ -173,55 +195,497 @@
 
     </div>
 
-    <!-- 기업 리스트 뷰 -->
-    <div v-else class="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-      <div
-        v-for="company in companies" :key="company.id"
-        class="flex items-center gap-3 p-3 rounded-xl border border-white/5 transition-all duration-200 cursor-pointer"
-        :class="replaceMode
-          ? 'bg-white/5 hover:bg-white/10 hover:border-emerald-500/30'
-          : 'bg-white/5 hover:bg-white/8 hover:border-white/15'"
-        @click="replaceMode ? openCompare(company) : openDetail(company)"
-      >
-        <div class="w-1 h-10 rounded-full flex-shrink-0" :style="{ background: company.color }"></div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2">
-            <p class="font-bold text-sm truncate">{{ company.name }}</p>
-            <span class="text-[9px] text-white/35 font-mono flex-shrink-0">{{ company.ticker }}</span>
+    <!-- 기업 리스트 뷰 (탭) -->
+    <div v-else class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- ──────────────────────────────────────
+           탭 A: AI 추천 랭킹
+      ────────────────────────────────────── -->
+      <template v-if="activeTab === 'recommend'">
+
+        <!-- 종목 리스트 -->
+        <div class="flex-1 overflow-y-auto px-4 pb-3 space-y-2">
+          <!-- 로딩 -->
+          <div v-if="screenerStore.loading" class="flex items-center justify-center h-20 gap-2">
+            <div class="w-4 h-4 rounded-full border-2 animate-spin"
+                 style="border-color:rgba(96,165,250,0.5);border-top-color:transparent"></div>
+            <span class="text-[9px] text-white/30">종목 분석 중...</span>
           </div>
-          <p class="text-[9px] text-white/40">{{ company.sector }}</p>
-        </div>
-        <!-- 퀀트 스코어 -->
-        <div class="flex flex-col items-center flex-shrink-0 min-w-[36px]">
-          <p class="text-[7px] text-white/30 uppercase tracking-wide">Quant</p>
-          <p class="text-sm font-black" :class="quantTextColor(company.quantScore)">{{ company.quantScore }}</p>
-          <div class="w-6 h-0.5 bg-black/30 rounded-full overflow-hidden mt-0.5">
-            <div class="h-full rounded-full" :class="quantBarColor(company.quantScore)"
-              :style="{ width: company.quantScore + '%' }"></div>
+          <!-- 결과 없음 -->
+          <div v-else-if="recommendList.length === 0" class="flex flex-col items-center justify-center h-20 gap-1">
+            <span class="text-[20px]">🔍</span>
+            <span class="text-[10px] text-white/35">조건에 맞는 종목이 없습니다</span>
+          </div>
+          <div v-else
+            v-for="company in recommendList" :key="company.id"
+            class="flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer"
+            :class="replaceMode
+              ? 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-emerald-500/30'
+              : 'bg-white/5 border-white/5 hover:bg-white/8 hover:border-white/15'"
+            @click="replaceMode ? openCompare(company) : openDetail(company)"
+          >
+            <div class="w-1 h-10 rounded-full flex-shrink-0" :style="{ background: company.color }"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="font-bold text-sm truncate">{{ company.name }}</p>
+                <span class="text-[9px] text-white/35 font-mono flex-shrink-0">{{ company.ticker }}</span>
+              </div>
+              <p class="text-[9px] text-white/40">{{ company.sector }}</p>
+            </div>
+            <div class="flex flex-col items-center flex-shrink-0 min-w-[36px]">
+              <p class="text-[7px] text-white/30 uppercase tracking-wide">Quant</p>
+              <p class="text-sm font-black" :class="quantTextColor(company.quantScore)">{{ company.quantScore }}</p>
+              <div class="w-6 h-0.5 bg-black/30 rounded-full overflow-hidden mt-0.5">
+                <div class="h-full rounded-full" :class="quantBarColor(company.quantScore)"
+                     :style="{ width: company.quantScore + '%' }"></div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-sm font-bold">₩{{ company.price.toLocaleString() }}</p>
+              <p class="text-[10px] font-semibold"
+                 :class="company.change >= 0 ? 'text-green-400' : 'text-red-400'">
+                {{ company.change >= 0 ? '+' : '' }}{{ company.change }}%
+              </p>
+            </div>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <template v-if="!replaceMode">
+                <button @click.stop="openOrderModal(company, 'buy')"
+                        class="px-2 py-1 rounded-lg text-[10px] font-bold border transition-all bg-blue-500/15 border-blue-500/30 text-blue-300 hover:bg-blue-500/30">매수</button>
+                <button @click.stop="openOrderModal(company, 'sell')"
+                        class="px-2 py-1 rounded-lg text-[10px] font-bold border transition-all bg-red-500/15 border-red-500/30 text-red-300 hover:bg-red-500/30">매도</button>
+              </template>
+              <LucideChevronRight class="w-4 h-4 text-white/25 ml-0.5" />
+            </div>
           </div>
         </div>
-        <div class="text-right flex-shrink-0">
-          <p class="text-sm font-bold">₩{{ company.price.toLocaleString() }}</p>
-          <p class="text-[10px] font-semibold"
-            :class="company.change >= 0 ? 'text-green-400' : 'text-red-400'">
-            {{ company.change >= 0 ? '+' : '' }}{{ company.change }}%
-          </p>
-        </div>
-        <div class="flex items-center gap-1 flex-shrink-0">
-          <template v-if="!replaceMode">
-            <button
-              @click.stop="openOrderModal(company, 'buy')"
-              class="px-2 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 bg-blue-500/15 border-blue-500/30 text-blue-300 hover:bg-blue-500/30"
-            >매수</button>
-            <button
-              @click.stop="openOrderModal(company, 'sell')"
-              class="px-2 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 bg-red-500/15 border-red-500/30 text-red-300 hover:bg-red-500/30"
-            >매도</button>
+      </template>
+
+      <!-- ──────────────────────────────────────
+           탭 B: 커뮤니티 인기
+      ────────────────────────────────────── -->
+      <template v-else-if="activeTab === 'community'">
+        <div class="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+          <div v-if="communityLoading" class="flex items-center justify-center h-20 gap-2">
+            <div class="w-4 h-4 rounded-full border-2 animate-spin"
+                 style="border-color:rgba(251,191,36,0.5);border-top-color:transparent"></div>
+            <span class="text-[9px] text-white/30">커뮤니티 데이터 로딩 중...</span>
+          </div>
+          <div v-else-if="communityError" class="flex flex-col items-center justify-center h-20 gap-1.5">
+            <span class="text-[18px]">💬</span>
+            <span class="text-[10px] text-white/35">커뮤니티 데이터를 불러올 수 없습니다</span>
+            <span class="text-[8px] text-white/20">게시판 DB 연결을 확인해주세요</span>
+          </div>
+          <div v-else
+            v-for="(post, idx) in communityList" :key="post.id"
+            class="p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/8 transition-all cursor-pointer"
+            @click="post.ticker ? openDetailByTicker(post.ticker) : null"
+          >
+            <div class="flex items-start gap-2.5">
+              <!-- 순위 -->
+              <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
+                   :style="rankBadge(idx + 1)">
+                <span class="text-[9px] font-black">{{ idx + 1 }}</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 mb-0.5">
+                  <span v-if="post.ticker"
+                        class="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold"
+                        style="background:rgba(96,165,250,0.15);color:#93c5fd;border:1px solid rgba(96,165,250,0.25)">
+                    {{ post.ticker }}
+                  </span>
+                </div>
+                <p class="text-[11px] font-semibold leading-snug text-white/88">{{ post.title }}</p>
+                <div class="flex items-center gap-3 mt-1">
+                  <span class="text-[8px] text-white/25 font-mono">👁 {{ post.views }}</span>
+                  <span class="text-[8px] text-white/25 font-mono">♥ {{ post.likes }}</span>
+                  <span class="text-[8px] text-white/25 font-mono">💬 {{ post.comment_count }}</span>
+                  <span class="text-[8px] font-bold ml-auto"
+                        style="color:rgba(251,191,36,0.7)">
+                    🔥 {{ post.popularity }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- fallback mock -->
+          <template v-if="!communityLoading && !communityError && communityList.length === 0">
+            <div v-for="(post, idx) in MOCK_POPULAR" :key="post.id"
+                 class="p-3 rounded-xl border border-white/4 bg-white/4 opacity-60">
+              <div class="flex items-start gap-2.5">
+                <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
+                     :style="rankBadge(idx + 1)">
+                  <span class="text-[9px] font-black">{{ idx + 1 }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <span v-if="post.ticker" class="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold mr-1.5"
+                        style="background:rgba(96,165,250,0.15);color:#93c5fd;border:1px solid rgba(96,165,250,0.25)">
+                    {{ post.ticker }}
+                  </span>
+                  <p class="text-[11px] font-semibold leading-snug text-white/70 mt-0.5">{{ post.title }}</p>
+                  <div class="flex items-center gap-3 mt-1">
+                    <span class="text-[8px] text-white/22 font-mono">👁 {{ post.views }}</span>
+                    <span class="text-[8px] text-white/22 font-mono">♥ {{ post.likes }}</span>
+                    <span class="text-[8px] font-bold ml-auto" style="color:rgba(251,191,36,0.5)">🔥 {{ post.popularity }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </template>
-          <LucideChevronRight class="w-4 h-4 text-white/25 ml-0.5" />
+        </div>
+      </template>
+
+      <!-- ──────────────────────────────────────
+           탭 C: 급상승 종목
+      ────────────────────────────────────── -->
+      <template v-else-if="activeTab === 'rising'">
+        <div class="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+          <div v-if="risingLoading" class="flex items-center justify-center h-20 gap-2">
+            <div class="w-4 h-4 rounded-full border-2 animate-spin"
+                 style="border-color:rgba(52,211,153,0.5);border-top-color:transparent"></div>
+            <span class="text-[9px] text-white/30">급상승 종목 탐색 중...</span>
+          </div>
+          <div v-else-if="risingError" class="flex flex-col items-center justify-center h-20 gap-1.5">
+            <span class="text-[18px]">📈</span>
+            <span class="text-[10px] text-white/35">급상승 데이터를 불러올 수 없습니다</span>
+          </div>
+          <div v-else
+            v-for="(s, idx) in risingList" :key="s.ticker"
+            class="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/8 hover:border-white/12 transition-all cursor-pointer"
+            @click="openDetailByTicker(s.ticker)"
+          >
+            <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black"
+                 style="background:rgba(52,211,153,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.3)">
+              {{ idx + 1 }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <p class="font-bold text-sm truncate">{{ s.name ?? s.ticker }}</p>
+                <span class="text-[9px] text-white/35 font-mono flex-shrink-0">{{ s.ticker }}</span>
+              </div>
+              <p class="text-[9px] text-white/38">{{ s.sector }}</p>
+            </div>
+            <!-- 점수 변화 -->
+            <div class="text-right flex-shrink-0">
+              <p class="text-[11px] font-black text-green-300">
+                △ {{ s.score_change >= 0 ? '+' : '' }}{{ s.score_change?.toFixed(1) }}
+              </p>
+              <p class="text-[8.5px] font-mono text-white/38">점수 {{ s.score?.toFixed(0) }}</p>
+            </div>
+            <!-- Tier 뱃지 -->
+            <span class="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
+                  :style="tierBadgeStyle(s.tier)">{{ s.tier }}</span>
+          </div>
+          <!-- fallback mock -->
+          <template v-if="!risingLoading && !risingError && risingList.length === 0">
+            <div v-for="(s, idx) in MOCK_RISING" :key="s.ticker"
+                 class="flex items-center gap-3 p-3 rounded-xl border border-white/4 bg-white/4 opacity-60">
+              <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black"
+                   style="background:rgba(52,211,153,0.12);color:#34d399;border:1px solid rgba(52,211,153,0.2)">
+                {{ idx + 1 }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-sm truncate">{{ s.name }}</p>
+                <p class="text-[9px] text-white/32">{{ s.sector }}</p>
+              </div>
+              <div class="text-right flex-shrink-0">
+                <p class="text-[11px] font-black text-green-300">△ +{{ s.score_change }}</p>
+                <p class="text-[8.5px] font-mono text-white/35">점수 {{ s.score }}</p>
+              </div>
+              <span class="text-[9px] font-black px-1.5 py-0.5 rounded" :style="tierBadgeStyle(s.tier)">{{ s.tier }}</span>
+            </div>
+          </template>
+        </div>
+      </template>
+
+    </div><!-- /기업 리스트 뷰 -->
+
+    <!-- ══════════════════════════════
+         검색 오버레이
+    ══════════════════════════════ -->
+    <transition name="search-slide">
+      <div v-if="showSearch"
+           class="absolute inset-0 z-50 flex flex-col rounded-[2rem] overflow-hidden"
+           style="background:linear-gradient(160deg,#0c1622 0%,#080e18 100%)">
+
+        <!-- 검색 바 -->
+        <div class="px-3 pt-4 pb-2.5 flex items-center gap-2 flex-shrink-0 border-b border-white/8">
+          <div class="flex-1 flex items-center gap-2 px-2.5 py-1.5 rounded-xl"
+               style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.11)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input ref="searchInputRef"
+                   v-model="searchQuery"
+                   type="text"
+                   placeholder="종목명 · 티커 검색"
+                   class="flex-1 bg-transparent outline-none text-[11px] text-white placeholder:text-white/25 min-w-0" />
+            <button v-if="searchQuery" @click="searchQuery = ''"
+                    class="text-white/28 hover:text-white/55 text-[10px] flex-shrink-0">✕</button>
+          </div>
+          <button @click="closeSearch"
+                  class="text-[10px] font-bold text-white/40 hover:text-white/65 flex-shrink-0 px-1 transition-colors">
+            닫기
+          </button>
+        </div>
+
+        <!-- 본문: 좌(1/5 상세설정) + 우(4/5 종목 리스트) -->
+        <div class="flex-1 flex overflow-hidden">
+
+          <!-- ── 좌: 상세 설정 (1/5) ── -->
+          <div class="w-1/5 flex-shrink-0 flex flex-col overflow-y-auto border-r border-white/8"
+               style="background:rgba(0,0,0,0.18)">
+
+            <!-- ▸ 모델 버전 -->
+            <div class="px-2 pt-2.5 pb-1.5 border-b border-white/6">
+              <p class="text-[7px] text-white/28 uppercase tracking-widest mb-1">버전</p>
+              <select :value="searchFilters.model_version"
+                      @change="searchFilters.model_version = $event.target.value"
+                      class="w-full text-[8px] bg-black/20 border border-white/10 text-white/70 rounded px-1 py-0.5 outline-none">
+                <option value="latest">최신</option>
+                <option v-for="v in searchVersions" :key="v" :value="v">{{ v }}</option>
+              </select>
+            </div>
+
+            <!-- ▸ 기준일 -->
+            <div class="px-2 py-1.5 border-b border-white/6">
+              <p class="text-[7px] text-white/28 uppercase tracking-widest mb-1">기준일</p>
+              <select :value="searchFilters.date"
+                      @change="searchFilters.date = $event.target.value"
+                      class="w-full text-[8px] bg-black/20 border border-white/10 text-white/70 rounded px-1 py-0.5 outline-none">
+                <option v-for="d in searchDates" :key="d" :value="d">{{ d }}</option>
+              </select>
+            </div>
+
+            <!-- ▸ 섹터 -->
+            <div class="px-2 py-1.5 border-b border-white/6">
+              <p class="text-[7px] text-white/28 uppercase tracking-widest mb-1">섹터</p>
+              <select :value="searchFilters.sector ?? ''"
+                      @change="searchFilters.sector = $event.target.value || null"
+                      class="w-full text-[8px] bg-black/20 border border-white/10 text-white/70 rounded px-1 py-0.5 outline-none">
+                <option value="">전체</option>
+                <option v-for="s in SECTOR_LIST" :key="s" :value="s">{{ s }}</option>
+              </select>
+            </div>
+
+            <!-- ▸ 최소 점수 슬라이더 -->
+            <div class="px-2 py-1.5 border-b border-white/6">
+              <div class="flex justify-between mb-1">
+                <p class="text-[7px] text-white/28 uppercase tracking-widest">최소 점수</p>
+                <span class="text-[8px] font-bold text-blue-300">{{ searchFilters.min_score }}</span>
+              </div>
+              <input type="range" min="0" max="100" step="1"
+                     v-model.number="searchFilters.min_score"
+                     class="w-full h-0.5 rounded-full appearance-none cursor-pointer"
+                     style="accent-color:#60a5fa" />
+              <div class="flex justify-between mt-0.5">
+                <span class="text-[6px] text-white/18">0</span>
+                <span class="text-[6px] text-white/18">100</span>
+              </div>
+            </div>
+
+            <!-- ▸ Tier 빠른 선택 -->
+            <div class="px-2 py-1.5 border-b border-white/6">
+              <p class="text-[7px] text-white/28 uppercase tracking-widest mb-1">Tier</p>
+              <div class="grid grid-cols-2 gap-0.5">
+                <!-- A / B / C / D -->
+                <button v-for="t in TIER_PRESETS.filter(p => p.tier !== null)" :key="t.label"
+                        @click="searchFilters.min_score = t.min; searchFilters.tier = t.tier"
+                        class="py-0.5 rounded text-[8px] font-bold text-center transition-all flex items-center justify-center gap-0.5"
+                        :style="searchFilters.tier === t.tier && searchFilters.min_score === t.min
+                          ? tierActiveStyle(t.tier)
+                          : 'background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.38);border:1px solid rgba(255,255,255,0.08)'">
+                  <span>{{ t.label }}</span>
+                  <span class="text-[6px] opacity-55">({{ tierCounts[t.tier] ?? 0 }})</span>
+                </button>
+                <!-- 전체: col-span-2 -->
+                <button class="col-span-2 mt-0.5 py-0.5 rounded text-[8px] font-bold text-center transition-all"
+                        @click="searchFilters.min_score = 0; searchFilters.tier = null"
+                        :style="searchFilters.tier === null && searchFilters.min_score === 0
+                          ? tierActiveStyle('all')
+                          : 'background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.38);border:1px solid rgba(255,255,255,0.08)'">
+                  전체 ({{ searchAllItems.length }})
+                </button>
+              </div>
+            </div>
+
+            <!-- ▸ Tier 분포 -->
+            <div class="px-2 py-1.5 border-b border-white/6">
+              <p class="text-[7px] text-white/28 uppercase tracking-widest mb-1.5">Tier 분포</p>
+              <div class="space-y-0.5">
+                <div v-for="tk in ['A','B','C','D']" :key="tk" class="flex items-center gap-1.5">
+                  <span class="text-[7px] font-black w-3 flex-shrink-0"
+                        :style="{ color: {A:'#34d399',B:'#93c5fd',C:'#fbbf24',D:'#f87171'}[tk] }">{{ tk }}</span>
+                  <div class="flex-1 h-0.5 rounded-full" style="background:rgba(255,255,255,0.06)">
+                    <div class="h-full rounded-full transition-all duration-300"
+                         :style="{
+                           width: searchAllItems.length
+                             ? ((tierCounts[tk] ?? 0) / searchAllItems.length * 100).toFixed(1) + '%'
+                             : '0%',
+                           background: {A:'#34d399',B:'#93c5fd',C:'#fbbf24',D:'#f87171'}[tk]
+                         }"></div>
+                  </div>
+                  <span class="text-[7px] text-white/30 w-4 text-right flex-shrink-0">{{ tierCounts[tk] ?? 0 }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══ 부가설정 (접기/펼치기) ══ -->
+            <div class="px-2 pt-1.5">
+              <button @click="financialOpen = !financialOpen"
+                      class="w-full flex items-center justify-between text-[7px] font-bold uppercase tracking-widest mb-1 transition-colors"
+                      :class="financialOpen ? 'text-white/50' : 'text-white/25'">
+                <span>부가설정</span>
+                <span class="text-[8px]">{{ financialOpen ? '▲' : '▼' }}</span>
+              </button>
+
+              <template v-if="financialOpen">
+                <!-- 재무 조건 7개 -->
+                <div v-for="f in ALL_FINANCE_FILTERS" :key="f.key" class="mb-1.5">
+                  <p class="text-[6.5px] text-white/22 mb-0.5">{{ f.shortLabel }}</p>
+                  <input type="number" :placeholder="f.placeholder"
+                         :value="searchFilters[f.key]"
+                         @change="searchFilters[f.key] = $event.target.value === '' ? null : +$event.target.value"
+                         class="w-full px-1.5 py-0.5 rounded text-[8px] font-mono bg-black/20 border border-white/8 text-white/70 outline-none" />
+                </div>
+
+                <!-- 구분선 -->
+                <div class="border-t border-white/6 my-1.5"></div>
+
+                <!-- 정렬 기준 -->
+                <div class="mb-1.5">
+                  <p class="text-[6.5px] text-white/22 mb-0.5">정렬</p>
+                  <select :value="searchFilters.sort_by"
+                          @change="searchFilters.sort_by = $event.target.value"
+                          class="w-full text-[8px] bg-black/20 border border-white/8 text-white/60 rounded px-1 py-0.5 outline-none">
+                    <option value="composite_score">복합점수</option>
+                    <option value="score">ML점수</option>
+                    <option value="finance_score">재무점수</option>
+                    <option value="roe">ROE</option>
+                    <option value="per">PER</option>
+                    <option value="pbr">PBR</option>
+                    <option value="rev_growth_yoy">매출성장률</option>
+                  </select>
+                </div>
+
+                <!-- 결과 수 -->
+                <div class="mb-1.5">
+                  <p class="text-[6.5px] text-white/22 mb-0.5">결과 수</p>
+                  <select :value="searchFilters.limit"
+                          @change="searchFilters.limit = +$event.target.value"
+                          class="w-full text-[8px] bg-black/20 border border-white/8 text-white/60 rounded px-1 py-0.5 outline-none">
+                    <option :value="50">50개</option>
+                    <option :value="100">100개</option>
+                    <option :value="200">200개</option>
+                    <option :value="300">300개</option>
+                  </select>
+                </div>
+
+                <!-- 구분선 -->
+                <div class="border-t border-white/6 my-1.5"></div>
+
+                <!-- 프리셋 -->
+                <div class="mb-1.5">
+                  <p class="text-[6.5px] text-white/22 mb-1">프리셋</p>
+                  <div class="flex gap-0.5 mb-1">
+                    <input v-model="presetName" type="text" placeholder="이름"
+                           class="flex-1 px-1 py-0.5 rounded text-[8px] bg-black/20 border border-white/8 text-white/70 outline-none min-w-0"
+                           @keydown.enter="savePreset" />
+                    <button @click="savePreset"
+                            class="px-1.5 py-0.5 rounded text-[8px] font-bold flex-shrink-0 transition-colors"
+                            style="background:rgba(96,165,250,0.2);color:#93c5fd;border:1px solid rgba(96,165,250,0.3)">
+                      저장
+                    </button>
+                  </div>
+                  <div v-for="name in savedPresets" :key="name"
+                       class="flex items-center justify-between mb-0.5">
+                    <button @click="loadPreset(name)"
+                            class="text-[7.5px] text-white/45 hover:text-white/70 truncate flex-1 text-left transition-colors">
+                      {{ name }}
+                    </button>
+                    <button @click="deletePreset(name)"
+                            class="text-[8px] text-white/20 hover:text-red-400 ml-1 flex-shrink-0 transition-colors">✕</button>
+                  </div>
+                  <p v-if="!savedPresets.length" class="text-[7px] text-white/18">저장된 프리셋 없음</p>
+                </div>
+
+                <!-- 재무만 초기화 / 전체 초기화 -->
+                <div class="flex flex-col gap-0.5 pb-2">
+                  <button @click="resetFinancialFilters"
+                          class="text-[7px] text-red-400/60 hover:text-red-400 text-left transition-colors">
+                    재무 조건 초기화
+                  </button>
+                  <button @click="resetSearchFilters"
+                          class="text-[7px] text-red-400/60 hover:text-red-400 text-left transition-colors">
+                    전체 초기화
+                  </button>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- ── 우: 종목 리스트 (4/5) ── -->
+          <div class="flex-1 overflow-y-auto">
+
+            <!-- 로딩 -->
+            <div v-if="searchLoading" class="flex items-center justify-center h-20 gap-2">
+              <div class="w-3 h-3 rounded-full border-2 animate-spin"
+                   style="border-color:rgba(96,165,250,0.5);border-top-color:transparent"></div>
+              <span class="text-[8px] text-white/28">로딩 중...</span>
+            </div>
+
+            <!-- 결과 없음 -->
+            <div v-else-if="searchDisplayList.length === 0"
+                 class="flex flex-col items-center justify-center h-20 gap-1">
+              <span class="text-[14px]">🔍</span>
+              <span class="text-[9px] text-white/30">결과 없음</span>
+            </div>
+
+            <!-- 리스트 -->
+            <div v-else>
+              <!-- 건수 + CSV -->
+              <div class="px-2 py-1.5 border-b border-white/6 flex items-center justify-between">
+                <span class="text-[7.5px] text-white/25">{{ searchDisplayList.length }}개 종목</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[7.5px] text-white/18">가나다순</span>
+                  <button @click="exportCsv"
+                          class="text-[7px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 transition-all"
+                          style="background:rgba(52,211,153,0.12);color:rgba(52,211,153,0.7);border:1px solid rgba(52,211,153,0.2)">
+                    CSV ↓
+                  </button>
+                </div>
+              </div>
+              <div v-for="s in searchDisplayList" :key="s.ticker"
+                   class="flex items-center gap-1.5 px-2 py-1.5 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                   @click="selectSearchResult(s)">
+                <!-- 이름 + 티커 + 점수 바 -->
+                <div class="flex-1 min-w-0">
+                  <p class="text-[10px] font-bold truncate text-white/88">{{ s.name }}</p>
+                  <p class="text-[7.5px] font-mono text-white/30">{{ s.ticker }}</p>
+                  <div class="w-full h-0.5 bg-black/30 rounded-full mt-0.5">
+                    <div class="h-full rounded-full transition-all"
+                         :style="{ width: s.quantScore + '%', background: s.color }"></div>
+                  </div>
+                </div>
+                <!-- ML / 재무 점수 -->
+                <div class="text-right flex-shrink-0 min-w-[28px]">
+                  <p class="text-[6.5px] text-white/28">ML <span class="font-mono font-bold">{{ s.mlScore }}</span></p>
+                  <p class="text-[6.5px] text-white/28">재무 <span class="font-mono font-bold">{{ s.finScore }}</span></p>
+                </div>
+                <!-- Tier -->
+                <span class="text-[8px] font-black px-1 py-0.5 rounded flex-shrink-0"
+                      :style="tierBadgeStyle(s.tier)">{{ s.tier }}</span>
+                <!-- 복합점수 -->
+                <span class="text-[9px] font-black flex-shrink-0"
+                      :class="s.quantScore >= 70 ? 'text-green-300' : s.quantScore >= 45 ? 'text-yellow-300' : 'text-red-300'">
+                  {{ s.quantScore }}
+                </span>
+                <LucideChevronRight class="w-3 h-3 text-white/20 flex-shrink-0" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
 
     <!-- 상세 주가 차트 모달 -->
     <transition name="order-modal">
@@ -681,15 +1145,16 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { LucidePlus, LucideCheck, LucideChevronRight, LucideChevronLeft, LucideBarChart2 } from 'lucide-vue-next'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { LucideChevronRight, LucideChevronLeft, LucideBarChart2 } from 'lucide-vue-next'
 import { MOCK_COMPANIES, generateMockOHLC } from '@/mock/data.js'
 import StockChartModal from '@/components/modal/StockChartModal.vue'
 import { stocksApi } from '@/api/stocks.js'
+import { screenerApi } from '@/api/screener.js'
 import { chartApi } from '@/api/chart.js'
-import { financeApi } from '@/api/finance.js'
+// import { financeApi } from '@/api/finance.js'  // [미사용] 재무 API 연결 시 주석 해제
 import { useStocksStore } from '@/stores/stocks.js'
-import { useMarketStore } from '@/stores/market.js'
+import { useScreenerStore } from '@/stores/screener.js'
 
 const props = defineProps({
   replaceMode:  { type: Boolean, default: false },
@@ -698,10 +1163,82 @@ const props = defineProps({
 });
 const emit = defineEmits(['select-company', 'add-company', 'back', 'sell-replace']);
 
-const stocksStore = useStocksStore()
-const marketStore = useMarketStore()
+const stocksStore   = useStocksStore()
+const screenerStore = useScreenerStore()
 
-// 실제 API 데이터 우선 사용, fallback → 목업
+// ── 탭 설정 ──────────────────────────────────
+const STOCK_TABS = [
+  { key: 'recommend', label: 'AI 추천 랭킹' },
+  { key: 'community', label: '커뮤니티 인기' },
+  { key: 'rising',    label: '급상승 종목'  },
+]
+const activeTab = ref('recommend')
+
+// ── 섹터 목록 ────────────────────────────────
+const SECTOR_LIST = ['IT','에너지','건강관리','산업재','커뮤니케이션','경기소비재','소재','금융','유틸리티','필수소비재']
+
+// ── Tier 빠른선택 (FilterPanel 스타일) ────────
+const TIER_PRESETS = [
+  { label: 'A (80+)', min: 80, tier: 'A' },
+  { label: 'B (60+)', min: 60, tier: 'B' },
+  { label: 'C (40+)', min: 40, tier: 'C' },
+  { label: 'D (0+)',  min: 0,  tier: 'D' },
+  { label: '전체',    min: 0,  tier: null },
+]
+
+// ── 재무+부가 필터 목록 (FilterSidebar 7개) ──
+const ALL_FINANCE_FILTERS = [
+  { key: 'max_per',           shortLabel: '최대 PER',          placeholder: '제한없음' },
+  { key: 'max_pbr',           shortLabel: '최대 PBR',          placeholder: '제한없음' },
+  { key: 'min_roe',           shortLabel: '최소 ROE (%)',       placeholder: '제한없음' },
+  { key: 'max_debt_ratio',    shortLabel: '최대 부채비율 (%)',   placeholder: '제한없음' },
+  { key: 'min_op_margin',     shortLabel: '최소 영업이익률 (%)', placeholder: '제한없음' },
+  { key: 'min_rev_growth',    shortLabel: '최소 매출성장률 (%)', placeholder: '제한없음' },
+  { key: 'min_finance_score', shortLabel: '최소 재무점수',       placeholder: '제한없음' },
+]
+
+// ══════════════════════════════════════════════
+// [더미데이터] API 연결 후 아래 MOCK_RECOMMEND 블록 전체 삭제
+// ══════════════════════════════════════════════
+const MOCK_RECOMMEND = [
+  //                                                                                                                               mlScore  finScore  (composite ≈ ml*0.6 + fin*0.4)
+  { id:'005930', ticker:'005930', name:'삼성전자',        sector:'IT',          price:78400,  change: 1.83, color:'#34d399', marketCap:'467조', per:20.1, pbr:1.5, dividend:2.1, quantScore:91, mlScore:88, finScore:96, tier:'A', description:'' },
+  { id:'000660', ticker:'000660', name:'SK하이닉스',       sector:'IT',          price:198500, change: 2.41, color:'#34d399', marketCap:'144조', per:16.3, pbr:2.2, dividend:0.8, quantScore:87, mlScore:92, finScore:79, tier:'A', description:'' },
+  { id:'035420', ticker:'035420', name:'NAVER',           sector:'커뮤니케이션', price:214500, change: 0.94, color:'#34d399', marketCap:'35조',  per:35.2, pbr:2.8, dividend:0.3, quantScore:82, mlScore:80, finScore:85, tier:'A', description:'' },
+  { id:'207940', ticker:'207940', name:'삼성바이오로직스', sector:'건강관리',     price:996000, change: 1.12, color:'#34d399', marketCap:'71조',  per:99.6, pbr:7.1, dividend:0.0, quantScore:79, mlScore:75, finScore:85, tier:'B', description:'' },
+  { id:'051910', ticker:'051910', name:'LG화학',          sector:'소재',         price:312000, change:-0.64, color:'#fbbf24', marketCap:'22조',  per:28.4, pbr:1.1, dividend:1.2, quantScore:73, mlScore:70, finScore:78, tier:'B', description:'' },
+  { id:'086520', ticker:'086520', name:'에코프로',         sector:'소재',         price:87500,  change: 3.17, color:'#34d399', marketCap:'12조',  per:42.1, pbr:5.3, dividend:0.0, quantScore:68, mlScore:72, finScore:62, tier:'B', description:'' },
+  { id:'035720', ticker:'035720', name:'카카오',           sector:'커뮤니케이션', price:41200,  change:-1.32, color:'#fbbf24', marketCap:'18조',  per:48.7, pbr:1.3, dividend:0.0, quantScore:61, mlScore:65, finScore:55, tier:'B', description:'' },
+  { id:'196170', ticker:'196170', name:'알테오젠',         sector:'건강관리',     price:321000, change: 4.23, color:'#34d399', marketCap:'19조',  per:null, pbr:18.4,dividend:0.0, quantScore:58, mlScore:60, finScore:55, tier:'C', description:'' },
+  { id:'041510', ticker:'041510', name:'에스엠',           sector:'커뮤니케이션', price:87700,  change: 0.57, color:'#fbbf24', marketCap:'2.1조', per:22.3, pbr:2.6, dividend:0.5, quantScore:54, mlScore:52, finScore:57, tier:'C', description:'' },
+  { id:'006400', ticker:'006400', name:'삼성SDI',          sector:'소재',         price:189000, change:-0.79, color:'#fbbf24', marketCap:'13조',  per:31.8, pbr:0.9, dividend:0.6, quantScore:51, mlScore:48, finScore:56, tier:'C', description:'' },
+  { id:'068270', ticker:'068270', name:'셀트리온',         sector:'건강관리',     price:165000, change: 1.47, color:'#fbbf24', marketCap:'22조',  per:44.6, pbr:3.2, dividend:0.0, quantScore:48, mlScore:50, finScore:45, tier:'C', description:'' },
+  { id:'005380', ticker:'005380', name:'현대차',           sector:'경기소비재',   price:218000, change: 0.23, color:'#fbbf24', marketCap:'46조',  per:7.4,  pbr:0.7, dividend:3.4, quantScore:45, mlScore:42, finScore:50, tier:'C', description:'' },
+]
+// ══════════════════════════════════════════════ [더미데이터 끝]
+
+// ── AI 추천 랭킹 (screener 연동) ─────────────
+const recommendList = computed(() => {
+  const src = screenerStore.items.length > 0 ? screenerStore.items : stocksStore.items
+  if (src.length === 0) return MOCK_RECOMMEND   // [더미데이터] 연결 후 → return [] 로 변경
+  return src.map(s => ({
+    id:         s.ticker,
+    name:       s.name ?? s.ticker,
+    ticker:     s.ticker,
+    sector:     s.sector ?? '',
+    price:      s.close_price ?? s.price ?? 0,
+    change:     s.change_rate ?? s.change ?? 0,
+    color:      scoreToColor(Math.round(s.composite_score ?? s.score ?? 0)),
+    marketCap:  s.market_cap_str ?? '',
+    per:        s.per ?? null,
+    pbr:        s.pbr ?? null,
+    dividend:   s.dividend_yield ?? null,
+    quantScore: Math.round(s.composite_score ?? s.score ?? 0),
+    description:'',
+  }))
+})
+
+// 기존 companies computed (detail 뷰용)
 const companies = computed(() => {
   if (stocksStore.items.length > 0) {
     return stocksStore.items.map(s => ({
@@ -723,11 +1260,325 @@ const companies = computed(() => {
   return MOCK_COMPANIES
 })
 
+const scoreToColor = (s) => s >= 70 ? '#34d399' : s >= 45 ? '#fbbf24' : '#f87171'
+
+const tierActiveStyle = (t) => ({
+  A:   'background:rgba(52,211,153,0.2);color:#34d399;border:1px solid rgba(52,211,153,0.4)',
+  B:   'background:rgba(96,165,250,0.2);color:#93c5fd;border:1px solid rgba(96,165,250,0.4)',
+  C:   'background:rgba(251,191,36,0.2);color:#fbbf24;border:1px solid rgba(251,191,36,0.4)',
+  D:   'background:rgba(248,113,113,0.2);color:#f87171;border:1px solid rgba(248,113,113,0.4)',
+  all: 'background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.75);border:1px solid rgba(255,255,255,0.25)',
+}[t] ?? '')
+
+const tierBadgeStyle = (t) => ({
+  A: 'background:rgba(52,211,153,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.3)',
+  B: 'background:rgba(96,165,250,0.15);color:#93c5fd;border:1px solid rgba(96,165,250,0.3)',
+  C: 'background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)',
+  D: 'background:rgba(248,113,113,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.3)',
+}[t] ?? 'background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.4)')
+
+// ── 커뮤니티 인기 ────────────────────────────
+const communityList    = ref([])
+const communityLoading = ref(false)
+const communityError   = ref(false)
+
+// ══════════════════════════════════════════════
+// [더미데이터] API 연결 후 아래 MOCK_POPULAR 블록 전체 삭제
+// ══════════════════════════════════════════════
+const MOCK_POPULAR = [
+  { id:1, ticker:'005930', title:'삼성전자 AI 칩 수요 폭발…목표주가 상향 잇따라',         views:3420, likes:187, comment_count:34, popularity:601 },
+  { id:2, ticker:'000660', title:'SK하이닉스 HBM3E 독점 공급 체제 굳힌다',                views:2891, likes:143, comment_count:28, popularity:499 },
+  { id:3, ticker:'035420', title:'NAVER 하이퍼클로바X 기업 서비스 확대, 실적 전망↑',      views:2104, likes:98,  comment_count:19, popularity:353 },
+  { id:4, ticker:'051910', title:'LG화학 배터리 소재 수주 급증…2분기 깜짝 실적 예상',     views:1876, likes:76,  comment_count:15, popularity:283 },
+  { id:5, ticker:null,     title:'코스피 2900선 돌파 시도, 외국인 5거래일 연속 순매수',   views:5200, likes:224, comment_count:47, popularity:819 },
+  { id:6, ticker:'035720', title:'카카오 AI 에이전트 서비스 출시…플랫폼 경쟁력 강화',     views:1654, likes:62,  comment_count:11, popularity:241 },
+  { id:7, ticker:'207940', title:'삼성바이오로직스, 글로벌 CMO 계약 연속 수주',           views:1432, likes:55,  comment_count:9,  popularity:198 },
+  { id:8, ticker:null,     title:'Fed 금리 동결 시사에 성장주 강세…나스닥 +1.8%',         views:4870, likes:198, comment_count:39, popularity:742 },
+]
+// ══════════════════════════════════════════════ [더미데이터 끝]
+
+async function fetchCommunity() {
+  communityLoading.value = true
+  communityError.value   = false
+  try {
+    const { data } = await stocksApi.getPopularPosts(20)
+    communityList.value = data.items ?? []
+  } catch {
+    communityError.value = false               // [더미데이터] 연결 후 → true 로 변경
+    communityList.value  = MOCK_POPULAR        // [더미데이터] 연결 후 → [] 로 변경
+  } finally {
+    communityLoading.value = false
+  }
+}
+
+// ── 급상승 종목 ───────────────────────────────
+const risingList    = ref([])
+const risingLoading = ref(false)
+const risingError   = ref(false)
+
+// ══════════════════════════════════════════════
+// [더미데이터] API 연결 후 아래 MOCK_RISING 블록 전체 삭제
+// ══════════════════════════════════════════════
+const MOCK_RISING = [
+  { ticker:'060230', name:'제이케이시냅스',  sector:'IT',       score:100, score_change:18.5, tier:'A' },
+  { ticker:'373110', name:'엑셀세라퓨틱스',  sector:'건강관리',  score:98,  score_change:15.2, tier:'A' },
+  { ticker:'246710', name:'티엔알바이오팹',  sector:'건강관리',  score:97,  score_change:13.8, tier:'A' },
+  { ticker:'279600', name:'미디어젠',        sector:'IT',       score:96,  score_change:12.1, tier:'A' },
+  { ticker:'313760', name:'캐리',            sector:'경기소비재', score:94,  score_change:10.7, tier:'A' },
+  { ticker:'086520', name:'에코프로',        sector:'소재',      score:91,  score_change: 9.3, tier:'A' },
+  { ticker:'196170', name:'알테오젠',        sector:'건강관리',  score:89,  score_change: 8.1, tier:'B' },
+  { ticker:'041510', name:'에스엠',          sector:'커뮤니케이션', score:85, score_change: 7.4, tier:'B' },
+]
+// ══════════════════════════════════════════════ [더미데이터 끝]
+
+async function fetchRising() {
+  risingLoading.value = true
+  risingError.value   = false
+  try {
+    const { data } = await stocksApi.getRisingStocks({ limit: 20 })
+    risingList.value = data.items ?? []
+  } catch {
+    risingError.value = false                  // [더미데이터] 연결 후 → true 로 변경
+    risingList.value  = MOCK_RISING            // [더미데이터] 연결 후 → [] 로 변경
+  } finally {
+    risingLoading.value = false
+  }
+}
+
+// ── 탭 전환 ──────────────────────────────────
+function switchTab(key) {
+  activeTab.value = key
+  showSearch.value = false
+  if (key === 'recommend' && screenerStore.items.length === 0) screenerStore.fetchScreener()
+  if (key === 'community' && communityList.value.length === 0) fetchCommunity()
+  if (key === 'rising'    && risingList.value.length === 0)    fetchRising()
+}
+
+// ── 검색 오버레이 ─────────────────────────────
+const showSearch     = ref(false)
+const searchQuery    = ref('')
+const searchLoading  = ref(false)
+const searchInputRef = ref(null)
+
+// 버전/기준일 (FilterPanel 요소)
+const searchVersions = ref([])
+const searchDates    = ref([])
+
+// 부가설정 기본 펼침
+const financialOpen = ref(true)
+
+// 프리셋
+const PRESET_KEY  = 'company_search_presets'
+const presetName  = ref('')
+const savedPresets = ref(JSON.parse(localStorage.getItem(PRESET_KEY) ?? '[]'))
+
+// 검색 오버레이 전용 필터 (screener store와 독립)
+const searchFilters = ref({
+  model_version:     'latest',
+  date:              null,
+  tier:              null,
+  min_score:         0,
+  sector:            null,
+  // 재무 (부가설정)
+  max_per:           null,
+  max_pbr:           null,
+  min_roe:           null,
+  max_debt_ratio:    null,
+  min_op_margin:     null,
+  min_rev_growth:    null,
+  min_finance_score: null,
+  // 정렬 & 결과수 (부가설정)
+  sort_by:           'composite_score',
+  limit:             100,
+})
+
+// 검색 오버레이용 종목 목록
+const searchAllItems = ref([])
+
+const rawToItem = (s) => ({
+  id:         s.ticker,
+  ticker:     s.ticker,
+  name:       s.name ?? s.ticker,
+  sector:     s.sector ?? '',
+  score:      Math.round(s.composite_score ?? s.score ?? 0),
+  tier:       s.tier ?? '—',
+  price:      s.close_price ?? s.price ?? 0,
+  change:     s.change_rate ?? s.change ?? 0,
+  color:      scoreToColor(Math.round(s.composite_score ?? s.score ?? 0)),
+  marketCap:  s.market_cap_str ?? '',
+  per:        s.per ?? null,
+  pbr:        s.pbr ?? null,
+  dividend:   s.dividend_yield ?? null,
+  quantScore: Math.round(s.composite_score ?? s.score ?? 0),
+  mlScore:    Math.round(s.score ?? 0),
+  finScore:   Math.round(s.finance_score ?? 0),
+  description: '',
+})
+
+// ── Tier 분포 집계 ────────────────────────────
+const tierCounts = computed(() => {
+  const c = { A: 0, B: 0, C: 0, D: 0 }
+  for (const s of searchAllItems.value) {
+    if (s.tier in c) c[s.tier]++
+  }
+  return c
+})
+
+// ── CSV 내보내기 ──────────────────────────────
+function exportCsv() {
+  const headers = ['티커', '종목명', '섹터', 'Tier', '복합점수', 'ML점수', '재무점수', '현재가', '등락률']
+  const rows = searchDisplayList.value.map(s => [
+    s.ticker, s.name, s.sector, s.tier,
+    s.quantScore, s.mlScore, s.finScore,
+    s.price, s.change,
+  ])
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href = url
+  a.download = `stocks_${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// 텍스트 검색 + 가나다 정렬
+const searchDisplayList = computed(() => {
+  let list = searchAllItems.value
+  const q = searchQuery.value.trim().toLowerCase()
+  if (q) list = list.filter(s => s.name.toLowerCase().includes(q) || s.ticker.toLowerCase().includes(q))
+  return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko-KR'))
+})
+
+// 필터 → 서버 fetch (300ms 디바운스)
+let searchFetchTimer = null
+async function fetchSearchAll() {
+  searchLoading.value = true
+  try {
+    const f = searchFilters.value
+    const params = {}
+    if (f.model_version)          params.model_version      = f.model_version
+    if (f.date)                   params.date               = f.date
+    if (f.tier)                   params.tier               = f.tier
+    if (f.min_score > 0)          params.min_score          = f.min_score
+    if (f.sector)                 params.sector             = f.sector
+    if (f.max_per != null)        params.max_per            = f.max_per
+    if (f.max_pbr != null)        params.max_pbr            = f.max_pbr
+    if (f.min_roe != null)        params.min_roe            = f.min_roe
+    if (f.max_debt_ratio != null) params.max_debt_ratio     = f.max_debt_ratio
+    if (f.min_op_margin != null)  params.min_op_margin      = f.min_op_margin
+    if (f.min_rev_growth != null) params.min_rev_growth     = f.min_rev_growth
+    if (f.min_finance_score != null) params.min_finance_score = f.min_finance_score
+    params.sort_by = f.sort_by ?? 'composite_score'
+    params.limit   = f.limit   ?? 100
+
+    const { data } = await screenerApi.getScreener(params)
+    searchAllItems.value = (data.items ?? []).map(rawToItem)
+  } catch {
+    searchAllItems.value = []
+  } finally {
+    searchLoading.value = false
+  }
+}
+
+watch(searchFilters, () => {
+  clearTimeout(searchFetchTimer)
+  searchFetchTimer = setTimeout(fetchSearchAll, 300)
+}, { deep: true })
+
+// 검색창 열릴 때: 버전/날짜 로드 + fetch + 포커스
+watch(showSearch, async (v) => {
+  if (v) {
+    if (searchAllItems.value.length === 0) fetchSearchAll()
+    if (searchVersions.value.length === 0) {
+      try {
+        const { data } = await stocksApi.getVersions()
+        searchVersions.value = data.versions ?? []
+      } catch {}
+    }
+    if (searchDates.value.length === 0) {
+      try {
+        const { data } = await stocksApi.getDates('latest')
+        searchDates.value = [...(data.dates ?? [])].reverse()
+      } catch {}
+    }
+    await nextTick()
+    searchInputRef.value?.focus()
+  } else {
+    searchQuery.value = ''
+  }
+})
+
+// 프리셋
+function savePreset() {
+  const name = presetName.value.trim()
+  if (!name) return
+  const list = JSON.parse(localStorage.getItem(PRESET_KEY) ?? '[]')
+  if (!list.includes(name)) list.push(name)
+  localStorage.setItem(PRESET_KEY, JSON.stringify(list))
+  localStorage.setItem(`${PRESET_KEY}:${name}`, JSON.stringify(searchFilters.value))
+  savedPresets.value = list
+  presetName.value = ''
+}
+function loadPreset(name) {
+  const saved = localStorage.getItem(`${PRESET_KEY}:${name}`)
+  if (saved) Object.assign(searchFilters.value, JSON.parse(saved))
+}
+function deletePreset(name) {
+  const list = savedPresets.value.filter(n => n !== name)
+  localStorage.setItem(PRESET_KEY, JSON.stringify(list))
+  localStorage.removeItem(`${PRESET_KEY}:${name}`)
+  savedPresets.value = list
+}
+
+function resetFinancialFilters() {
+  const f = searchFilters.value
+  f.max_per = f.max_pbr = f.min_roe = f.max_debt_ratio = null
+  f.min_op_margin = f.min_rev_growth = f.min_finance_score = null
+}
+function resetSearchFilters() {
+  searchFilters.value = {
+    model_version: 'latest', date: null, tier: null, min_score: 0, sector: null,
+    max_per: null, max_pbr: null, min_roe: null, max_debt_ratio: null,
+    min_op_margin: null, min_rev_growth: null, min_finance_score: null,
+    sort_by: 'composite_score', limit: 100,
+  }
+}
+
+function closeSearch() {
+  showSearch.value = false
+}
+
+function selectSearchResult(s) {
+  closeSearch()
+  const company = s.id ? s : { ...s, id: s.ticker }
+  openDetail(company)
+}
+
+async function openDetailByTicker(ticker) {
+  const allItems = [...screenerStore.items, ...risingList.value, ...searchAllItems.value]
+  const raw = allItems.find(s => s.ticker === ticker)
+  const company = raw
+    ? rawToItem(raw)
+    : companies.value.find(c => c.ticker === ticker)
+  if (company) openDetail(company)
+}
+
+// ── 공통 배지 헬퍼 ───────────────────────────
+const rankBadge = (rank) => {
+  if (rank === 1) return 'background:rgba(251,191,36,0.22);color:#fbbf24;border:1px solid rgba(251,191,36,0.38)'
+  if (rank === 2) return 'background:rgba(148,163,184,0.18);color:#94a3b8;border:1px solid rgba(148,163,184,0.3)'
+  if (rank === 3) return 'background:rgba(180,120,60,0.18);color:#cd7f32;border:1px solid rgba(180,120,60,0.32)'
+  return 'background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.38);border:1px solid rgba(255,255,255,0.1)'
+}
+
+// ── 초기 로드 ────────────────────────────────
 onMounted(async () => {
   if (stocksStore.items.length === 0) {
     await stocksStore.initVersionsAndDates()
     await stocksStore.fetchRecommendations()
   }
+  await screenerStore.fetchScreener()
 })
 
 const addedIds      = ref(new Set());
@@ -808,25 +1659,9 @@ async function fetchChart(ticker) {
   }
 }
 
-// 개요 스파크라인용: 마지막 60일 종가
-const overviewPrices = computed(() => detailChartData.value.slice(-60).map(d => d.close));
-
-const overviewPaths = computed(() => {
-  const prices = overviewPrices.value;
-  if (prices.length < 2) return { area: '', line: '' };
-  const W = 300, H = 72, PH = 10, PV = 8;
-  const uw = W - PH * 2, uh = H - PV * 2;
-  const minP = Math.min(...prices), maxP = Math.max(...prices);
-  const range = maxP - minP || 1;
-  const pts = prices.map((p, i) => {
-    const x = PH + (i / (prices.length - 1)) * uw;
-    const y = PV + (1 - (p - minP) / range) * uh;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
-  const line = `M ${pts[0]} L ${pts.slice(1).join(' L ')}`;
-  const area = `${line} L ${(PH + uw).toFixed(1)},${H} L ${PH},${H} Z`;
-  return { area, line };
-});
+// 개요 스파크라인: 템플릿에서 사용 시 아래 주석 해제
+// const overviewPrices = computed(() => detailChartData.value.slice(-60).map(d => d.close))
+// const overviewPaths = computed(() => { /* SVG path 계산 */ })
 
 // ── 상세 차트 (기간별) ────────────────────────────
 const chartPeriod = ref('3M');
@@ -949,22 +1784,15 @@ const confirmOrder = () => {
 };
 
 // ── 교체 모드 ──────────────────────────────────
-const buildPortfolioItem = (company) => ({
-  id:           Date.now(),
-  company:      company.name,
-  ticker:       company.ticker,
-  sector:       company.sector,
-  shares:       10,
-  avgPrice:     company.price,
-  currentPrice: company.price,
-  change:       company.change,
-  color:        company.color,
-  weight:       10,
-});
+// selectCompany 사용 시 아래 주석 해제
+// const buildPortfolioItem = (company) => ({
+//   id: Date.now(), company: company.name, ticker: company.ticker,
+//   sector: company.sector, shares: 10, avgPrice: company.price,
+//   currentPrice: company.price, change: company.change, color: company.color, weight: 10,
+// })
 
-const selectCompany = (company) => {
-  emit('select-company', buildPortfolioItem(company));
-};
+// 포트폴리오 직접 추가용 (필요 시 템플릿에서 @click="selectCompany(company)" 로 연결)
+// const selectCompany = (company) => { emit('select-company', buildPortfolioItem(company)) }
 
 // ── 재무제표 ─────────────────────────────────
 // [API] GET /api/financials/{ticker}/annual 로 교체
@@ -1097,4 +1925,10 @@ const maxOperating = computed(() =>
 .order-inline-leave-active { transition: opacity 0.15s ease, max-height 0.2s ease; max-height: 200px; overflow: hidden; }
 .order-inline-enter-from,
 .order-inline-leave-to    { opacity: 0; max-height: 0; }
+
+/* 검색 오버레이 — 위에서 슬라이드 */
+.search-slide-enter-active { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease; }
+.search-slide-leave-active { transition: transform 0.22s ease-in, opacity 0.18s ease; }
+.search-slide-enter-from,
+.search-slide-leave-to    { transform: translateY(-100%); opacity: 0; }
 </style>

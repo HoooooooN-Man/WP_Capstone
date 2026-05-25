@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-tree *)",
+      "Bash(git -C \"c:\\\\Users\\\\wnwls\\\\OneDrive\\\\문서\\\\GitHub\\\\WP_Capstone\" show main:Front/src/views/StocksView.vue)",
+      "Bash(git -C \"c:\\\\Users\\\\wnwls\\\\OneDrive\\\\문서\\\\GitHub\\\\WP_Capstone\" show main:Front/src/components/screener/ScreenerTable.vue)",
+      "Bash(find \"c:/Users/wnwls/OneDrive/문서/GitHub/WP_Capstone\" -name \"*.duckdb\" 2>/dev/null *)",
+      "Read(//c/Users/wnwls/**)"
+    ]
+  }
+}

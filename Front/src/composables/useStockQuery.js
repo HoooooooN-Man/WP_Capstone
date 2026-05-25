@@ -55,3 +55,19 @@ export function useRanking(limitRef = 20) {
     staleTime: 60 * 1000,
   })
 }
+
+export function useNewsRankings(paramsRef) {
+  return useQuery({
+    queryKey: ['news-rankings', paramsRef],
+    queryFn: () => dbapi.get('/api/v1/news/rankings', { params: paramsRef?.value ?? paramsRef ?? {} }).then(r => r.data),
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useNewsRankingDates() {
+  return useQuery({
+    queryKey: ['news-ranking-dates'],
+    queryFn: () => dbapi.get('/api/v1/news/rankings/dates').then(r => r.data),
+    staleTime: 5 * 60 * 1000,
+  })
+}

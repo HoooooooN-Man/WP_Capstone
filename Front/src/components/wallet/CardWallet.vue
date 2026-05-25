@@ -20,7 +20,7 @@
 
     <!-- 메인 컨텐츠 -->
     <!-- absolute 래퍼 안에 각 뷰가 absolute inset-0으로 겹침 → mode 없이 동시 fade 가능 -->
-    <div class="absolute top-[4%] bottom-[100px] left-[2%] right-[2%] z-0 overflow-hidden rounded-[2rem]">
+    <div class="absolute top-[1.5%] bottom-[10px] left-[1%] right-[1%] z-0 overflow-hidden rounded-[2rem]">
       <transition name="fade-scale">
         <ProfileView   v-if="activeCard === 'profile'"   key="profile"
           class="absolute inset-0"
@@ -43,12 +43,12 @@
           :active-group-id="activeGroupId"
           @liquidate="handleLiquidate"
           @replace="handleReplace"
-          @add-group="handleAddGroup"
           @remove-group="handleRemoveGroup"
           @rename-group="handleRenameGroup"
           @switch-group="handleSwitchGroup"
           @view-company="handleViewCompany"
           @toggle-auto-trade="handleToggleAutoTrade"
+          @back="handlePortfolioBack"
           :auto-trade-state="autoTradeState"
           :trade-log="tradeLog"
         />
@@ -58,10 +58,22 @@
       </transition>
     </div>
 
-    <!-- 지갑 바 -->
+    <!-- 바닥 호버 트리거 — 포트폴리오 모드에서는 비활성 (팬 카드 + 메뉴버튼이 대신함) -->
+    <div v-show="activeCard !== 'portfolio'"
+         class="fixed bottom-0 left-0 right-0 h-4 z-20"
+         @mouseenter="walletVisible = true"></div>
+
+    <!-- 지갑 바 — 포트폴리오 모드일 때 완전히 숨김 -->
+    <div v-show="activeCard !== 'portfolio'"
+         class="fixed bottom-0 left-0 right-0 z-10 flex justify-center"
+         :style="{
+           transform: walletVisible ? 'translateY(0)' : 'translateY(100%)',
+           transition: 'transform 0.38s cubic-bezier(0.32, 0, 0.2, 1)'
+         }"
+         @mouseleave="walletVisible = false">
     <!-- ↓ [양쪽 여백 조정] max-w-[???px] 값을 바꾸면 지갑 전체 너비가 변합니다. 현재 860px -->
     <div
-      class="wallet-bar relative z-10 w-full max-w-[860px] rounded-t-[2.5rem] border-t border-x border-white/5 flex animate-slide-up-wallet overflow-visible"
+      class="wallet-bar relative z-10 w-full max-w-[860px] rounded-t-[2.5rem] border-t border-x border-white/5 flex overflow-visible"
     >
       <!-- 가죽 질감 -->
       <div class="absolute inset-0 opacity-60 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')] rounded-t-[2.5rem] pointer-events-none"></div>
@@ -156,6 +168,7 @@
         </div>
       </div>
     </div>
+    </div><!-- /지갑 바 wrapper -->
   </div>
 </template>
 
@@ -178,9 +191,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['toggle-wallet', 'toggle-portfolio']);
-const activeCard  = ref('profile');
-const viewTicker  = ref(null);
-const darkMode    = ref(true);
+const activeCard    = ref('profile');
+const viewTicker    = ref(null);
+const darkMode      = ref(true);
+const walletVisible = ref(false);
 
 // TODO: [API] GET /api/portfolio/groups 로 교체
 const portfolioGroups = ref([
@@ -195,19 +209,6 @@ const replaceIndex = ref(-1);
 const replaceStock = ref(null);
 
 // ── 포트폴리오 그룹 관리 ───────────────────────
-const getNextGroupName = () => {
-  const used = portfolioGroups.value
-    .map(g => parseInt(g.name.replace('포트폴리오', '')))
-    .filter(n => !isNaN(n));
-  for (let n = 1; ; n++) { if (!used.includes(n)) return `포트폴리오${n}`; }
-};
-
-const handleAddGroup = () => {
-  const id = Date.now();
-  portfolioGroups.value.push({ id, name: getNextGroupName(), stocks: [] });
-  activeGroupId.value = id;
-};
-
 const handleRemoveGroup = (id) => {
   const idx = portfolioGroups.value.findIndex(g => g.id === id);
   if (idx < 0 || portfolioGroups.value.length <= 1) return;
@@ -265,6 +266,11 @@ const handleViewCompany = (ticker) => {
 const handleCompanyBack = () => {
   viewTicker.value = null;
   activeCard.value = 'portfolio';
+};
+
+// 포트폴리오 뷰 → 뒤로가기 (Company List로)
+const handlePortfolioBack = () => {
+  activeCard.value = 'company';
 };
 
 // ── 자동매매 ───────────────────────────────────
