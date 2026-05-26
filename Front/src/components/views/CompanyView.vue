@@ -1488,24 +1488,35 @@ async function fetchSearchAll() {
   searchLoading.value = true
   try {
     const f = searchFilters.value
+
+    // ── screenerApi에 전달할 파라미터 구성 ──────────────
+    // (tier, sort_by, 재무 필터는 screener.js 내에서 처리 또는 클라이언트에서 후처리)
     const params = {}
-    if (f.model_version)          params.model_version      = f.model_version
-    if (f.date)                   params.date               = f.date
-    if (f.tier)                   params.tier               = f.tier
-    if (f.min_score > 0)          params.min_score          = f.min_score
-    if (f.sector)                 params.sector             = f.sector
-    if (f.max_per != null)        params.max_per            = f.max_per
-    if (f.max_pbr != null)        params.max_pbr            = f.max_pbr
-    if (f.min_roe != null)        params.min_roe            = f.min_roe
-    if (f.max_debt_ratio != null) params.max_debt_ratio     = f.max_debt_ratio
-    if (f.min_op_margin != null)  params.min_op_margin      = f.min_op_margin
-    if (f.min_rev_growth != null) params.min_rev_growth     = f.min_rev_growth
-    if (f.min_finance_score != null) params.min_finance_score = f.min_finance_score
+    if (f.model_version) params.model_version = f.model_version
+    if (f.date)          params.date          = f.date
+    if (f.sector)        params.sector        = f.sector
+    if (f.tier)          params.tier          = f.tier       // screener.js에서 min_score 변환
+    if (f.min_score > 0) params.min_score     = f.min_score
     params.sort_by = f.sort_by ?? 'composite_score'
     params.limit   = f.limit   ?? 100
 
     const { data } = await screenerApi.getScreener(params)
-    searchAllItems.value = (data.items ?? []).map(rawToItem)
+    let items = (data.items ?? []).map(rawToItem)
+
+    // ── 클라이언트 사이드: tier 정확 필터 ─────────────────
+    // API는 min_score로만 필터 → tier 라벨 정확 매칭은 클라이언트에서 처리
+    if (f.tier) {
+      items = items.filter(s => s.tier === f.tier)
+    }
+
+    // ── 클라이언트 사이드: sort_by ─────────────────────────
+    // 백엔드 응답에는 score/tier만 있으므로 score 기준 정렬만 지원
+    if (f.sort_by === 'score' || f.sort_by === 'composite_score') {
+      items.sort((a, b) => b.quantScore - a.quantScore)
+    }
+    // per·pbr·roe 정렬은 API에 해당 필드 없으므로 score 정렬 유지
+
+    searchAllItems.value = items
   } catch {
     searchAllItems.value = []
   } finally {

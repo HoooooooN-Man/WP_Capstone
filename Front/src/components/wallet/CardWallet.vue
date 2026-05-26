@@ -175,7 +175,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { LucideUser, LucideSparkles, LucideBuilding2, LucideFolder } from 'lucide-vue-next'
 import ProfileView   from '@/components/views/ProfileView.vue'
 import FlashCardView from '@/components/views/FlashCardView.vue'
@@ -183,6 +183,7 @@ import CompanyView   from '@/components/views/CompanyView.vue'
 import PortfolioView from '@/components/views/PortfolioView.vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useStocksStore } from '@/stores/stocks.js'
+import { stocksApi } from '@/api/stocks.js'
 import { MOCK_PORTFOLIOS, MOCK_COMPANIES } from '@/mock/data.js'
 
 const authStore   = useAuthStore()
@@ -198,12 +199,37 @@ const viewTicker    = ref(null);
 const darkMode      = ref(true);
 const walletVisible = ref(false);
 
-// TODO: [API] GET /api/portfolio/groups 로 교체
+// AI 추천 Top10 → 포트폴리오 초기 종목
+const TIER_COLORS = { A: '#1D9E75', B: '#378ADD', C: '#EF9F27', D: '#E24B4A' }
+
 const portfolioGroups = ref([
-  { id: 1, name: '포트폴리오1', stocks: [...MOCK_PORTFOLIOS] }
+  { id: 1, name: 'AI 추천 포트폴리오', stocks: [] }
 ]);
 const activeGroupId = ref(1);
 const activeGroup   = computed(() => portfolioGroups.value.find(g => g.id === activeGroupId.value));
+
+onMounted(async () => {
+  try {
+    const { data } = await stocksApi.getRecommendations({ top_k: 10 })
+    const items = data.items ?? []
+    portfolioGroups.value[0].stocks = items.map((item, i) => ({
+      id:           i + 1,
+      company:      item.name ?? item.ticker,
+      ticker:       item.ticker,
+      sector:       item.sector ?? 'Market',
+      shares:       10,
+      avgPrice:     0,
+      currentPrice: 0,
+      change:       0,
+      color:        TIER_COLORS[item.tier ?? 'C'] ?? '#4A90E2',
+      weight:       10,
+      quantScore:   Math.round(item.score ?? 50),
+    }))
+  } catch {
+    // API 실패 시 기존 목업 fallback
+    portfolioGroups.value[0].stocks = [...MOCK_PORTFOLIOS]
+  }
+});
 
 // 교체 모드 상태
 const replaceMode  = ref(false);
