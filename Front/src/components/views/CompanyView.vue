@@ -385,151 +385,121 @@
           </button>
         </div>
 
-        <!-- 본문: 좌(1/5 상세설정) + 우(4/5 종목 리스트) -->
+        <!-- 본문: 좌(설정) + 가운데(리스트) + 우(결과 요약) -->
         <div class="flex-1 flex overflow-hidden">
 
-          <!-- ── 좌: 상세 설정 (1/5) ── -->
-          <div class="w-1/5 flex-shrink-0 flex flex-col overflow-y-auto border-r border-white/8"
-               style="background:rgba(0,0,0,0.18)">
+          <!-- ── 좌: 상세 설정 ── -->
+          <div class="w-[150px] flex-shrink-0 flex flex-col overflow-y-auto border-r border-white/8"
+               style="background:rgba(0,0,0,0.22)">
 
             <!-- ▸ 모델 버전 -->
-            <div class="px-2 pt-2.5 pb-1.5 border-b border-white/6">
-              <p class="text-[7px] text-white/28 uppercase tracking-widest mb-1">버전</p>
+            <div class="px-3 pt-3 pb-2 border-b border-white/6">
+              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1.5">버전</p>
               <select :value="searchFilters.model_version"
                       @change="searchFilters.model_version = $event.target.value"
-                      class="w-full text-[8px] bg-black/20 border border-white/10 text-white/70 rounded px-1 py-0.5 outline-none">
+                      class="w-full text-[9px] bg-black/25 border border-white/12 text-white/80 rounded-md px-2 py-1 outline-none">
                 <option value="latest">최신</option>
                 <option v-for="v in searchVersions" :key="v" :value="v">{{ v }}</option>
               </select>
             </div>
 
             <!-- ▸ 기준일 -->
-            <div class="px-2 py-1.5 border-b border-white/6">
-              <p class="text-[7px] text-white/28 uppercase tracking-widest mb-1">기준일</p>
+            <div class="px-3 py-2 border-b border-white/6">
+              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1.5">기준일</p>
               <select :value="searchFilters.date"
                       @change="searchFilters.date = $event.target.value"
-                      class="w-full text-[8px] bg-black/20 border border-white/10 text-white/70 rounded px-1 py-0.5 outline-none">
+                      class="w-full text-[9px] bg-black/25 border border-white/12 text-white/80 rounded-md px-2 py-1 outline-none">
                 <option v-for="d in searchDates" :key="d" :value="d">{{ d }}</option>
               </select>
             </div>
 
             <!-- ▸ 섹터 -->
-            <div class="px-2 py-1.5 border-b border-white/6">
-              <p class="text-[7px] text-white/28 uppercase tracking-widest mb-1">섹터</p>
+            <div class="px-3 py-2 border-b border-white/6">
+              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1.5">섹터</p>
               <select :value="searchFilters.sector ?? ''"
                       @change="searchFilters.sector = $event.target.value || null"
-                      class="w-full text-[8px] bg-black/20 border border-white/10 text-white/70 rounded px-1 py-0.5 outline-none">
+                      class="w-full text-[9px] bg-black/25 border border-white/12 text-white/80 rounded-md px-2 py-1 outline-none">
                 <option value="">전체</option>
                 <option v-for="s in SECTOR_LIST" :key="s" :value="s">{{ s }}</option>
               </select>
             </div>
 
             <!-- ▸ 최소 점수 슬라이더 -->
-            <div class="px-2 py-1.5 border-b border-white/6">
-              <div class="flex justify-between mb-1">
-                <p class="text-[7px] text-white/28 uppercase tracking-widest">최소 점수</p>
-                <span class="text-[8px] font-bold text-blue-300">{{ searchFilters.min_score }}</span>
+            <div class="px-3 py-2 border-b border-white/6">
+              <div class="flex justify-between mb-1.5">
+                <p class="text-[9px] text-white/40 uppercase tracking-widest">최소 점수</p>
+                <span class="text-[10px] font-bold text-blue-300">{{ searchFilters.min_score }}</span>
               </div>
               <input type="range" min="0" max="100" step="1"
                      v-model.number="searchFilters.min_score"
-                     class="w-full h-0.5 rounded-full appearance-none cursor-pointer"
+                     class="w-full h-1 rounded-full appearance-none cursor-pointer"
                      style="accent-color:#60a5fa" />
-              <div class="flex justify-between mt-0.5">
-                <span class="text-[6px] text-white/18">0</span>
-                <span class="text-[6px] text-white/18">100</span>
+              <div class="flex justify-between mt-1">
+                <span class="text-[8px] text-white/25">0</span>
+                <span class="text-[8px] text-white/25">100</span>
               </div>
             </div>
 
             <!-- ▸ Tier 빠른 선택 -->
-            <div class="px-2 py-1.5 border-b border-white/6">
-              <p class="text-[7px] text-white/28 uppercase tracking-widest mb-1">Tier</p>
-              <div class="grid grid-cols-2 gap-0.5">
-                <!-- A / B / C / D -->
+            <div class="px-3 py-2 border-b border-white/6">
+              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1.5">Tier</p>
+              <div class="grid grid-cols-2 gap-1">
                 <button v-for="t in TIER_PRESETS.filter(p => p.tier !== null)" :key="t.label"
                         @click="searchFilters.min_score = t.min; searchFilters.tier = t.tier"
-                        class="py-0.5 rounded text-[8px] font-bold text-center transition-all flex items-center justify-center gap-0.5"
+                        class="py-1 rounded-md text-[9px] font-bold text-center transition-all"
                         :style="searchFilters.tier === t.tier && searchFilters.min_score === t.min
                           ? tierActiveStyle(t.tier)
-                          : 'background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.38);border:1px solid rgba(255,255,255,0.08)'">
-                  <span>{{ t.label }}</span>
-                  <span class="text-[6px] opacity-55">({{ tierCounts[t.tier] ?? 0 }})</span>
+                          : 'background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.42);border:1px solid rgba(255,255,255,0.10)'">
+                  {{ t.label.split(' ')[0] }}
                 </button>
-                <!-- 전체: col-span-2 -->
-                <button class="col-span-2 mt-0.5 py-0.5 rounded text-[8px] font-bold text-center transition-all"
+                <button class="col-span-2 mt-0.5 py-1 rounded-md text-[9px] font-bold text-center transition-all"
                         @click="searchFilters.min_score = 0; searchFilters.tier = null"
                         :style="searchFilters.tier === null && searchFilters.min_score === 0
                           ? tierActiveStyle('all')
-                          : 'background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.38);border:1px solid rgba(255,255,255,0.08)'">
+                          : 'background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.42);border:1px solid rgba(255,255,255,0.10)'">
                   전체 ({{ searchAllItems.length }})
                 </button>
               </div>
             </div>
 
-            <!-- ▸ Tier 분포 -->
-            <div class="px-2 py-1.5 border-b border-white/6">
-              <p class="text-[7px] text-white/28 uppercase tracking-widest mb-1.5">Tier 분포</p>
-              <div class="space-y-0.5">
-                <div v-for="tk in ['A','B','C','D']" :key="tk" class="flex items-center gap-1.5">
-                  <span class="text-[7px] font-black w-3 flex-shrink-0"
-                        :style="{ color: {A:'#34d399',B:'#93c5fd',C:'#fbbf24',D:'#f87171'}[tk] }">{{ tk }}</span>
-                  <div class="flex-1 h-0.5 rounded-full" style="background:rgba(255,255,255,0.06)">
-                    <div class="h-full rounded-full transition-all duration-300"
-                         :style="{
-                           width: searchAllItems.length
-                             ? ((tierCounts[tk] ?? 0) / searchAllItems.length * 100).toFixed(1) + '%'
-                             : '0%',
-                           background: {A:'#34d399',B:'#93c5fd',C:'#fbbf24',D:'#f87171'}[tk]
-                         }"></div>
-                  </div>
-                  <span class="text-[7px] text-white/30 w-4 text-right flex-shrink-0">{{ tierCounts[tk] ?? 0 }}</span>
-                </div>
-              </div>
-            </div>
-
             <!-- ══ 부가설정 (접기/펼치기) ══ -->
-            <div class="px-2 pt-1.5">
+            <div class="px-3 pt-2">
               <button @click="financialOpen = !financialOpen"
-                      class="w-full flex items-center justify-between text-[7px] font-bold uppercase tracking-widest mb-1 transition-colors"
-                      :class="financialOpen ? 'text-white/50' : 'text-white/25'">
+                      class="w-full flex items-center justify-between text-[9px] font-bold uppercase tracking-widest mb-1.5 transition-colors"
+                      :class="financialOpen ? 'text-white/55' : 'text-white/28'">
                 <span>부가설정</span>
-                <span class="text-[8px]">{{ financialOpen ? '▲' : '▼' }}</span>
+                <span>{{ financialOpen ? '▲' : '▼' }}</span>
               </button>
 
               <template v-if="financialOpen">
-                <!-- 재무 조건 7개 -->
-                <div v-for="f in ALL_FINANCE_FILTERS" :key="f.key" class="mb-1.5">
-                  <p class="text-[6.5px] text-white/22 mb-0.5">{{ f.shortLabel }}</p>
+                <div v-for="f in ALL_FINANCE_FILTERS" :key="f.key" class="mb-2">
+                  <p class="text-[8px] text-white/28 mb-0.5">{{ f.shortLabel }}</p>
                   <input type="number" :placeholder="f.placeholder"
                          :value="searchFilters[f.key]"
                          @change="searchFilters[f.key] = $event.target.value === '' ? null : +$event.target.value"
-                         class="w-full px-1.5 py-0.5 rounded text-[8px] font-mono bg-black/20 border border-white/8 text-white/70 outline-none" />
+                         class="w-full px-2 py-1 rounded-md text-[9px] font-mono bg-black/25 border border-white/10 text-white/75 outline-none" />
                 </div>
 
-                <!-- 구분선 -->
-                <div class="border-t border-white/6 my-1.5"></div>
+                <div class="border-t border-white/6 my-2"></div>
 
-                <!-- 정렬 기준 -->
-                <div class="mb-1.5">
-                  <p class="text-[6.5px] text-white/22 mb-0.5">정렬</p>
+                <div class="mb-2">
+                  <p class="text-[8px] text-white/28 mb-0.5">정렬</p>
                   <select :value="searchFilters.sort_by"
                           @change="searchFilters.sort_by = $event.target.value"
-                          class="w-full text-[8px] bg-black/20 border border-white/8 text-white/60 rounded px-1 py-0.5 outline-none">
+                          class="w-full text-[9px] bg-black/25 border border-white/10 text-white/70 rounded-md px-2 py-1 outline-none">
                     <option value="composite_score">복합점수</option>
                     <option value="score">ML점수</option>
-                    <option value="finance_score">재무점수</option>
                     <option value="roe">ROE</option>
                     <option value="per">PER</option>
                     <option value="pbr">PBR</option>
-                    <option value="rev_growth_yoy">매출성장률</option>
                   </select>
                 </div>
 
-                <!-- 결과 수 -->
-                <div class="mb-1.5">
-                  <p class="text-[6.5px] text-white/22 mb-0.5">결과 수</p>
+                <div class="mb-2">
+                  <p class="text-[8px] text-white/28 mb-0.5">결과 수</p>
                   <select :value="searchFilters.limit"
                           @change="searchFilters.limit = +$event.target.value"
-                          class="w-full text-[8px] bg-black/20 border border-white/8 text-white/60 rounded px-1 py-0.5 outline-none">
+                          class="w-full text-[9px] bg-black/25 border border-white/10 text-white/70 rounded-md px-2 py-1 outline-none">
                     <option :value="50">50개</option>
                     <option :value="100">100개</option>
                     <option :value="200">200개</option>
@@ -537,42 +507,39 @@
                   </select>
                 </div>
 
-                <!-- 구분선 -->
-                <div class="border-t border-white/6 my-1.5"></div>
+                <div class="border-t border-white/6 my-2"></div>
 
-                <!-- 프리셋 -->
-                <div class="mb-1.5">
-                  <p class="text-[6.5px] text-white/22 mb-1">프리셋</p>
-                  <div class="flex gap-0.5 mb-1">
+                <div class="mb-2">
+                  <p class="text-[8px] text-white/28 mb-1">프리셋</p>
+                  <div class="flex gap-1 mb-1">
                     <input v-model="presetName" type="text" placeholder="이름"
-                           class="flex-1 px-1 py-0.5 rounded text-[8px] bg-black/20 border border-white/8 text-white/70 outline-none min-w-0"
+                           class="flex-1 px-1.5 py-1 rounded-md text-[9px] bg-black/25 border border-white/10 text-white/75 outline-none min-w-0"
                            @keydown.enter="savePreset" />
                     <button @click="savePreset"
-                            class="px-1.5 py-0.5 rounded text-[8px] font-bold flex-shrink-0 transition-colors"
+                            class="px-2 py-1 rounded-md text-[9px] font-bold flex-shrink-0 transition-colors"
                             style="background:rgba(96,165,250,0.2);color:#93c5fd;border:1px solid rgba(96,165,250,0.3)">
                       저장
                     </button>
                   </div>
                   <div v-for="name in savedPresets" :key="name"
-                       class="flex items-center justify-between mb-0.5">
+                       class="flex items-center justify-between mb-1">
                     <button @click="loadPreset(name)"
-                            class="text-[7.5px] text-white/45 hover:text-white/70 truncate flex-1 text-left transition-colors">
+                            class="text-[8.5px] text-white/50 hover:text-white/75 truncate flex-1 text-left transition-colors">
                       {{ name }}
                     </button>
                     <button @click="deletePreset(name)"
-                            class="text-[8px] text-white/20 hover:text-red-400 ml-1 flex-shrink-0 transition-colors">✕</button>
+                            class="text-[9px] text-white/22 hover:text-red-400 ml-1 flex-shrink-0 transition-colors">✕</button>
                   </div>
-                  <p v-if="!savedPresets.length" class="text-[7px] text-white/18">저장된 프리셋 없음</p>
+                  <p v-if="!savedPresets.length" class="text-[8px] text-white/22">저장된 프리셋 없음</p>
                 </div>
 
-                <!-- 재무만 초기화 / 전체 초기화 -->
-                <div class="flex flex-col gap-0.5 pb-2">
+                <div class="flex flex-col gap-1 pb-3">
                   <button @click="resetFinancialFilters"
-                          class="text-[7px] text-red-400/60 hover:text-red-400 text-left transition-colors">
+                          class="text-[8px] text-red-400/60 hover:text-red-400 text-left transition-colors">
                     재무 조건 초기화
                   </button>
                   <button @click="resetSearchFilters"
-                          class="text-[7px] text-red-400/60 hover:text-red-400 text-left transition-colors">
+                          class="text-[8px] text-red-400/60 hover:text-red-400 text-left transition-colors">
                     전체 초기화
                   </button>
                 </div>
@@ -580,65 +547,186 @@
             </div>
           </div>
 
-          <!-- ── 우: 종목 리스트 (4/5) ── -->
+          <!-- ── 가운데: 종목 리스트 ── -->
           <div class="flex-1 overflow-y-auto">
 
             <!-- 로딩 -->
-            <div v-if="searchLoading" class="flex items-center justify-center h-20 gap-2">
-              <div class="w-3 h-3 rounded-full border-2 animate-spin"
+            <div v-if="searchLoading" class="flex items-center justify-center h-32 gap-2">
+              <div class="w-4 h-4 rounded-full border-2 animate-spin"
                    style="border-color:rgba(96,165,250,0.5);border-top-color:transparent"></div>
-              <span class="text-[8px] text-white/28">로딩 중...</span>
+              <span class="text-[10px] text-white/35">로딩 중...</span>
             </div>
 
             <!-- 결과 없음 -->
             <div v-else-if="searchDisplayList.length === 0"
-                 class="flex flex-col items-center justify-center h-20 gap-1">
-              <span class="text-[14px]">🔍</span>
-              <span class="text-[9px] text-white/30">결과 없음</span>
+                 class="flex flex-col items-center justify-center h-32 gap-2">
+              <span class="text-[22px]">🔍</span>
+              <span class="text-[10px] text-white/35">결과 없음</span>
             </div>
 
             <!-- 리스트 -->
             <div v-else>
               <!-- 건수 + CSV -->
-              <div class="px-2 py-1.5 border-b border-white/6 flex items-center justify-between">
-                <span class="text-[7.5px] text-white/25">{{ searchDisplayList.length }}개 종목</span>
-                <div class="flex items-center gap-2">
-                  <span class="text-[7.5px] text-white/18">가나다순</span>
-                  <button @click="exportCsv"
-                          class="text-[7px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 transition-all"
-                          style="background:rgba(52,211,153,0.12);color:rgba(52,211,153,0.7);border:1px solid rgba(52,211,153,0.2)">
-                    CSV ↓
-                  </button>
-                </div>
+              <div class="px-3 py-2 border-b border-white/6 flex items-center justify-between">
+                <span class="text-[9px] text-white/35 font-medium">{{ searchDisplayList.length }}개 종목 · 가나다순</span>
+                <button @click="exportCsv"
+                        class="text-[8px] px-2 py-0.5 rounded-md font-bold flex-shrink-0 transition-all"
+                        style="background:rgba(52,211,153,0.12);color:rgba(52,211,153,0.75);border:1px solid rgba(52,211,153,0.22)">
+                  CSV ↓
+                </button>
               </div>
               <div v-for="s in searchDisplayList" :key="s.ticker"
-                   class="flex items-center gap-1.5 px-2 py-1.5 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                   class="flex items-center gap-2 px-3 py-2.5 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
                    @click="selectSearchResult(s)">
+                <!-- Tier 색 바 -->
+                <div class="w-0.5 h-8 rounded-full flex-shrink-0" :style="{ background: s.color }"></div>
                 <!-- 이름 + 티커 + 점수 바 -->
                 <div class="flex-1 min-w-0">
-                  <p class="text-[10px] font-bold truncate text-white/88">{{ s.name }}</p>
-                  <p class="text-[7.5px] font-mono text-white/30">{{ s.ticker }}</p>
-                  <div class="w-full h-0.5 bg-black/30 rounded-full mt-0.5">
+                  <p class="text-[11px] font-bold truncate text-white/90">{{ s.name }}</p>
+                  <div class="flex items-center gap-1.5 mt-0.5">
+                    <p class="text-[8px] font-mono text-white/35">{{ s.ticker }}</p>
+                    <span class="text-[8px] text-white/25">·</span>
+                    <p class="text-[8px] text-white/35 truncate">{{ s.sector }}</p>
+                  </div>
+                  <div class="w-full h-1 bg-black/30 rounded-full mt-1">
                     <div class="h-full rounded-full transition-all"
                          :style="{ width: s.quantScore + '%', background: s.color }"></div>
                   </div>
                 </div>
-                <!-- ML / 재무 점수 -->
-                <div class="text-right flex-shrink-0 min-w-[28px]">
-                  <p class="text-[6.5px] text-white/28">ML <span class="font-mono font-bold">{{ s.mlScore }}</span></p>
-                  <p class="text-[6.5px] text-white/28">재무 <span class="font-mono font-bold">{{ s.finScore }}</span></p>
+                <!-- ML 점수 -->
+                <div class="text-right flex-shrink-0">
+                  <p class="text-[8px] text-white/30">ML</p>
+                  <p class="text-[10px] font-mono font-bold text-white/65">{{ s.mlScore }}</p>
                 </div>
-                <!-- Tier -->
-                <span class="text-[8px] font-black px-1 py-0.5 rounded flex-shrink-0"
+                <!-- Tier 뱃지 -->
+                <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md flex-shrink-0"
                       :style="tierBadgeStyle(s.tier)">{{ s.tier }}</span>
                 <!-- 복합점수 -->
-                <span class="text-[9px] font-black flex-shrink-0"
+                <span class="text-[13px] font-black flex-shrink-0 w-8 text-right"
                       :class="s.quantScore >= 70 ? 'text-green-300' : s.quantScore >= 45 ? 'text-yellow-300' : 'text-red-300'">
                   {{ s.quantScore }}
                 </span>
-                <LucideChevronRight class="w-3 h-3 text-white/20 flex-shrink-0" />
+                <LucideChevronRight class="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
               </div>
             </div>
+          </div>
+
+          <!-- ── 우: 결과 요약 패널 ── -->
+          <div class="w-[160px] flex-shrink-0 flex flex-col overflow-y-auto border-l border-white/8"
+               style="background:rgba(0,0,0,0.22)">
+
+            <!-- 결과 요약 -->
+            <div class="px-3 pt-3 pb-2.5 border-b border-white/6">
+              <p class="text-[9px] text-white/35 uppercase tracking-widest mb-2.5">결과 요약</p>
+              <div class="space-y-2">
+                <div class="rounded-lg p-2" style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.15)">
+                  <p class="text-[8px] text-blue-300/60 mb-0.5">검색 결과</p>
+                  <p class="text-[16px] font-black text-blue-200 leading-none">{{ searchAllItems.length }}</p>
+                  <p class="text-[8px] text-blue-300/50 mt-0.5">종목</p>
+                </div>
+                <div class="rounded-lg p-2"
+                     :style="avgScore >= 70
+                       ? 'background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.15)'
+                       : avgScore >= 45
+                         ? 'background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.15)'
+                         : 'background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.15)'">
+                  <p class="text-[8px] mb-0.5"
+                     :class="avgScore >= 70 ? 'text-green-300/60' : avgScore >= 45 ? 'text-yellow-300/60' : 'text-red-300/60'">
+                    평균 점수
+                  </p>
+                  <p class="text-[16px] font-black leading-none"
+                     :class="avgScore >= 70 ? 'text-green-300' : avgScore >= 45 ? 'text-yellow-300' : 'text-red-300'">
+                    {{ avgScore }}
+                  </p>
+                  <p class="text-[8px] mt-0.5"
+                     :class="avgScore >= 70 ? 'text-green-300/50' : avgScore >= 45 ? 'text-yellow-300/50' : 'text-red-300/50'">
+                    점 (0-100)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tier 분포 -->
+            <div class="px-3 py-2.5 border-b border-white/6">
+              <p class="text-[9px] text-white/35 uppercase tracking-widest mb-2.5">Tier 분포</p>
+
+              <!-- SVG 도넛 차트 -->
+              <div class="flex justify-center mb-3">
+                <svg viewBox="0 0 80 80" class="w-20 h-20">
+                  <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12" />
+                  <template v-for="(seg, i) in tierDonutSegments" :key="i">
+                    <circle cx="40" cy="40" r="28"
+                            fill="none"
+                            :stroke="seg.color"
+                            stroke-width="12"
+                            stroke-linecap="butt"
+                            :stroke-dasharray="`${seg.dash} 175.9`"
+                            :stroke-dashoffset="-seg.offset"
+                            transform="rotate(-90 40 40)"
+                            opacity="0.88" />
+                  </template>
+                  <text x="40" y="37" text-anchor="middle" fill="rgba(255,255,255,0.75)"
+                        font-size="13" font-weight="bold" font-family="sans-serif">
+                    {{ searchAllItems.length }}
+                  </text>
+                  <text x="40" y="49" text-anchor="middle" fill="rgba(255,255,255,0.3)"
+                        font-size="7" font-family="sans-serif">종목</text>
+                </svg>
+              </div>
+
+              <!-- Tier 바 -->
+              <div class="space-y-1.5">
+                <div v-for="tk in ['A','B','C','D']" :key="tk" class="flex items-center gap-1.5">
+                  <span class="text-[9px] font-black w-3.5 flex-shrink-0"
+                        :style="{ color: {A:'#34d399',B:'#93c5fd',C:'#fbbf24',D:'#f87171'}[tk] }">{{ tk }}</span>
+                  <div class="flex-1 h-1.5 rounded-full" style="background:rgba(255,255,255,0.06)">
+                    <div class="h-full rounded-full transition-all duration-500"
+                         :style="{
+                           width: searchAllItems.length
+                             ? ((tierCounts[tk] ?? 0) / searchAllItems.length * 100).toFixed(1) + '%'
+                             : '0%',
+                           background: {A:'#34d399',B:'#93c5fd',C:'#fbbf24',D:'#f87171'}[tk]
+                         }"></div>
+                  </div>
+                  <span class="text-[8px] text-white/45 w-5 text-right flex-shrink-0 font-mono font-bold">
+                    {{ tierCounts[tk] ?? 0 }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 점수 분포 히스토그램 -->
+            <div class="px-3 py-2.5">
+              <p class="text-[9px] text-white/35 uppercase tracking-widest mb-2.5">점수 분포</p>
+              <div class="flex items-end gap-0.5 h-20">
+                <div v-for="(count, i) in scoreBuckets" :key="i"
+                     class="flex-1 rounded-t-sm transition-all duration-500 cursor-default"
+                     :style="{
+                       height: maxBucket > 0 ? Math.max(count / maxBucket * 100, count > 0 ? 4 : 0) + '%' : '0%',
+                       background: scoreBucketColors[i],
+                       opacity: 0.82,
+                     }"
+                     :title="`${i*10}~${i*10+10}: ${count}종목`">
+                </div>
+              </div>
+              <div class="flex justify-between mt-1">
+                <span class="text-[7px] text-white/25 font-mono">0</span>
+                <span class="text-[7px] text-white/25 font-mono">50</span>
+                <span class="text-[7px] text-white/25 font-mono">100</span>
+              </div>
+              <!-- 버킷 레이블 -->
+              <div class="mt-1.5 space-y-0.5">
+                <div v-for="(count, i) in scoreBuckets" :key="i"
+                     v-show="count > 0"
+                     class="flex items-center gap-1">
+                  <div class="w-1.5 h-1.5 rounded-sm flex-shrink-0"
+                       :style="{ background: scoreBucketColors[i] }"></div>
+                  <span class="text-[7px] text-white/30 font-mono">{{ i*10 }}-{{ i*10+10 }}</span>
+                  <span class="text-[7px] text-white/45 font-bold ml-auto">{{ count }}</span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -1329,6 +1417,43 @@ const tierCounts = computed(() => {
     if (s.tier in c) c[s.tier]++
   }
   return c
+})
+
+// ── 우측 패널: 평균 점수 ──────────────────────
+const avgScore = computed(() => {
+  if (!searchAllItems.value.length) return 0
+  const sum = searchAllItems.value.reduce((acc, s) => acc + (s.quantScore ?? 0), 0)
+  return Math.round(sum / searchAllItems.value.length)
+})
+
+// ── 우측 패널: 점수 분포 히스토그램 ──────────
+const scoreBucketColors = [
+  '#f87171','#fb923c','#fbbf24','#a3e635','#4ade80',
+  '#34d399','#2dd4bf','#38bdf8','#818cf8','#a78bfa',
+]
+const scoreBuckets = computed(() => {
+  const b = Array(10).fill(0)
+  searchAllItems.value.forEach(s => {
+    const idx = Math.min(Math.floor((s.quantScore ?? 0) / 10), 9)
+    b[idx]++
+  })
+  return b
+})
+const maxBucket = computed(() => Math.max(...scoreBuckets.value, 1))
+
+// ── 우측 패널: Tier 도넛 세그먼트 ────────────
+const TIER_COLORS_MAP = { A: '#34d399', B: '#93c5fd', C: '#fbbf24', D: '#f87171' }
+const tierDonutSegments = computed(() => {
+  const total = searchAllItems.value.length || 1
+  const C = 175.9   // 2 * π * r (r=28)
+  let offset = 0
+  return ['A', 'B', 'C', 'D'].map(tk => {
+    const count = tierCounts.value[tk] ?? 0
+    const dash  = (count / total) * C
+    const seg   = { color: TIER_COLORS_MAP[tk], dash, offset }
+    offset += dash
+    return seg
+  })
 })
 
 // ── CSV 내보내기 ──────────────────────────────
