@@ -21,6 +21,7 @@ export default {
   verifyCode:            (data)         => authApi.post('/auth/verify-code', data),
   register:              (data)         => authApi.post('/auth/register', data),
   login:                 (data)         => mockLogin(data), // ← 실제 서버 연결 시: authApi.post('/auth/login', data)
+  logout:                (token)        => authApi.post('/auth/logout', null, { headers: { 'session-token': token } }),
   resetPassword:         (data, token)  => authApi.post('/auth/reset-password', data, { headers: { 'session-token': token } }),
   resetPasswordViaEmail: (data)         => authApi.post('/auth/reset-password-via-email', data),
 }

@@ -229,6 +229,49 @@
           </div>
         </section>
 
+        <!-- 계정 -->
+        <section>
+          <h3 class="text-[10px] font-black uppercase tracking-[0.4em] mb-3 transition-colors duration-300"
+              :class="darkMode ? 'text-white/35' : 'text-gray-400'">계정</h3>
+          <div class="rounded-xl border overflow-hidden transition-colors duration-300"
+               :class="darkMode ? 'border-white/10' : 'border-gray-200'">
+
+            <!-- 로그인 정보 -->
+            <div class="flex items-center justify-between p-4 transition-colors duration-300"
+                 :class="[darkMode ? 'bg-white/5 border-b border-white/10' : 'bg-white border-b border-gray-100']">
+              <div class="flex items-center gap-3">
+                <LucideLogOut class="w-4 h-4" :class="darkMode ? 'text-white/40' : 'text-gray-400'"/>
+                <div>
+                  <p class="text-sm font-bold">{{ auth.nickname || '사용자' }}</p>
+                  <p class="text-[11px] mt-0.5 transition-colors duration-300"
+                     :class="darkMode ? 'text-white/38' : 'text-gray-400'">현재 로그인 중</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-500/15 text-green-500 border border-green-500/25">
+                ACTIVE
+              </span>
+            </div>
+
+            <!-- 로그아웃 버튼 -->
+            <div class="p-4 transition-colors duration-300"
+                 :class="darkMode ? 'bg-white/5' : 'bg-white'">
+              <button
+                @click="handleLogout"
+                :disabled="logoutLoading"
+                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 border"
+                :class="logoutLoading
+                  ? 'opacity-50 cursor-not-allowed border-red-500/20 text-red-400/50'
+                  : (darkMode
+                      ? 'bg-red-500/10 border-red-500/25 text-red-400 hover:bg-red-500/20 hover:border-red-500/40'
+                      : 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100')"
+              >
+                <LucideLogOut class="w-4 h-4"/>
+                {{ logoutLoading ? '로그아웃 중...' : '로그아웃' }}
+              </button>
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
   </div>
@@ -236,14 +279,33 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import { LucideUser, LucideInfo, LucideSettings, LucideMoon, LucideSun } from 'lucide-vue-next';
+import { LucideUser, LucideInfo, LucideSettings, LucideMoon, LucideSun, LucideLogOut } from 'lucide-vue-next';
 import { MOCK_USER } from '@/mock/data.js';
+import authApi from '@/api/auth.js';
+import { useAuthStore } from '@/stores/auth.js';
 
 defineProps({
   user:     { type: Object,  required: true, default: () => ({}) },
   darkMode: { type: Boolean, default: true },
 });
 defineEmits(['toggle-dark-mode']);
+
+const auth = useAuthStore();
+const logoutLoading = ref(false);
+
+async function handleLogout() {
+  if (logoutLoading.value) return;
+  logoutLoading.value = true;
+  try {
+    // 서버에 로그아웃 요청 (실패해도 로컬 처리 진행)
+    await authApi.logout(auth.token);
+  } catch {
+    // POST /auth/logout 미연결 또는 실패 → 로컬만 처리
+  } finally {
+    auth.logout();   // 로컬 토큰/세션 초기화
+    logoutLoading.value = false;
+  }
+}
 
 const issueDate = MOCK_USER.issueDate;
 const status    = MOCK_USER.status;
