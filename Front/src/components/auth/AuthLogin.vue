@@ -140,7 +140,8 @@ async function login() {
 
   try {
     const { data } = await authApi.login({ email: email.value, password: password.value })
-    authStore.login(data.session_token, data.nickname, data.user_id)
+    // 백엔드가 user_id를 반환하지 않는 경우 email을 식별자로 사용
+    authStore.login(data.session_token, data.nickname, data.user_id ?? email.value)
     return true
   } catch (err) {
     const status = err.response?.status

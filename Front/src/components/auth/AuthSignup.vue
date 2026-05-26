@@ -23,8 +23,10 @@
         :class="['w-full px-4 py-2.5 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all',
           emailError ? 'border-red-500/60' : 'border-white/10']" />
       <p v-if="emailError" class="text-[9px] text-red-400/80 px-1 -mt-1">{{ emailError }}</p>
-      <input v-model="pw" type="password" placeholder="비밀번호 (6자 이상)"
-        class="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all" />
+      <input v-model="pw" type="password" placeholder="비밀번호 (영문+숫자+특수문자 8~24자)"
+        :class="['w-full px-4 py-2.5 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all',
+          pwError ? 'border-red-500/60' : 'border-white/10']" />
+      <p v-if="pwError" class="text-[9px] text-red-400/80 px-1 -mt-1">{{ pwError }}</p>
       <div>
         <input v-model="pwConfirm" type="password" placeholder="비밀번호 확인"
           class="w-full px-4 py-2.5 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all"
@@ -82,6 +84,14 @@ const emailError = computed(() => {
   return null
 })
 
+// 백엔드 요구사항: 영문+숫자+특수문자(@$!%*#?&) 포함 8~24자
+const PW_RE = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,24}$/
+const pwError = computed(() => {
+  if (!pw.value) return null
+  if (!PW_RE.test(pw.value)) return '영문·숫자·특수문자(@$!%*#?&) 포함 8~24자'
+  return null
+})
+
 async function handleRegister() {
   apiError.value  = ''
   successMsg.value = ''
@@ -90,11 +100,7 @@ async function handleRegister() {
     apiError.value = '모든 항목을 입력해주세요'
     return
   }
-  if (nicknameError.value || emailError.value) return
-  if (pw.value.length < 6) {
-    apiError.value = '비밀번호는 6자 이상이어야 합니다'
-    return
-  }
+  if (nicknameError.value || emailError.value || pwError.value) return
   if (pw.value !== pwConfirm.value) return
 
   loading.value = true
