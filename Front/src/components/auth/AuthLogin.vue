@@ -44,8 +44,29 @@
         <span class="text-[8px] text-[#7a5c20]/70 uppercase tracking-[0.3em] font-semibold">or</span>
         <div class="flex-1 h-px bg-gradient-to-l from-transparent to-white/10"></div>
       </div>
-      <SocialLoginButtons @done="emit('login-success')" />
+      <SocialLoginButtons
+        @done="emit('login-success')"
+        :onNeedsPassword="handleNeedsPassword"
+        :onRequiresLinkConfirm="handleRequiresLinkConfirm"
+      />
     </div>
+
+    <!-- 소셜 계정 연동 확인 모달 -->
+    <LinkConfirmModal
+      v-if="showLinkModal"
+      :linkHintToken="linkHintToken"
+      :provider="linkProvider"
+      @confirmed="onLinkConfirmed"
+      @cancel="showLinkModal = false"
+    />
+
+    <!-- 비밀번호 설정 모달 -->
+    <SetPasswordModal
+      v-if="showPwModal"
+      :nickname="pwModalNickname"
+      @done="onPwDone"
+      @skip="onPwDone"
+    />
 
     <!-- 하단 링크 -->
     <div class="flex items-center gap-3">
@@ -68,7 +89,9 @@ import { ref, computed } from 'vue'
 import { LucideAlertCircle } from 'lucide-vue-next'
 import authApi from '@/api/auth.js'
 import { useAuthStore } from '@/stores/auth.js'
-import SocialLoginButtons from './SocialLoginButtons.vue'
+import SocialLoginButtons  from './SocialLoginButtons.vue'
+import LinkConfirmModal    from './LinkConfirmModal.vue'
+import SetPasswordModal    from './SetPasswordModal.vue'
 
 const emit = defineEmits(['go-signup', 'go-find', 'login-success'])
 
@@ -123,6 +146,35 @@ async function login() {
     }
     return false
   }
+}
+
+// ── 소셜 로그인 모달 상태 ──────────────────────────────────
+const showLinkModal    = ref(false)
+const linkHintToken    = ref('')
+const linkProvider     = ref('')
+
+const showPwModal      = ref(false)
+const pwModalNickname  = ref('')
+
+function handleRequiresLinkConfirm(token, provider) {
+  linkHintToken.value = token
+  linkProvider.value  = provider
+  showLinkModal.value = true
+}
+
+function handleNeedsPassword(_token, nickname) {
+  pwModalNickname.value = nickname
+  showPwModal.value     = true
+}
+
+function onLinkConfirmed() {
+  showLinkModal.value = false
+  emit('login-success')
+}
+
+function onPwDone() {
+  showPwModal.value = false
+  emit('login-success')
 }
 
 defineExpose({ validate, login })

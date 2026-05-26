@@ -229,6 +229,49 @@
           </div>
         </section>
 
+        <!-- 연결된 소셜 계정 -->
+        <section>
+          <h3 class="text-[10px] font-black uppercase tracking-[0.4em] mb-3 transition-colors duration-300"
+              :class="darkMode ? 'text-white/35' : 'text-gray-400'">연결된 소셜 계정</h3>
+          <div class="rounded-xl border overflow-hidden transition-colors duration-300"
+               :class="darkMode ? 'border-white/10' : 'border-gray-200'">
+            <div
+              v-for="(provider, idx) in socialProviders" :key="provider.id"
+              class="flex items-center justify-between p-4 transition-colors duration-300"
+              :class="[
+                darkMode ? 'bg-white/5' : 'bg-white',
+                idx < socialProviders.length - 1 ? (darkMode ? 'border-b border-white/10' : 'border-b border-gray-100') : ''
+              ]"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                     :style="{ background: provider.bgColor }">
+                  <span v-html="provider.icon" class="w-4 h-4 flex items-center justify-center"></span>
+                </div>
+                <div>
+                  <p class="text-sm font-bold">{{ provider.label }}</p>
+                  <p class="text-[10px] transition-colors duration-300"
+                     :class="provider.linked
+                       ? 'text-green-500'
+                       : (darkMode ? 'text-white/30' : 'text-gray-400')"
+                  >{{ provider.linked ? '연결됨' : '연결되지 않음' }}</p>
+                </div>
+              </div>
+              <button
+                @click="handleSocialConnect(provider)"
+                :disabled="provider.loading"
+                class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="provider.linked
+                  ? (darkMode ? 'bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20' : 'bg-red-50 border border-red-200 text-red-500 hover:bg-red-100')
+                  : (darkMode ? 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50')"
+              >
+                {{ provider.loading ? '처리 중...' : (provider.linked ? '연결 해제' : '연결하기') }}
+              </button>
+            </div>
+          </div>
+          <p v-if="socialError" class="text-[9px] text-red-400/80 px-1 mt-1.5">{{ socialError }}</p>
+        </section>
+
         <!-- 계정 -->
         <section>
           <h3 class="text-[10px] font-black uppercase tracking-[0.4em] mb-3 transition-colors duration-300"
@@ -282,6 +325,7 @@ import { ref, reactive } from 'vue';
 import { LucideUser, LucideInfo, LucideSettings, LucideMoon, LucideSun, LucideLogOut } from 'lucide-vue-next';
 import { MOCK_USER } from '@/mock/data.js';
 import authApi from '@/api/auth.js';
+import dbapi from '@/api/dbapi.js';
 import { useAuthStore } from '@/stores/auth.js';
 
 defineProps({
@@ -360,6 +404,122 @@ const appInfo = [
   { label: '빌드일',   value: '2026.05.09'         },
   { label: '라이선스', value: 'WP Capstone © 2026' },
 ];
+
+// ── 소셜 계정 연동 ──────────────────────────────────────────
+const socialError = ref('');
+
+const socialProviders = reactive([
+  {
+    id:      'google',
+    label:   'Google',
+    bgColor: '#fff',
+    linked:  false,
+    loading: false,
+    icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>`,
+  },
+  {
+    id:      'kakao',
+    label:   '카카오',
+    bgColor: '#FEE500',
+    linked:  false,
+    loading: false,
+    icon: `<svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.584 1.574 4.857 3.969 6.22l-.994 3.695a.375.375 0 0 0 .553.415L9.86 18.54A11.578 11.578 0 0 0 12 18c5.523 0 10-3.477 10-7.5S17.523 3 12 3z" fill="#3C1E1E"/>
+    </svg>`,
+  },
+  {
+    id:      'naver',
+    label:   '네이버',
+    bgColor: '#03C75A',
+    linked:  false,
+    loading: false,
+    icon: `<svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13.6 12.4 10.1 7H7v10h3.4v-5.4L14 17H17V7h-3.4z" fill="white"/>
+    </svg>`,
+  },
+]);
+
+async function handleSocialConnect(provider) {
+  if (provider.loading) return;
+  socialError.value  = '';
+  provider.loading   = true;
+
+  try {
+    if (provider.linked) {
+      // 연결 해제: 현재 백엔드 엔드포인트 미구현 — 로컬만 처리
+      provider.linked  = false;
+      provider.loading = false;
+      return;
+    }
+
+    // 소셜 OAuth 토큰 획득 후 백엔드에 연동 요청
+    // dbapi 인터셉터가 session-token을 자동으로 헤더에 추가함
+    let accessToken = '';
+    if (provider.id === 'google')     accessToken = await getGoogleToken();
+    else if (provider.id === 'kakao') accessToken = await getKakaoToken();
+    else if (provider.id === 'naver') accessToken = await getNaverToken();
+
+    await dbapi.post(`/auth/login/${provider.id}`, { access_token: accessToken });
+    provider.linked = true;
+  } catch (err) {
+    const status = err.response?.status;
+    if (status === 429) socialError.value = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
+    else socialError.value = err.response?.data?.detail ?? `${provider.label} 연동에 실패했습니다.`;
+  } finally {
+    provider.loading = false;
+  }
+}
+
+// ── 소셜 OAuth 토큰 스텁 (SocialLoginButtons와 동일) ─────────
+function getGoogleToken() {
+  return new Promise((resolve, reject) => {
+    if (!window.google?.accounts?.oauth2) { reject(new Error('Google SDK가 로드되지 않았습니다.')); return; }
+    const client = window.google.accounts.oauth2.initTokenClient({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      scope: 'email profile',
+      callback: (res) => { if (res.error) reject(new Error(res.error)); else resolve(res.access_token); },
+    });
+    client.requestAccessToken();
+  });
+}
+
+function getKakaoToken() {
+  return new Promise((resolve, reject) => {
+    const redirectUri = 'http://localhost:8000/auth/kakao/callback';
+    const url = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${import.meta.env.VITE_KAKAO_REST_KEY}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const popup = window.open(url, 'kakao_link', 'width=500,height=600');
+    const timer = setInterval(() => { if (popup?.closed) { clearInterval(timer); reject(new Error('창이 닫혔습니다.')); } }, 500);
+    window.addEventListener('message', function handler(e) {
+      if (e.origin !== 'http://localhost:8000') return;
+      clearInterval(timer); window.removeEventListener('message', handler); popup?.close();
+      if (e.data?.error) reject(new Error(e.data.error));
+      else if (e.data?.access_token) resolve(e.data.access_token);
+      else reject(new Error('토큰 수신 실패'));
+    });
+  });
+}
+
+function getNaverToken() {
+  return new Promise((resolve, reject) => {
+    const state = Math.random().toString(36).substring(2);
+    const redirectUri = 'http://localhost:8000/auth/naver/callback';
+    const url = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${import.meta.env.VITE_NAVER_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+    const popup = window.open(url, 'naver_link', 'width=500,height=600');
+    const timer = setInterval(() => { if (popup?.closed) { clearInterval(timer); reject(new Error('창이 닫혔습니다.')); } }, 500);
+    window.addEventListener('message', function handler(e) {
+      if (e.origin !== 'http://localhost:8000') return;
+      clearInterval(timer); window.removeEventListener('message', handler); popup?.close();
+      if (e.data?.error) reject(new Error(e.data.error));
+      else if (e.data?.access_token) resolve(e.data.access_token);
+      else reject(new Error('토큰 수신 실패'));
+    });
+  });
+}
 </script>
 
 <style scoped>
