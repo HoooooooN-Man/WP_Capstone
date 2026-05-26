@@ -80,6 +80,15 @@ BT_START = "2025-01-01"
 PASS_IC_MIN = 0.05
 PASS_CAGR_MIN = -0.05  # 90d realized CAGR ≥ -5%
 
+# T1.1 blended rollout 자동 rollback 임계 (§10.12.8, Week1~4 라이브 적용 시)
+ROLLBACK = {
+    "ic_warn":   {"thr": 0.04, "days": 5, "action": "w 증가 보류·1주 모니터링"},   # 위험
+    "ic_severe": {"thr": 0.02, "days": 3, "action": "직전 단계 w 롤백"},           # 심각
+    "mdd_severe": {"thr": -0.10, "action": "즉시 롤백·원인 분석"},                 # 드라이런 예상 초과
+    "tier_gap":  {"thr": 0.10, "action": "tier 재캘리브 재실행"},                  # 운영
+    "complaints": {"action": "사용자 공지 + 대응"},                               # 운영(채널 있을 시)
+}
+
 
 def log(m):
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {m}", flush=True)
@@ -457,6 +466,46 @@ def write_report() -> None:
     log(f"[report] → {REPORT_MD}")
 
 
+PASS_MDD_MIN = -0.25       # rolling MDD 차단 룰 (§6.7.5)
+ROLL_N = 3                 # 최근 N개월 rolling 창
+
+
+def check_alerts() -> list[str]:
+    """라이브 모니터링 알람 (D1, §10.11): 최근 ROLL_N개월 rolling IC<0.05 / CAGR<-5% / MDD<-25%.
+    cron 에서 호출 → alerts.json 기록(이메일/Slack/webhook 연동 지점)."""
+    import json as _json
+    alerts = []
+    if not MEASUREMENTS_PARQUET.exists():
+        return ["(no measurements)"]
+    m = pd.read_parquet(MEASUREMENTS_PARQUET)
+    comp = m[m["ic_spearman"].notna()].copy()
+    comp["score_date_ts"] = pd.to_datetime(comp["score_date"])
+    if comp.empty:
+        return ["(no completed measurements)"]
+    recent_dates = sorted(comp["score_date_ts"].unique())[-ROLL_N:]
+    rec = comp[comp["score_date_ts"].isin(recent_dates)]
+    roll_ic = float(rec["ic_spearman"].mean())
+    if roll_ic < PASS_IC_MIN:
+        alerts.append(f"⚠️ rolling IC {roll_ic:+.3f} < {PASS_IC_MIN} (최근 {ROLL_N}개월) — 신호 약화")
+    bal = comp[comp["cohort"] == "balanced"].sort_values("score_date_ts")
+    if len(bal) >= ROLL_N:
+        r = bal["port_return_net"].fillna(0).to_numpy()
+        eq = np.cumprod(1 + r); mdd = float((eq / np.maximum.accumulate(eq) - 1).min())
+        roll_cagr = float((1 + (np.prod(1 + r[-ROLL_N:]) - 1)) ** (12 / ROLL_N) - 1)
+        if mdd < PASS_MDD_MIN:
+            alerts.append(f"⚠️ MDD {mdd:+.1%} < {PASS_MDD_MIN:+.0%} — 자본 보전 차단룰")
+        if roll_cagr < PASS_CAGR_MIN:
+            alerts.append(f"⚠️ rolling CAGR {roll_cagr:+.1%} < {PASS_CAGR_MIN:+.0%}")
+    if not alerts:
+        alerts.append(f"✅ 정상 (rolling IC {roll_ic:+.3f} ≥ {PASS_IC_MIN})")
+    _json.dump({"checked_at": datetime.utcnow().isoformat() + "Z", "roll_n_months": ROLL_N,
+                "rolling_ic": round(roll_ic, 4), "alerts": alerts},
+               open(OUT_ROOT / "alerts.json", "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    for a in alerts:
+        log(f"[alert] {a}")
+    return alerts
+
+
 # ─────────────────────────────────────────────────────────────────
 # CLI
 # ─────────────────────────────────────────────────────────────────
@@ -470,11 +519,13 @@ def main():
                    help="누적 metrics + pass/fail 리포트")
     p.add_argument("--backfill", action="store_true",
                    help="backtest CSV → paper-trade snapshot 변환 (1회성)")
+    p.add_argument("--alerts", action="store_true",
+                   help="rolling IC/CAGR/MDD 알람 체크 (D1 라이브 모니터링)")
     p.add_argument("--date", default=None,
                    help="snapshot decision_date (default = today)")
     args = p.parse_args()
 
-    if not (args.snapshot or args.measure or args.report or args.backfill):
+    if not (args.snapshot or args.measure or args.report or args.backfill or args.alerts):
         p.print_help()
         return
 
@@ -515,6 +566,14 @@ def main():
         except Exception:
             err_count += 1
             log("[ERROR] report failed")
+            traceback.print_exc()
+
+    if args.alerts:
+        try:
+            check_alerts()
+        except Exception:
+            err_count += 1
+            log("[ERROR] alerts failed")
             traceback.print_exc()
 
     log(f"[done] errors = {err_count}")

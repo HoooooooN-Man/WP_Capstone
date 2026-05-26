@@ -46,7 +46,7 @@ import pandas as pd
 
 CAPSTONE_ROOT = Path(os.getenv("CAPSTONE_ROOT", r"E:\Capstone Data"))
 ML_ROOT       = Path(__file__).resolve().parent  # Back/MachineLearning/
-FEATURE_CACHE = CAPSTONE_ROOT / "data_pipeline" / "train_features_v9_cache_ext.parquet"
+FEATURE_CACHE = CAPSTONE_ROOT / "data_pipeline" / "train_features_v9_cache_ext_fixed8.parquet"
 DUCKDB_PATH   = CAPSTONE_ROOT / "project_data" / "db" / "market_data.duckdb"
 MODELS_ROOT   = CAPSTONE_ROOT / "project_data" / "models"
 

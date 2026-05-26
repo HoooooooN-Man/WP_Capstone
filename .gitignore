@@ -89,3 +89,6 @@ e2e/.cache/
 
 # ML 추론 cache (50M+) — push 제외, 로컬만
 Back/MachineLearning/report/backtest/_signal_cache/
+
+# ML 연구 산출물 (백테 결과·parquet·csv·pyc, 107MB) — 코드 외 데이터는 push 제외, 로컬만
+Back/MachineLearning/report/
