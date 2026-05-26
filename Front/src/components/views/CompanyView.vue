@@ -307,30 +307,6 @@
               </div>
             </div>
           </div>
-          <!-- fallback mock -->
-          <template v-if="!communityLoading && !communityError && communityList.length === 0">
-            <div v-for="(post, idx) in MOCK_POPULAR" :key="post.id"
-                 class="p-3 rounded-xl border border-white/4 bg-white/4 opacity-60">
-              <div class="flex items-start gap-2.5">
-                <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
-                     :style="rankBadge(idx + 1)">
-                  <span class="text-[9px] font-black">{{ idx + 1 }}</span>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <span v-if="post.ticker" class="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold mr-1.5"
-                        style="background:rgba(96,165,250,0.15);color:#93c5fd;border:1px solid rgba(96,165,250,0.25)">
-                    {{ post.ticker }}
-                  </span>
-                  <p class="text-[11px] font-semibold leading-snug text-white/70 mt-0.5">{{ post.title }}</p>
-                  <div class="flex items-center gap-3 mt-1">
-                    <span class="text-[8px] text-white/22 font-mono">👁 {{ post.views }}</span>
-                    <span class="text-[8px] text-white/22 font-mono">♥ {{ post.likes }}</span>
-                    <span class="text-[8px] font-bold ml-auto" style="color:rgba(251,191,36,0.5)">🔥 {{ post.popularity }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
         </div>
       </template>
 
@@ -375,25 +351,6 @@
             <span class="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
                   :style="tierBadgeStyle(s.tier)">{{ s.tier }}</span>
           </div>
-          <!-- fallback mock -->
-          <template v-if="!risingLoading && !risingError && risingList.length === 0">
-            <div v-for="(s, idx) in MOCK_RISING" :key="s.ticker"
-                 class="flex items-center gap-3 p-3 rounded-xl border border-white/4 bg-white/4 opacity-60">
-              <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black"
-                   style="background:rgba(52,211,153,0.12);color:#34d399;border:1px solid rgba(52,211,153,0.2)">
-                {{ idx + 1 }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="font-bold text-sm truncate">{{ s.name }}</p>
-                <p class="text-[9px] text-white/32">{{ s.sector }}</p>
-              </div>
-              <div class="text-right flex-shrink-0">
-                <p class="text-[11px] font-black text-green-300">△ +{{ s.score_change }}</p>
-                <p class="text-[8.5px] font-mono text-white/35">점수 {{ s.score }}</p>
-              </div>
-              <span class="text-[9px] font-black px-1.5 py-0.5 rounded" :style="tierBadgeStyle(s.tier)">{{ s.tier }}</span>
-            </div>
-          </template>
         </div>
       </template>
 
@@ -1147,7 +1104,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { LucideChevronRight, LucideChevronLeft, LucideBarChart2 } from 'lucide-vue-next'
-import { MOCK_COMPANIES, generateMockOHLC } from '@/mock/data.js'
+import { generateMockOHLC } from '@/mock/data.js'
 import StockChartModal from '@/components/modal/StockChartModal.vue'
 import { stocksApi } from '@/api/stocks.js'
 import { screenerApi } from '@/api/screener.js'
@@ -1197,30 +1154,10 @@ const ALL_FINANCE_FILTERS = [
   { key: 'min_finance_score', shortLabel: '최소 재무점수',       placeholder: '제한없음' },
 ]
 
-// ══════════════════════════════════════════════
-// [더미데이터] API 연결 후 아래 MOCK_RECOMMEND 블록 전체 삭제
-// ══════════════════════════════════════════════
-const MOCK_RECOMMEND = [
-  //                                                                                                                               mlScore  finScore  (composite ≈ ml*0.6 + fin*0.4)
-  { id:'005930', ticker:'005930', name:'삼성전자',        sector:'IT',          price:78400,  change: 1.83, color:'#34d399', marketCap:'467조', per:20.1, pbr:1.5, dividend:2.1, quantScore:91, mlScore:88, finScore:96, tier:'A', description:'' },
-  { id:'000660', ticker:'000660', name:'SK하이닉스',       sector:'IT',          price:198500, change: 2.41, color:'#34d399', marketCap:'144조', per:16.3, pbr:2.2, dividend:0.8, quantScore:87, mlScore:92, finScore:79, tier:'A', description:'' },
-  { id:'035420', ticker:'035420', name:'NAVER',           sector:'커뮤니케이션', price:214500, change: 0.94, color:'#34d399', marketCap:'35조',  per:35.2, pbr:2.8, dividend:0.3, quantScore:82, mlScore:80, finScore:85, tier:'A', description:'' },
-  { id:'207940', ticker:'207940', name:'삼성바이오로직스', sector:'건강관리',     price:996000, change: 1.12, color:'#34d399', marketCap:'71조',  per:99.6, pbr:7.1, dividend:0.0, quantScore:79, mlScore:75, finScore:85, tier:'B', description:'' },
-  { id:'051910', ticker:'051910', name:'LG화학',          sector:'소재',         price:312000, change:-0.64, color:'#fbbf24', marketCap:'22조',  per:28.4, pbr:1.1, dividend:1.2, quantScore:73, mlScore:70, finScore:78, tier:'B', description:'' },
-  { id:'086520', ticker:'086520', name:'에코프로',         sector:'소재',         price:87500,  change: 3.17, color:'#34d399', marketCap:'12조',  per:42.1, pbr:5.3, dividend:0.0, quantScore:68, mlScore:72, finScore:62, tier:'B', description:'' },
-  { id:'035720', ticker:'035720', name:'카카오',           sector:'커뮤니케이션', price:41200,  change:-1.32, color:'#fbbf24', marketCap:'18조',  per:48.7, pbr:1.3, dividend:0.0, quantScore:61, mlScore:65, finScore:55, tier:'B', description:'' },
-  { id:'196170', ticker:'196170', name:'알테오젠',         sector:'건강관리',     price:321000, change: 4.23, color:'#34d399', marketCap:'19조',  per:null, pbr:18.4,dividend:0.0, quantScore:58, mlScore:60, finScore:55, tier:'C', description:'' },
-  { id:'041510', ticker:'041510', name:'에스엠',           sector:'커뮤니케이션', price:87700,  change: 0.57, color:'#fbbf24', marketCap:'2.1조', per:22.3, pbr:2.6, dividend:0.5, quantScore:54, mlScore:52, finScore:57, tier:'C', description:'' },
-  { id:'006400', ticker:'006400', name:'삼성SDI',          sector:'소재',         price:189000, change:-0.79, color:'#fbbf24', marketCap:'13조',  per:31.8, pbr:0.9, dividend:0.6, quantScore:51, mlScore:48, finScore:56, tier:'C', description:'' },
-  { id:'068270', ticker:'068270', name:'셀트리온',         sector:'건강관리',     price:165000, change: 1.47, color:'#fbbf24', marketCap:'22조',  per:44.6, pbr:3.2, dividend:0.0, quantScore:48, mlScore:50, finScore:45, tier:'C', description:'' },
-  { id:'005380', ticker:'005380', name:'현대차',           sector:'경기소비재',   price:218000, change: 0.23, color:'#fbbf24', marketCap:'46조',  per:7.4,  pbr:0.7, dividend:3.4, quantScore:45, mlScore:42, finScore:50, tier:'C', description:'' },
-]
-// ══════════════════════════════════════════════ [더미데이터 끝]
-
 // ── AI 추천 랭킹 (screener 연동) ─────────────
 const recommendList = computed(() => {
   const src = screenerStore.items.length > 0 ? screenerStore.items : stocksStore.items
-  if (src.length === 0) return MOCK_RECOMMEND   // [더미데이터] 연결 후 → return [] 로 변경
+  if (src.length === 0) return []
   return src.map(s => ({
     id:         s.ticker,
     name:       s.name ?? s.ticker,
@@ -1257,7 +1194,7 @@ const companies = computed(() => {
       description: s.description ?? '',
     }))
   }
-  return MOCK_COMPANIES
+  return []
 })
 
 const scoreToColor = (s) => s >= 70 ? '#34d399' : s >= 45 ? '#fbbf24' : '#f87171'
@@ -1282,21 +1219,6 @@ const communityList    = ref([])
 const communityLoading = ref(false)
 const communityError   = ref(false)
 
-// ══════════════════════════════════════════════
-// [더미데이터] API 연결 후 아래 MOCK_POPULAR 블록 전체 삭제
-// ══════════════════════════════════════════════
-const MOCK_POPULAR = [
-  { id:1, ticker:'005930', title:'삼성전자 AI 칩 수요 폭발…목표주가 상향 잇따라',         views:3420, likes:187, comment_count:34, popularity:601 },
-  { id:2, ticker:'000660', title:'SK하이닉스 HBM3E 독점 공급 체제 굳힌다',                views:2891, likes:143, comment_count:28, popularity:499 },
-  { id:3, ticker:'035420', title:'NAVER 하이퍼클로바X 기업 서비스 확대, 실적 전망↑',      views:2104, likes:98,  comment_count:19, popularity:353 },
-  { id:4, ticker:'051910', title:'LG화학 배터리 소재 수주 급증…2분기 깜짝 실적 예상',     views:1876, likes:76,  comment_count:15, popularity:283 },
-  { id:5, ticker:null,     title:'코스피 2900선 돌파 시도, 외국인 5거래일 연속 순매수',   views:5200, likes:224, comment_count:47, popularity:819 },
-  { id:6, ticker:'035720', title:'카카오 AI 에이전트 서비스 출시…플랫폼 경쟁력 강화',     views:1654, likes:62,  comment_count:11, popularity:241 },
-  { id:7, ticker:'207940', title:'삼성바이오로직스, 글로벌 CMO 계약 연속 수주',           views:1432, likes:55,  comment_count:9,  popularity:198 },
-  { id:8, ticker:null,     title:'Fed 금리 동결 시사에 성장주 강세…나스닥 +1.8%',         views:4870, likes:198, comment_count:39, popularity:742 },
-]
-// ══════════════════════════════════════════════ [더미데이터 끝]
-
 async function fetchCommunity() {
   communityLoading.value = true
   communityError.value   = false
@@ -1304,8 +1226,8 @@ async function fetchCommunity() {
     const { data } = await stocksApi.getPopularPosts(20)
     communityList.value = data.items ?? []
   } catch {
-    communityError.value = false               // [더미데이터] 연결 후 → true 로 변경
-    communityList.value  = MOCK_POPULAR        // [더미데이터] 연결 후 → [] 로 변경
+    communityError.value = true
+    communityList.value  = []
   } finally {
     communityLoading.value = false
   }
@@ -1316,21 +1238,6 @@ const risingList    = ref([])
 const risingLoading = ref(false)
 const risingError   = ref(false)
 
-// ══════════════════════════════════════════════
-// [더미데이터] API 연결 후 아래 MOCK_RISING 블록 전체 삭제
-// ══════════════════════════════════════════════
-const MOCK_RISING = [
-  { ticker:'060230', name:'제이케이시냅스',  sector:'IT',       score:100, score_change:18.5, tier:'A' },
-  { ticker:'373110', name:'엑셀세라퓨틱스',  sector:'건강관리',  score:98,  score_change:15.2, tier:'A' },
-  { ticker:'246710', name:'티엔알바이오팹',  sector:'건강관리',  score:97,  score_change:13.8, tier:'A' },
-  { ticker:'279600', name:'미디어젠',        sector:'IT',       score:96,  score_change:12.1, tier:'A' },
-  { ticker:'313760', name:'캐리',            sector:'경기소비재', score:94,  score_change:10.7, tier:'A' },
-  { ticker:'086520', name:'에코프로',        sector:'소재',      score:91,  score_change: 9.3, tier:'A' },
-  { ticker:'196170', name:'알테오젠',        sector:'건강관리',  score:89,  score_change: 8.1, tier:'B' },
-  { ticker:'041510', name:'에스엠',          sector:'커뮤니케이션', score:85, score_change: 7.4, tier:'B' },
-]
-// ══════════════════════════════════════════════ [더미데이터 끝]
-
 async function fetchRising() {
   risingLoading.value = true
   risingError.value   = false
@@ -1338,8 +1245,8 @@ async function fetchRising() {
     const { data } = await stocksApi.getRisingStocks({ limit: 20 })
     risingList.value = data.items ?? []
   } catch {
-    risingError.value = false                  // [더미데이터] 연결 후 → true 로 변경
-    risingList.value  = MOCK_RISING            // [더미데이터] 연결 후 → [] 로 변경
+    risingError.value = true
+    risingList.value  = []
   } finally {
     risingLoading.value = false
   }
