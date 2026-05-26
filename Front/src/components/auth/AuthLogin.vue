@@ -131,6 +131,13 @@ function validate() {
 
 async function login() {
   if (!validate()) return false
+
+  // ── 테스트 계정 (API 없이 즉시 로그인) ──────────────
+  if (email.value === 'test1234@gmail.com' && password.value === 'test1234') {
+    authStore.login('test-session-token', 'Admin', 'test-user-001')
+    return true
+  }
+
   try {
     const { data } = await authApi.login({ email: email.value, password: password.value })
     authStore.login(data.session_token, data.nickname, data.user_id)
