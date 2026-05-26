@@ -1163,7 +1163,7 @@ const recommendList = computed(() => {
     name:       s.name ?? s.ticker,
     ticker:     s.ticker,
     sector:     s.sector ?? '',
-    price:      s.close_price ?? s.price ?? 0,
+    price:      s.close_price ?? s.close ?? s.price ?? 0,
     change:     s.change_rate ?? s.change ?? 0,
     color:      scoreToColor(Math.round(s.composite_score ?? s.score ?? 0)),
     marketCap:  s.market_cap_str ?? '',
@@ -1183,7 +1183,7 @@ const companies = computed(() => {
       name:        s.name ?? s.ticker,
       ticker:      s.ticker,
       sector:      s.sector ?? '',
-      price:       s.close_price ?? s.price ?? 0,
+      price:       s.close_price ?? s.close ?? s.price ?? 0,
       change:      s.change_rate ?? s.change ?? 0,
       color:       '#4A90E2',
       marketCap:   s.market_cap_str ?? '',
@@ -1309,7 +1309,7 @@ const rawToItem = (s) => ({
   sector:     s.sector ?? '',
   score:      Math.round(s.composite_score ?? s.score ?? 0),
   tier:       s.tier ?? '—',
-  price:      s.close_price ?? s.price ?? 0,
+  price:      s.close_price ?? s.close ?? s.price ?? 0,
   change:     s.change_rate ?? s.change ?? 0,
   color:      scoreToColor(Math.round(s.composite_score ?? s.score ?? 0)),
   marketCap:  s.market_cap_str ?? '',
@@ -1550,7 +1550,7 @@ const detailChartData = computed(() => {
   if (apiChartData.value.length > 0) return apiChartData.value
   if (!detailCompany.value) return []
   // fallback: 목업 데이터
-  return generateMockOHLC(detailCompany.value.ticker, detailCompany.value.price ?? 50000)
+  return generateMockOHLC(detailCompany.value.ticker, detailCompany.value.price || 50000)
 })
 
 async function fetchChart(ticker) {
