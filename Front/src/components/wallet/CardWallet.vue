@@ -24,7 +24,9 @@
       <transition name="fade-scale">
         <ProfileView   v-if="activeCard === 'profile'"   key="profile"
           class="absolute inset-0"
-          :user="user" :dark-mode="darkMode" @toggle-dark-mode="darkMode = !darkMode" />
+          :user="user" :dark-mode="darkMode"
+          @toggle-dark-mode="darkMode = !darkMode"
+          @navigate="activeCard = $event" />
         <FlashCardView v-else-if="activeCard === 'feed'" key="feed"
           class="absolute inset-0" />
         <CompanyView   v-else-if="activeCard === 'company'" key="company"
