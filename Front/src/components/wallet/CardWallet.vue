@@ -20,7 +20,9 @@
 
     <!-- 메인 컨텐츠 -->
     <!-- absolute 래퍼 안에 각 뷰가 absolute inset-0으로 겹침 → mode 없이 동시 fade 가능 -->
-    <div class="absolute top-[1.5%] bottom-[10px] left-[1%] right-[1%] z-0 overflow-hidden rounded-[2rem]">
+    <!-- 고정 모드(비포트폴리오)일 때 지갑 바(100px)와 겹치지 않도록 bottom 확보 -->
+    <div class="absolute top-[1.5%] left-[1%] right-[1%] z-0 overflow-hidden rounded-[2rem]"
+         :style="{ bottom: (menuBarLocked && activeCard !== 'portfolio') ? '104px' : '10px' }">
       <transition name="fade-scale">
         <ProfileView   v-if="activeCard === 'profile'"   key="profile"
           class="absolute inset-0"
@@ -76,13 +78,13 @@
       <span class="text-[8px] font-bold tracking-wide leading-none">게시판</span>
     </button>
 
-    <!-- 바닥 호버 트리거 — 고정 시 불필요하지만 유지 -->
+    <!-- 바닥 호버 트리거 — 고정이거나 포트폴리오 모드엔 비활성 -->
     <div v-show="!menuBarLocked && activeCard !== 'portfolio'"
          class="fixed bottom-0 left-0 right-0 h-4 z-20"
          @mouseenter="walletVisible = true"></div>
 
-    <!-- 지갑 바 — 고정 시 포트폴리오 위에서도 항상 표시 -->
-    <div v-show="menuBarLocked || activeCard !== 'portfolio'"
+    <!-- 지갑 바 — 포트폴리오 모드엔 고정 여부 무관하게 항상 숨김 (부채꼴 카드가 대체) -->
+    <div v-show="activeCard !== 'portfolio'"
          class="fixed bottom-0 left-0 right-0 z-10 flex justify-center"
          :style="{
            transform: (menuBarLocked || walletVisible) ? 'translateY(0)' : 'translateY(100%)',

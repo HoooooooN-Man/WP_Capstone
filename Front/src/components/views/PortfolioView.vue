@@ -3,6 +3,7 @@
        style="background: linear-gradient(160deg, #1a2e4a 0%, #0e1d30 100%)">
 
     <!-- ── 스크롤 메인 컨텐츠 (카드별 화면 전환) ── -->
+    <!-- padding-bottom 220px: 부채꼴 카드(210px) 고정 표시 시 컨텐츠가 가려지지 않도록 -->
     <div class="absolute inset-0 overflow-y-auto" style="scrollbar-width:thin;padding-bottom:220px">
       <transition name="page-switch" mode="out-in">
 
