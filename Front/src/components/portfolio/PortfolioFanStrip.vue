@@ -1,0 +1,320 @@
+<template>
+  <!-- 팬 트리거 스트립 -->
+  <div class="absolute bottom-0 left-0 right-0 h-5 z-30"
+       @mouseenter="fanVisible = true"></div>
+
+  <!-- 팬 바 — 지갑 바와 동일한 슬라이드-업 구조 -->
+  <div class="absolute bottom-0 left-0 right-0 z-20 fan-bar"
+       :style="{ transform: effectiveFanVisible ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.38s cubic-bezier(0.32,0,0.2,1)' }"
+       @mouseleave="!swipeMode && !props.walletLocked && (fanVisible = false)">
+
+    <!-- 스와이프 힌트 -->
+    <transition name="fade">
+      <div v-if="swipeMode" class="absolute inset-0 pointer-events-none z-[5]">
+        <div class="absolute left-5 top-[30%] -translate-y-1/2 flex flex-col items-center gap-1.5"
+             :style="{ opacity: dragX < -20 ? Math.min(1, (-dragX-20)/55) : 0.15 }">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center"
+               style="background:rgba(239,68,68,0.2);border:1.5px solid rgba(239,68,68,0.4)">
+            <LucideTrash2 class="w-3.5 h-3.5 text-red-400" />
+          </div>
+          <p class="text-[8px] text-red-400 font-bold uppercase tracking-wide">청산</p>
+        </div>
+        <div class="absolute right-5 top-[30%] -translate-y-1/2 flex flex-col items-center gap-1.5"
+             :style="{ opacity: dragX > 20 ? Math.min(1, (dragX-20)/55) : 0.15 }">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center"
+               style="background:rgba(16,185,129,0.2);border:1.5px solid rgba(16,185,129,0.4)">
+            <LucideRefreshCw class="w-3.5 h-3.5 text-emerald-400" />
+          </div>
+          <p class="text-[8px] text-emerald-400 font-bold uppercase tracking-wide">교체</p>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 카드 + 버튼 영역 (높이 고정) -->
+    <div class="relative" style="height:210px">
+
+      <!-- 부채꼴 카드들 -->
+      <div v-for="(item, i) in displayItems" :key="item.id"
+           class="absolute rounded-2xl overflow-hidden text-white"
+           :style="cardFanStyle(i)"
+           @click="onCardClick(i)"
+           @mousedown="(e) => onCardDown(i, e)"
+           @mousemove="(e) => onCardMove(i, e)"
+           @mouseup="() => onCardUp(i)"
+           @mouseleave="() => onCardLeave(i)"
+           @touchstart.prevent="(e) => onCardDown(i, e)"
+           @touchmove.prevent="(e) => onCardMove(i, e)"
+           @touchend.prevent="() => onCardUp(i)">
+
+        <!-- 오버뷰 카드 -->
+        <div v-if="item.isOverview" class="relative h-full flex flex-col justify-between p-2.5">
+          <div>
+            <p class="text-[6.5px] font-bold uppercase tracking-widest mb-0.5"
+               style="color:rgba(201,162,39,0.9)">Portfolio</p>
+            <p class="text-[12px] font-black leading-tight">
+              {{ totalValue >= 1_000_000
+                ? '₩' + (totalValue/1_000_000).toFixed(1)+'M'
+                : '₩' + totalValue.toLocaleString() }}
+            </p>
+          </div>
+          <div>
+            <div v-if="activeStocksCount > 0" class="flex gap-[1.5px] h-1 rounded-full overflow-hidden mb-1.5">
+              <div v-for="s in displayItems.slice(1, 7)" :key="s.id"
+                   class="h-full flex-1" :style="{ background: s.color ?? '#4A90E2' }"></div>
+            </div>
+            <p class="text-[11px] font-black"
+               :class="totalReturn >= 0 ? 'text-green-300' : 'text-red-300'">
+              {{ totalReturn >= 0 ? '+' : '' }}{{ totalReturn.toFixed(1) }}%
+            </p>
+            <p class="text-[7px] mt-0.5" style="color:rgba(255,255,255,0.38)">{{ activeStocksCount }}종목</p>
+          </div>
+        </div>
+
+        <!-- 종목 카드 -->
+        <div v-else class="relative h-full flex flex-col justify-between p-2.5">
+          <div>
+            <p class="text-[9px] font-black leading-tight truncate">{{ item.company }}</p>
+            <p class="text-[7px] font-mono mt-0.5" style="color:rgba(255,255,255,0.38)">{{ item.ticker }}</p>
+          </div>
+          <div>
+            <div class="w-full h-0.5 rounded-full mb-1.5" style="background:rgba(255,255,255,0.12)">
+              <div class="h-full rounded-full"
+                   :class="(item.quantScore??50)>=70?'bg-green-400':(item.quantScore??50)>=45?'bg-yellow-400':'bg-red-400'"
+                   :style="{ width:`${item.quantScore??50}%` }"></div>
+            </div>
+            <div class="flex items-center justify-between">
+              <p class="text-[9px] font-bold" :class="item.change>=0?'text-green-300':'text-red-300'">
+                {{ item.change>=0?'+':'' }}{{ item.change }}%
+              </p>
+              <p class="text-[11px] font-black"
+                 :class="(item.quantScore??50)>=70?'text-green-300':(item.quantScore??50)>=45?'text-yellow-300':'text-red-300'">
+                {{ item.quantScore??'—' }}
+              </p>
+            </div>
+            <p class="text-[6.5px] mt-0.5" style="color:rgba(255,255,255,0.28)">{{ item.shares }}주</p>
+          </div>
+        </div>
+
+        <!-- 롱프레스 오버레이 -->
+        <transition name="fade">
+          <div v-if="longPressingIdx === i"
+               class="absolute inset-0 flex items-center justify-center rounded-2xl pointer-events-none"
+               style="background:rgba(255,255,255,0.08)">
+            <div class="w-6 h-6 rounded-full border-2 border-white/60 border-t-transparent animate-spin"></div>
+          </div>
+        </transition>
+      </div>
+
+      <!-- 뒤로가기 버튼 -->
+      <button class="absolute z-10 rounded-full flex flex-col items-center justify-center gap-0.5
+                     active:scale-90 transition-all duration-150 text-white"
+              :style="{
+                width:'50px', height:'50px',
+                bottom:`${BTN_BOTTOM}px`, left:'50%', transform:'translateX(-50%)',
+                background:'linear-gradient(145deg,#243347 0%,#162030 100%)',
+                boxShadow:'0 0 0 1px rgba(255,255,255,0.12),0 6px 18px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.08)',
+              }"
+              @click="swipeMode ? cancelSwipe() : emit('back')">
+        <component :is="swipeMode ? LucideX : LucideChevronLeft"
+                   class="w-4 h-4"
+                   :class="swipeMode ? 'text-yellow-300' : 'text-white/50'" />
+        <span class="text-[6px] font-bold uppercase tracking-wide leading-none"
+              :class="swipeMode ? 'text-yellow-300/60' : 'text-white/28'">
+          {{ swipeMode ? '취소' : '메뉴' }}
+        </span>
+      </button>
+
+      <!-- 자동매매 버튼 -->
+      <button class="absolute z-10 flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl border transition-all text-white"
+              :style="{
+                bottom:`${BTN_BOTTOM+2}px`, right:'14px',
+                ...(autoTradeState!=='off'
+                  ? { background:'rgba(16,185,129,0.18)', borderColor:'rgba(16,185,129,0.35)' }
+                  : { background:'rgba(20,32,50,0.9)', borderColor:'rgba(255,255,255,0.14)' })
+              }"
+              @click="emit('toggle-auto-trade')">
+        <p class="text-[7px] uppercase tracking-widest font-bold leading-none"
+           :class="autoTradeState!=='off'?'text-green-400':'text-white/35'">AUTO</p>
+        <div class="relative w-8 h-4 rounded-full mt-0.5"
+             :class="autoTradeState!=='off'?'bg-green-500/45':'bg-white/12'">
+          <div class="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all duration-200"
+               :class="autoTradeState!=='off'?'right-0.5':'left-0.5 opacity-35'"></div>
+          <div v-if="autoTradeState==='analyzing'"
+               class="absolute inset-0 rounded-full bg-green-400/40 animate-ping pointer-events-none"></div>
+        </div>
+      </button>
+
+    </div><!-- /카드+버튼 -->
+  </div><!-- /팬 바 -->
+</template>
+
+<script setup>
+import { ref, computed, onUnmounted } from 'vue'
+import { LucideX, LucideChevronLeft, LucideTrash2, LucideRefreshCw } from 'lucide-vue-next'
+
+const props = defineProps({
+  displayItems:     { type: Array,   required: true },
+  currentIndex:     { type: Number,  required: true },
+  totalValue:       { type: Number,  default: 0 },
+  totalReturn:      { type: Number,  default: 0 },
+  activeStocksCount:{ type: Number,  default: 0 },
+  autoTradeState:   { type: String,  default: 'off' },
+  walletLocked:     { type: Boolean, default: false },
+})
+const emit = defineEmits([
+  'update:currentIndex',
+  'back', 'liquidate', 'replace', 'view-company', 'toggle-auto-trade',
+  'fan-open',   // 팬이 열릴 때 부모에 알림
+])
+
+// ── 팬 가시성 ─────────────────────────────────────
+const fanVisible          = ref(false)
+const effectiveFanVisible = computed(() => props.walletLocked || fanVisible.value)
+
+// ── 카드 포지셔닝 상수 ─────────────────────────────
+const BTN_BOTTOM   = 14
+const BTN_SIZE     = 50
+const BTN_CENTER_Y = BTN_BOTTOM + BTN_SIZE / 2
+
+const CARD_W     = 74
+const CARD_H     = 114
+const FAN_RADIUS = 95
+const ANGLE_STEP = 22
+
+// ── 스와이프 상태 ──────────────────────────────────
+const swipeMode       = ref(false)
+const dragX           = ref(0)
+const isDragging      = ref(false)
+const startX          = ref(0)
+const longPressingIdx = ref(null)
+const THRESHOLD       = 80
+const LONG_PRESS_MS   = 480
+let   longPressTimer  = null
+
+// ── 카드 스타일 계산 ───────────────────────────────
+const cardFanStyle = (i) => {
+  const relIdx = i - props.currentIndex
+  if (Math.abs(relIdx) > 3) return { display: 'none' }
+
+  const angleDeg = relIdx * ANGLE_STEP
+  const rad      = (angleDeg * Math.PI) / 180
+  const swipeDX  = isSwipeDragging(i) ? dragX.value : 0
+  const offsetX  = FAN_RADIUS * Math.sin(rad) + swipeDX
+  const offsetY  = FAN_RADIUS * Math.cos(rad)
+
+  const cardBottom = (BTN_CENTER_Y + offsetY) - CARD_H / 2
+  const cardLeft   = offsetX - CARD_W / 2
+  const isActive   = relIdx === 0
+  const isLP       = longPressingIdx.value === i
+
+  const scale   = isLP ? 1.18 : (swipeMode.value && isActive) ? 1.18 : isActive ? 1.10 : Math.max(0.80, 1 - Math.abs(relIdx) * 0.09)
+  const opacity  = (swipeMode.value && !isActive) ? 0.18 : isActive ? 1 : Math.max(0.35, 1 - Math.abs(relIdx) * 0.18)
+  const zIndex   = isActive ? 25 : Math.max(1, 20 - Math.abs(relIdx) * 2)
+  const rotate   = angleDeg * 0.28 + (isSwipeDragging(i) ? swipeDX * 0.06 : 0)
+  const col      = props.displayItems[i]?.color ?? '#888888'
+
+  return {
+    position: 'absolute', width: `${CARD_W}px`, height: `${CARD_H}px`,
+    bottom: `${cardBottom}px`, left: `calc(50% + ${cardLeft}px)`,
+    transform: `scale(${scale}) rotate(${rotate}deg)`,
+    transformOrigin: 'center center',
+    opacity, zIndex,
+    transition: (isSwipeDragging(i) && isDragging.value)
+      ? 'opacity 0.1s, transform 0.1s'
+      : isLP ? 'transform 0.2s ease' : 'all 0.38s cubic-bezier(0.22,1,0.36,1)',
+    background: `linear-gradient(145deg,${col}${isActive ? 'ee' : '99'} 0%,${col}${isActive ? '55' : '30'} 100%)`,
+    boxShadow: isLP
+      ? `0 16px 40px ${col}66,0 0 0 2px rgba(255,255,255,0.3)`
+      : isActive ? `0 8px 26px ${col}55,0 0 0 1px rgba(255,255,255,0.18)` : 'none',
+    border: isActive ? '1px solid rgba(255,255,255,0.22)' : '1px solid rgba(255,255,255,0.08)',
+    cursor: 'pointer', borderRadius: '16px', overflow: 'hidden',
+    pointerEvents: (swipeMode.value && !isActive) || Math.abs(relIdx) > 3 ? 'none' : 'auto',
+  }
+}
+
+// ── 이벤트 핸들러 ──────────────────────────────────
+const isSwipeDragging = (i) => swipeMode.value && i === props.currentIndex
+const getClientX = (e) => e.type?.includes('touch') ? e.touches[0]?.clientX : e.clientX
+
+const onCardClick = (i) => {
+  if (swipeMode.value || longPressingIdx.value !== null) return
+  if (i !== props.currentIndex) { emit('update:currentIndex', i); return }
+  const item = props.displayItems[i]
+  if (item && !item.isOverview) emit('view-company', item.ticker)
+}
+
+const cancelSwipe = () => {
+  clearLP()
+  swipeMode.value = false; dragX.value = 0; isDragging.value = false
+  fanVisible.value = true
+}
+const clearLP = () => {
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null }
+  longPressingIdx.value = null
+}
+
+const onCardDown = (i, e) => {
+  if (swipeMode.value) {
+    if (i !== props.currentIndex) return
+    isDragging.value = true; startX.value = getClientX(e)
+    return
+  }
+  if (i !== props.currentIndex) return
+  if (props.displayItems[i]?.isOverview) return
+  startX.value = getClientX(e)
+  longPressingIdx.value = i
+  longPressTimer = setTimeout(() => {
+    longPressingIdx.value = null
+    swipeMode.value = true; isDragging.value = true; dragX.value = 0
+    fanVisible.value = true
+  }, LONG_PRESS_MS)
+}
+const onCardMove = (i, e) => {
+  const x = getClientX(e)
+  if (longPressingIdx.value !== null) { if (Math.abs(x - startX.value) > 6) clearLP(); return }
+  if (!swipeMode.value || !isDragging.value || i !== props.currentIndex) return
+  dragX.value = x - startX.value
+}
+const onCardUp = (i) => {
+  clearLP()
+  if (!isDragging.value || !swipeMode.value || i !== props.currentIndex) return
+  endDrag()
+}
+const onCardLeave = (i) => {
+  if (longPressingIdx.value === i) clearLP()
+  if (isDragging.value && i === props.currentIndex) endDrag()
+}
+const endDrag = () => {
+  if (!isDragging.value) return
+  isDragging.value = false
+  const x = dragX.value
+  const si = props.currentIndex - 1
+  if (x > THRESHOLD) {
+    dragX.value = 500
+    setTimeout(() => { emit('replace', si); swipeMode.value = false; dragX.value = 0 }, 280)
+  } else if (x < -THRESHOLD) {
+    dragX.value = -500
+    setTimeout(() => {
+      emit('liquidate', si)
+      if (props.currentIndex > 1 && props.currentIndex >= props.displayItems.length - 1)
+        emit('update:currentIndex', props.currentIndex - 1)
+      swipeMode.value = false; dragX.value = 0
+    }, 280)
+  } else {
+    dragX.value = 0
+  }
+}
+
+onUnmounted(() => clearLP())
+</script>
+
+<style scoped>
+/* 지갑 바와 동일한 소재감 배경 — 그라데이션 오버레이 제거 */
+.fan-bar {
+  background: linear-gradient(to bottom, #152030, #0e1a28 55%, #0a1420);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from,  .fade-leave-to      { opacity: 0; }
+</style>
