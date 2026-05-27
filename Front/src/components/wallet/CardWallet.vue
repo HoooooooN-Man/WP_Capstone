@@ -24,8 +24,9 @@
       <transition name="fade-scale">
         <ProfileView   v-if="activeCard === 'profile'"   key="profile"
           class="absolute inset-0"
-          :user="user" :dark-mode="darkMode"
+          :user="user" :dark-mode="darkMode" :menu-bar-locked="menuBarLocked"
           @toggle-dark-mode="darkMode = !darkMode"
+          @toggle-menu-lock="toggleMenuLock"
           @navigate="activeCard = $event" />
         <FlashCardView v-else-if="activeCard === 'feed'" key="feed"
           class="absolute inset-0" />
@@ -43,6 +44,7 @@
           class="absolute inset-0"
           :portfolio-groups="portfolioGroups"
           :active-group-id="activeGroupId"
+          :wallet-locked="menuBarLocked"
           @liquidate="handleLiquidate"
           @replace="handleReplace"
           @remove-group="handleRemoveGroup"
@@ -74,19 +76,19 @@
       <span class="text-[8px] font-bold tracking-wide leading-none">게시판</span>
     </button>
 
-    <!-- 바닥 호버 트리거 — 포트폴리오 모드에서는 비활성 (팬 카드 + 메뉴버튼이 대신함) -->
-    <div v-show="activeCard !== 'portfolio'"
+    <!-- 바닥 호버 트리거 — 고정 시 불필요하지만 유지 -->
+    <div v-show="!menuBarLocked && activeCard !== 'portfolio'"
          class="fixed bottom-0 left-0 right-0 h-4 z-20"
          @mouseenter="walletVisible = true"></div>
 
-    <!-- 지갑 바 — 포트폴리오 모드일 때 완전히 숨김 -->
-    <div v-show="activeCard !== 'portfolio'"
+    <!-- 지갑 바 — 고정 시 포트폴리오 위에서도 항상 표시 -->
+    <div v-show="menuBarLocked || activeCard !== 'portfolio'"
          class="fixed bottom-0 left-0 right-0 z-10 flex justify-center"
          :style="{
-           transform: walletVisible ? 'translateY(0)' : 'translateY(100%)',
+           transform: (menuBarLocked || walletVisible) ? 'translateY(0)' : 'translateY(100%)',
            transition: 'transform 0.38s cubic-bezier(0.32, 0, 0.2, 1)'
          }"
-         @mouseleave="walletVisible = false">
+         @mouseleave="!menuBarLocked && (walletVisible = false)">
     <!-- ↓ [양쪽 여백 조정] max-w-[???px] 값을 바꾸면 지갑 전체 너비가 변합니다. 현재 860px -->
     <div
       class="wallet-bar relative z-10 w-full max-w-[860px] rounded-t-[2.5rem] border-t border-x border-white/5 flex overflow-visible"
@@ -211,6 +213,14 @@ const activeCard    = ref('profile');
 const viewTicker    = ref(null);
 const darkMode      = ref(true);
 const walletVisible = ref(false);
+
+// 메뉴바 고정 (localStorage 영속)
+const menuBarLocked = ref(JSON.parse(localStorage.getItem('wp_menubar_locked') ?? 'false'))
+const toggleMenuLock = () => {
+  menuBarLocked.value = !menuBarLocked.value
+  localStorage.setItem('wp_menubar_locked', JSON.stringify(menuBarLocked.value))
+  if (menuBarLocked.value) walletVisible.value = true
+}
 
 // AI 추천 Top10 → 포트폴리오 초기 종목
 const TIER_COLORS = { A: '#1D9E75', B: '#378ADD', C: '#EF9F27', D: '#E24B4A' }

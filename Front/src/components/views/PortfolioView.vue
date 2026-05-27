@@ -284,10 +284,10 @@
     <!-- ── 팬 스트립 (지갑 바와 동일한 슬라이드-업 애니메이션) ── -->
     <div class="absolute bottom-0 left-0 right-0 z-20"
          :style="{
-           transform: fanVisible ? 'translateY(0)' : 'translateY(100%)',
+           transform: effectiveFanVisible ? 'translateY(0)' : 'translateY(100%)',
            transition: 'transform 0.38s cubic-bezier(0.32, 0, 0.2, 1)',
          }"
-         @mouseleave="!swipeMode && (fanVisible = false)">
+         @mouseleave="!swipeMode && !props.walletLocked && (fanVisible = false)">
 
       <!-- 그라데이션 배경 -->
       <div class="absolute inset-0 pointer-events-none"
@@ -471,6 +471,7 @@ const props = defineProps({
   activeGroupId:   { type: Number, required: true },
   autoTradeState:  { type: String, default: 'off' },
   tradeLog:        { type: Object, default: null  },
+  walletLocked:    { type: Boolean, default: false },
 })
 const emit = defineEmits([
   'liquidate','replace','remove-group',
@@ -521,7 +522,8 @@ const valueClass = (val) => {
 }
 
 // ── 팬 + 개인 포트폴리오 ────────────────────────
-const fanVisible   = ref(false)
+const fanVisible         = ref(false)
+const effectiveFanVisible = computed(() => props.walletLocked || fanVisible.value)
 const activeGroup  = computed(() => props.portfolioGroups.find(g => g.id === props.activeGroupId))
 const activeStocks = computed(() => activeGroup.value?.stocks || [])
 

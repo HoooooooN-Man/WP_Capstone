@@ -355,8 +355,9 @@
               :class="darkMode ? 'text-white/35' : 'text-gray-400'">화면 설정</h3>
           <div class="rounded-xl border overflow-hidden transition-colors duration-300"
                :class="darkMode ? 'border-white/10' : 'border-gray-200'">
-            <div class="flex items-center justify-between p-4 transition-colors duration-300"
-                 :class="darkMode ? 'bg-white/5' : 'bg-white'">
+            <!-- 다크 모드 -->
+            <div class="flex items-center justify-between p-4 transition-colors duration-300 border-b"
+                 :class="darkMode ? 'bg-white/5 border-white/8' : 'bg-white border-gray-100'">
               <div class="flex items-center gap-3">
                 <component :is="darkMode ? LucideMoon : LucideSun"
                            class="w-4 h-4"
@@ -375,6 +376,28 @@
                 <span
                   class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300"
                   :class="darkMode ? 'left-[22px]' : 'left-0.5'"
+                ></span>
+              </button>
+            </div>
+            <!-- 메뉴바 고정 -->
+            <div class="flex items-center justify-between p-4 transition-colors duration-300"
+                 :class="darkMode ? 'bg-white/5' : 'bg-white'">
+              <div class="flex items-center gap-3">
+                <span class="text-[16px]">📌</span>
+                <div>
+                  <p class="text-sm font-bold">메뉴바 고정</p>
+                  <p class="text-[10px] mt-0.5 transition-colors duration-300"
+                     :class="darkMode ? 'text-white/40' : 'text-gray-400'">지갑 바·포트폴리오 카드를 항상 표시합니다</p>
+                </div>
+              </div>
+              <button
+                @click="$emit('toggle-menu-lock')"
+                class="w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0 focus:outline-none"
+                :class="menuBarLocked ? 'bg-amber-500' : (darkMode ? 'bg-white/15' : 'bg-gray-300')"
+              >
+                <span
+                  class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300"
+                  :class="menuBarLocked ? 'left-[22px]' : 'left-0.5'"
                 ></span>
               </button>
             </div>
@@ -535,10 +558,11 @@ import { stocksApi } from '@/api/stocks.js';
 import { useAuthStore } from '@/stores/auth.js';
 
 defineProps({
-  user:     { type: Object,  default: () => ({}) },
-  darkMode: { type: Boolean, default: true },
+  user:          { type: Object,  default: () => ({}) },
+  darkMode:      { type: Boolean, default: true },
+  menuBarLocked: { type: Boolean, default: false },
 });
-const emit = defineEmits(['toggle-dark-mode', 'navigate']);
+const emit = defineEmits(['toggle-dark-mode', 'navigate', 'toggle-menu-lock']);
 
 const auth = useAuthStore();
 
