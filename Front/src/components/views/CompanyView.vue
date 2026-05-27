@@ -29,14 +29,24 @@
           <LucideBarChart2 class="w-3 h-3" />
           재무제표
         </button>
-        <!-- 검색 버튼: 리스트 뷰에서만 -->
-        <button v-if="!detailCompany"
-                @click="showSearch = true"
-                class="ml-auto w-8 h-8 flex items-center justify-center rounded-xl bg-white/8 border border-white/12 text-white/50 hover:bg-white/14 hover:text-white/80 transition-all flex-shrink-0">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-        </button>
+        <!-- 종목비교 + 검색 버튼: 리스트 뷰에서만 -->
+        <div v-if="!detailCompany" class="ml-auto flex items-center gap-1.5">
+          <!-- 종목비교 버튼 -->
+          <button @click="openCompareOverlay"
+                  class="w-8 h-8 flex items-center justify-center rounded-xl border transition-all flex-shrink-0"
+                  :class="showCompare
+                    ? 'bg-blue-500/20 border-blue-500/35 text-blue-300'
+                    : 'bg-white/8 border-white/12 text-white/50 hover:bg-white/14 hover:text-white/80'">
+            <LucideArrowLeftRight class="w-3.5 h-3.5" />
+          </button>
+          <!-- 검색 버튼 -->
+          <button @click="showSearch = true"
+                  class="w-8 h-8 flex items-center justify-center rounded-xl bg-white/8 border border-white/12 text-white/50 hover:bg-white/14 hover:text-white/80 transition-all flex-shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <p v-if="replaceMode && !detailCompany" class="text-[10px] text-white/35 mt-1">교체할 종목을 선택하세요</p>
     </div>
@@ -732,6 +742,247 @@
       </div>
     </transition>
 
+    <!-- ══════════════════════════════
+         종목 비교 오버레이
+    ══════════════════════════════ -->
+    <transition name="search-slide">
+      <div v-if="showCompare"
+           class="absolute inset-0 z-50 flex flex-col rounded-[2rem] overflow-hidden"
+           style="background:linear-gradient(160deg,#0c1622 0%,#080e18 100%)">
+
+        <!-- 헤더 -->
+        <div class="px-4 pt-4 pb-3 flex items-center gap-2 flex-shrink-0 border-b border-white/8">
+          <LucideArrowLeftRight class="w-4 h-4 text-blue-300/70 flex-shrink-0" />
+          <p class="text-[13px] font-black text-white/90 tracking-tight flex-1">종목 비교</p>
+          <button @click="closeCompareOverlay"
+                  class="text-[10px] font-bold text-white/40 hover:text-white/65 transition-colors px-1">
+            닫기
+          </button>
+        </div>
+
+        <!-- A / B 슬롯 -->
+        <div class="flex gap-2 px-3 pt-3 pb-2 flex-shrink-0">
+
+          <!-- 슬롯 A -->
+          <div class="flex-1 rounded-xl p-3 cursor-pointer border transition-all duration-200"
+               :class="compareSelectingSlot === 'A'
+                 ? 'border-blue-500/60 bg-blue-500/10'
+                 : compareStockA
+                   ? 'border-white/15 bg-white/5'
+                   : 'border-white/10 bg-white/3 hover:bg-white/6'"
+               @click="startSelectSlot('A')">
+            <p class="text-[8px] font-bold uppercase tracking-widest mb-1"
+               :class="compareSelectingSlot === 'A' ? 'text-blue-300' : 'text-white/35'">
+              {{ compareSelectingSlot === 'A' ? '▶ 비교 A 선택 중' : '종목 비교 A' }}
+            </p>
+            <template v-if="compareStockA">
+              <div class="h-0.5 rounded-full mb-1.5" :style="{ background: compareStockA.color }"></div>
+              <p class="text-[12px] font-black truncate">{{ compareStockA.name }}</p>
+              <p class="text-[9px] font-mono text-white/40">{{ compareStockA.ticker }}</p>
+              <div class="flex items-center gap-1.5 mt-1.5">
+                <span class="text-[9px] font-black px-1.5 py-0.5 rounded" :style="tierBadgeStyle(compareStockA.tier)">{{ compareStockA.tier }}</span>
+                <span class="text-[12px] font-black ml-auto" :class="quantTextColor(compareStockA.quantScore)">{{ compareStockA.quantScore }}</span>
+              </div>
+            </template>
+            <template v-else>
+              <p class="text-[10px] text-white/22 mt-1">클릭하여 종목 선택</p>
+            </template>
+          </div>
+
+          <!-- VS -->
+          <div class="flex items-center justify-center px-1 flex-shrink-0">
+            <span class="text-[10px] font-black text-white/20">VS</span>
+          </div>
+
+          <!-- 슬롯 B -->
+          <div class="flex-1 rounded-xl p-3 cursor-pointer border transition-all duration-200"
+               :class="compareSelectingSlot === 'B'
+                 ? 'border-emerald-500/60 bg-emerald-500/10'
+                 : compareStockB
+                   ? 'border-white/15 bg-white/5'
+                   : 'border-white/10 bg-white/3 hover:bg-white/6'"
+               @click="startSelectSlot('B')">
+            <p class="text-[8px] font-bold uppercase tracking-widest mb-1"
+               :class="compareSelectingSlot === 'B' ? 'text-emerald-300' : 'text-white/35'">
+              {{ compareSelectingSlot === 'B' ? '▶ 비교 B 선택 중' : '종목 비교 B' }}
+            </p>
+            <template v-if="compareStockB">
+              <div class="h-0.5 rounded-full mb-1.5" :style="{ background: compareStockB.color }"></div>
+              <p class="text-[12px] font-black truncate">{{ compareStockB.name }}</p>
+              <p class="text-[9px] font-mono text-white/40">{{ compareStockB.ticker }}</p>
+              <div class="flex items-center gap-1.5 mt-1.5">
+                <span class="text-[9px] font-black px-1.5 py-0.5 rounded" :style="tierBadgeStyle(compareStockB.tier)">{{ compareStockB.tier }}</span>
+                <span class="text-[12px] font-black ml-auto" :class="quantTextColor(compareStockB.quantScore)">{{ compareStockB.quantScore }}</span>
+              </div>
+            </template>
+            <template v-else>
+              <p class="text-[10px] text-white/22 mt-1">클릭하여 종목 선택</p>
+            </template>
+          </div>
+        </div>
+
+        <!-- ① 슬롯 선택 중: 종목 리스트 -->
+        <template v-if="compareSelectingSlot">
+          <!-- 안내 배너 -->
+          <div class="px-3 py-2 border-b border-white/6 flex items-center gap-2 flex-shrink-0"
+               :class="compareSelectingSlot === 'A' ? 'bg-blue-500/8' : 'bg-emerald-500/8'">
+            <div class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0"
+                 :class="compareSelectingSlot === 'A' ? 'bg-blue-400' : 'bg-emerald-400'"></div>
+            <span class="text-[10px] font-bold"
+                  :class="compareSelectingSlot === 'A' ? 'text-blue-300' : 'text-emerald-300'">
+              종목 비교 {{ compareSelectingSlot }} 선택 중 — 아래에서 종목을 클릭하세요
+            </span>
+          </div>
+          <!-- 종목 리스트 -->
+          <div class="flex-1 overflow-y-auto">
+            <div v-for="s in comparePickList" :key="s.ticker"
+                 class="flex items-center gap-2 px-3 py-2.5 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                 @click="assignCompareSlot(s)">
+              <div class="w-0.5 h-8 rounded-full flex-shrink-0" :style="{ background: s.color }"></div>
+              <div class="flex-1 min-w-0">
+                <p class="text-[11px] font-bold truncate text-white/90">{{ s.name }}</p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <p class="text-[8px] font-mono text-white/35">{{ s.ticker }}</p>
+                  <span class="text-[8px] text-white/25">·</span>
+                  <p class="text-[8px] text-white/35 truncate">{{ s.sector }}</p>
+                </div>
+              </div>
+              <span class="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
+                    :style="tierBadgeStyle(s.tier)">{{ s.tier }}</span>
+              <span class="text-[13px] font-black flex-shrink-0 w-8 text-right"
+                    :class="s.quantScore >= 70 ? 'text-green-300' : s.quantScore >= 45 ? 'text-yellow-300' : 'text-red-300'">
+                {{ s.quantScore }}
+              </span>
+            </div>
+          </div>
+        </template>
+
+        <!-- ② 둘 다 선택 완료: 비교 결과 -->
+        <template v-else-if="compareStockA && compareStockB">
+          <div class="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+
+            <!-- AI 점수 바 비교 -->
+            <div class="rounded-xl p-3 border border-white/8 bg-white/4 space-y-3">
+              <p class="text-[9px] text-white/40 uppercase tracking-widest">AI 점수 비교</p>
+              <div class="space-y-2.5">
+                <div v-for="(stk, key) in { A: compareStockA, B: compareStockB }" :key="key">
+                  <div class="flex justify-between mb-1">
+                    <span class="text-[10px] font-bold" :style="{ color: stk.color }">
+                      {{ key }} · {{ stk.name }}
+                    </span>
+                    <span class="text-[11px] font-black" :class="quantTextColor(stk.quantScore)">
+                      {{ stk.quantScore }}점
+                    </span>
+                  </div>
+                  <div class="w-full h-2 bg-black/30 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-700"
+                         :style="{ width: stk.quantScore + '%', background: stk.color }"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- 우위 표시 -->
+              <div class="pt-1 border-t border-white/6 flex items-center gap-1.5">
+                <span class="text-[9px] text-white/35">AI 점수 우위</span>
+                <span class="text-[10px] font-black"
+                      :style="{ color: compareStockA.quantScore >= compareStockB.quantScore ? compareStockA.color : compareStockB.color }">
+                  {{ compareStockA.quantScore >= compareStockB.quantScore ? compareStockA.name : compareStockB.name }}
+                </span>
+                <span class="text-[9px] font-bold ml-auto"
+                      :class="Math.abs(compareStockA.quantScore - compareStockB.quantScore) >= 15 ? 'text-green-300' : 'text-yellow-300'">
+                  +{{ Math.abs(compareStockA.quantScore - compareStockB.quantScore) }}점 차
+                </span>
+              </div>
+            </div>
+
+            <!-- 지표 비교 테이블 -->
+            <div class="rounded-xl border border-white/8 overflow-hidden">
+              <div class="grid grid-cols-3 border-b border-white/8" style="background:rgba(0,0,0,0.3)">
+                <div class="px-3 py-2 text-[9px] text-white/35 font-bold uppercase tracking-widest">지표</div>
+                <div class="px-3 py-2 text-[10px] font-black text-center" :style="{ color: compareStockA.color }">
+                  A · {{ compareStockA.ticker }}
+                </div>
+                <div class="px-3 py-2 text-[10px] font-black text-center" :style="{ color: compareStockB.color }">
+                  B · {{ compareStockB.ticker }}
+                </div>
+              </div>
+              <div v-for="row in compareMetricRows" :key="row.label"
+                   class="grid grid-cols-3 border-b border-white/5 last:border-0"
+                   style="background:rgba(255,255,255,0.02)">
+                <div class="px-3 py-2.5 text-[9px] text-white/40">{{ row.label }}</div>
+                <div class="px-3 py-2.5 text-center text-[11px] font-black"
+                     :class="row.betterA ? 'text-green-300' : (row.valA === '—' ? 'text-white/25' : 'text-white/70')">
+                  {{ row.valA }}
+                </div>
+                <div class="px-3 py-2.5 text-center text-[11px] font-black"
+                     :class="row.betterB ? 'text-green-300' : (row.valB === '—' ? 'text-white/25' : 'text-white/70')">
+                  {{ row.valB }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 점수 이력 스파크라인 -->
+            <div class="rounded-xl p-3 border border-white/8 bg-white/4">
+              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-2">AI 점수 이력</p>
+              <div v-if="compareHistoryLoading" class="flex items-center justify-center py-4 gap-2">
+                <div class="w-3.5 h-3.5 rounded-full border-2 animate-spin"
+                     style="border-color:rgba(96,165,250,0.5);border-top-color:transparent"></div>
+                <span class="text-[9px] text-white/30">로딩 중...</span>
+              </div>
+              <template v-else>
+                <div class="flex items-center gap-4 mb-2">
+                  <div class="flex items-center gap-1.5">
+                    <div class="w-4 h-0.5 rounded-full" :style="{ background: compareStockA.color }"></div>
+                    <span class="text-[8px] text-white/50">A · {{ compareStockA.ticker }}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <div class="w-4 h-0.5 rounded-full opacity-60" style="border-top:2px dashed"
+                         :style="{ borderColor: compareStockB.color }"></div>
+                    <span class="text-[8px] text-white/50">B · {{ compareStockB.ticker }}</span>
+                  </div>
+                </div>
+                <svg viewBox="0 0 300 70" class="w-full" style="height:70px">
+                  <path v-if="compareChartPaths.pathA"
+                        :d="compareChartPaths.pathA" fill="none"
+                        :stroke="compareStockA.color" stroke-width="1.8" stroke-linejoin="round" opacity="0.9"/>
+                  <path v-if="compareChartPaths.pathB"
+                        :d="compareChartPaths.pathB" fill="none"
+                        :stroke="compareStockB.color" stroke-width="1.8" stroke-linejoin="round"
+                        stroke-dasharray="5,3" opacity="0.9"/>
+                  <text v-if="!compareChartPaths.pathA && !compareChartPaths.pathB"
+                        x="150" y="38" text-anchor="middle" fill="rgba(255,255,255,0.2)"
+                        font-size="8" font-family="sans-serif">이력 데이터 없음</text>
+                </svg>
+              </template>
+            </div>
+
+            <!-- 다시 선택 버튼 -->
+            <div class="flex gap-2 pb-2">
+              <button @click="compareStockA = null; compareSelectingSlot = 'A'"
+                      class="flex-1 py-2 rounded-xl border text-[10px] font-bold transition-colors"
+                      :style="{ borderColor: compareStockA ? compareStockA.color + '50' : 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }">
+                A 다시 선택
+              </button>
+              <button @click="compareStockB = null; compareSelectingSlot = 'B'"
+                      class="flex-1 py-2 rounded-xl border text-[10px] font-bold transition-colors"
+                      :style="{ borderColor: compareStockB ? compareStockB.color + '50' : 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }">
+                B 다시 선택
+              </button>
+            </div>
+
+          </div>
+        </template>
+
+        <!-- ③ 초기 안내 -->
+        <div v-else class="flex-1 flex flex-col items-center justify-center gap-2">
+          <span class="text-[32px]">⚖️</span>
+          <p class="text-[11px] text-white/35 text-center px-6">
+            위 A, B 슬롯을 클릭해서<br>비교할 종목을 선택하세요
+          </p>
+        </div>
+
+      </div>
+    </transition>
+
     <!-- 상세 주가 차트 모달 -->
     <transition name="order-modal">
       <StockChartModal
@@ -1191,7 +1442,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import { LucideChevronRight, LucideChevronLeft, LucideBarChart2 } from 'lucide-vue-next'
+import { LucideChevronRight, LucideChevronLeft, LucideBarChart2, LucideArrowLeftRight } from 'lucide-vue-next'
 import { generateMockOHLC } from '@/mock/data.js'
 import StockChartModal from '@/components/modal/StockChartModal.vue'
 import { stocksApi } from '@/api/stocks.js'
@@ -1591,6 +1842,140 @@ function resetSearchFilters() {
 function closeSearch() {
   showSearch.value = false
 }
+
+// ── 종목 비교 ──────────────────────────────────
+const showCompare          = ref(false)
+const compareStockA        = ref(null)
+const compareStockB        = ref(null)
+const compareSelectingSlot = ref(null)   // 'A' | 'B' | null
+const compareAHistory      = ref([])
+const compareBHistory      = ref([])
+const compareHistoryLoading = ref(false)
+
+// 비교 선택용 종목 목록 (screener 또는 recommend 재활용)
+const comparePickList = computed(() => {
+  const src = screenerStore.items.length > 0 ? screenerStore.items : stocksStore.items
+  return src.map(s => ({
+    ticker:        s.ticker,
+    name:          s.name ?? s.ticker,
+    sector:        s.sector ?? '',
+    tier:          s.tier ?? '—',
+    quantScore:    Math.round(s.composite_score ?? s.score ?? 0),
+    prob_ensemble: s.prob_ensemble ?? 0,
+    color:         scoreToColor(Math.round(s.composite_score ?? s.score ?? 0)),
+  }))
+})
+
+function openCompareOverlay() {
+  showCompare.value = true
+  // 빈 슬롯 자동 포커스
+  if (!compareStockA.value)       compareSelectingSlot.value = 'A'
+  else if (!compareStockB.value)  compareSelectingSlot.value = 'B'
+  else                            compareSelectingSlot.value = null
+}
+
+function closeCompareOverlay() {
+  showCompare.value         = false
+  compareSelectingSlot.value = null
+}
+
+function startSelectSlot(slot) {
+  compareSelectingSlot.value = slot
+}
+
+async function assignCompareSlot(stock) {
+  if (compareSelectingSlot.value === 'A') compareStockA.value = stock
+  else if (compareSelectingSlot.value === 'B') compareStockB.value = stock
+
+  // 다음 빈 슬롯으로 자동 이동
+  if (!compareStockA.value)      compareSelectingSlot.value = 'A'
+  else if (!compareStockB.value) compareSelectingSlot.value = 'B'
+  else {
+    compareSelectingSlot.value = null
+    await fetchCompareHistories()
+  }
+}
+
+async function fetchCompareHistories() {
+  if (!compareStockA.value || !compareStockB.value) return
+  compareHistoryLoading.value = true
+  compareAHistory.value = []
+  compareBHistory.value = []
+  try {
+    const [rA, rB] = await Promise.all([
+      stocksApi.getHistory(compareStockA.value.ticker, {}),
+      stocksApi.getHistory(compareStockB.value.ticker, {}),
+    ])
+    compareAHistory.value = rA.data.items ?? []
+    compareBHistory.value = rB.data.items ?? []
+  } catch {
+    // 이력 없어도 기본 비교는 표시
+  } finally {
+    compareHistoryLoading.value = false
+  }
+}
+
+// 지표 비교 행 생성
+const compareMetricRows = computed(() => {
+  if (!compareStockA.value || !compareStockB.value) return []
+  const A = compareStockA.value, B = compareStockB.value
+  const pct = (v) => v != null ? (v * 100).toFixed(1) + '%' : '—'
+  return [
+    {
+      label: 'Tier',
+      valA: A.tier, valB: B.tier,
+      betterA: A.tier < B.tier,   // A < B < C < D (문자열 비교)
+      betterB: B.tier < A.tier,
+    },
+    {
+      label: 'AI 점수',
+      valA: String(A.quantScore), valB: String(B.quantScore),
+      betterA: A.quantScore > B.quantScore,
+      betterB: B.quantScore > A.quantScore,
+    },
+    {
+      label: '앙상블 확률',
+      valA: pct(A.prob_ensemble), valB: pct(B.prob_ensemble),
+      betterA: (A.prob_ensemble ?? 0) > (B.prob_ensemble ?? 0),
+      betterB: (B.prob_ensemble ?? 0) > (A.prob_ensemble ?? 0),
+    },
+    {
+      label: '섹터',
+      valA: A.sector || '—', valB: B.sector || '—',
+      betterA: false, betterB: false,
+    },
+  ]
+})
+
+// 이력 스파크라인 SVG 경로
+const compareChartPaths = computed(() => {
+  const hA = compareAHistory.value.slice(-30)
+  const hB = compareBHistory.value.slice(-30)
+  if (!hA.length && !hB.length) return { pathA: '', pathB: '' }
+
+  const allScores = [...hA, ...hB].map(d => d.score)
+  const minS = Math.min(...allScores), maxS = Math.max(...allScores)
+  const range = maxS - minS || 1
+  const W = 300, H = 70, PH = 4, PV = 6
+  const uw = W - PH * 2, uh = H - PV * 2
+
+  const makePath = (hist) => {
+    if (!hist.length) return ''
+    const pts = hist.map((d, i) => {
+      const x = PH + (i / Math.max(hist.length - 1, 1)) * uw
+      const y = PV + (1 - (d.score - minS) / range) * uh
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    })
+    return `M ${pts[0]} L ${pts.slice(1).join(' L ')}`
+  }
+
+  return { pathA: makePath(hA), pathB: makePath(hB) }
+})
+
+// 슬롯 재선택 시 이력도 재로드
+watch([compareStockA, compareStockB], ([a, b]) => {
+  if (a && b && compareSelectingSlot.value === null) fetchCompareHistories()
+})
 
 function selectSearchResult(s) {
   closeSearch()
