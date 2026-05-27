@@ -54,11 +54,25 @@
           :auto-trade-state="autoTradeState"
           :trade-log="tradeLog"
         />
+        <BoardView v-else-if="activeCard === 'board'" key="board"
+          class="absolute inset-0" />
         <div v-else key="standby" class="absolute inset-0 flex items-center justify-center animate-fade-in-delayed">
           <h2 class="text-4xl font-black italic tracking-tighter text-white uppercase opacity-20">{{ activeCard }} MODULE STANDBY</h2>
         </div>
       </transition>
     </div>
+
+    <!-- 게시판 플로팅 버튼 — 지갑 바 오른쪽 바깥 고정 -->
+    <button
+      @click="activeCard = activeCard === 'board' ? 'profile' : 'board'"
+      class="fixed right-5 bottom-28 z-30 flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl border transition-all duration-200 shadow-lg"
+      :class="activeCard === 'board'
+        ? 'bg-amber-500/25 border-amber-500/45 text-amber-200 shadow-amber-900/40'
+        : 'bg-black/50 border-white/12 text-white/45 hover:bg-black/65 hover:text-white/70 hover:border-white/22'"
+    >
+      <LucideLayoutList class="w-4 h-4" />
+      <span class="text-[8px] font-bold tracking-wide leading-none">게시판</span>
+    </button>
 
     <!-- 바닥 호버 트리거 — 포트폴리오 모드에서는 비활성 (팬 카드 + 메뉴버튼이 대신함) -->
     <div v-show="activeCard !== 'portfolio'"
@@ -176,17 +190,16 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { LucideUser, LucideSparkles, LucideBuilding2, LucideFolder } from 'lucide-vue-next'
+import { LucideUser, LucideSparkles, LucideBuilding2, LucideFolder, LucideLayoutList } from 'lucide-vue-next'
 import ProfileView   from '@/components/views/ProfileView.vue'
 import FlashCardView from '@/components/views/FlashCardView.vue'
 import CompanyView   from '@/components/views/CompanyView.vue'
 import PortfolioView from '@/components/views/PortfolioView.vue'
-import { useAuthStore } from '@/stores/auth.js'
+import BoardView     from '@/components/views/BoardView.vue'
 import { useStocksStore } from '@/stores/stocks.js'
 import { stocksApi } from '@/api/stocks.js'
 import { MOCK_PORTFOLIOS, MOCK_COMPANIES } from '@/mock/data.js'
 
-const authStore   = useAuthStore()
 const stocksStore = useStocksStore()
 
 const props = defineProps({
