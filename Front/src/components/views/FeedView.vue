@@ -4,13 +4,13 @@
     <!-- 헤더 -->
     <div class="px-5 pt-4 pb-3 border-b border-white/10 flex-shrink-0 flex items-center justify-between">
       <div>
-        <p class="text-[9px] text-white/40 uppercase tracking-widest mb-0.5">AI Market Intelligence</p>
+        <p class="text-[13px] text-white/40 uppercase tracking-widest mb-0.5">AI Market Intelligence</p>
         <h2 class="text-2xl font-black tracking-tighter uppercase">Latest Feed</h2>
       </div>
       <div class="flex items-center gap-2">
-        <span v-if="!loading" class="text-[9px] text-white/30">{{ recDate }}</span>
+        <span v-if="!loading" class="text-[13px] text-white/30">{{ recDate }}</span>
         <div class="px-2.5 py-1 bg-green-500/20 rounded-full border border-green-500/40">
-          <span class="text-[10px] text-green-300 font-bold uppercase tracking-wider">LIVE</span>
+          <span class="text-[14px] text-green-300 font-bold uppercase tracking-wider">LIVE</span>
         </div>
       </div>
     </div>
@@ -33,15 +33,15 @@
           <div class="flex items-center gap-2 flex-wrap">
             <span class="badge" :class="tierBadgeColor(item.tier)">{{ item.tier }}-TIER</span>
             <span class="badge" :class="categoryColor(item.category)">{{ item.category }}</span>
-            <span v-if="item.ticker" class="text-[9px] text-white/30 font-mono">{{ item.ticker }}</span>
+            <span v-if="item.ticker" class="text-[13px] text-white/30 font-mono">{{ item.ticker }}</span>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
-            <span class="text-[11px] font-bold text-[#c9a227]">{{ item.score }}점</span>
-            <span class="text-[9px] text-white/25">{{ item.time }}</span>
+            <span class="text-[13px] font-bold text-[#c9a227]">{{ item.score }}점</span>
+            <span class="text-[13px] text-white/25">{{ item.time }}</span>
           </div>
         </div>
-        <p class="text-[12px] font-bold leading-snug">{{ item.title }}</p>
-        <p class="text-[10px] text-white/45 mt-0.5 leading-snug">{{ item.body }}</p>
+        <p class="text-[14px] font-bold leading-snug">{{ item.title }}</p>
+        <p class="text-[14px] text-white/45 mt-0.5 leading-snug">{{ item.body }}</p>
       </div>
 
       <div v-if="!feeds.length" class="flex items-center justify-center py-12 text-white/25 text-sm">

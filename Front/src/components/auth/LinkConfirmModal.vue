@@ -15,13 +15,13 @@
           </svg>
         </div>
         <h2 class="text-sm font-black text-white tracking-tight uppercase">계정 연동</h2>
-        <p class="text-[10px] text-white/45 mt-1.5 leading-relaxed">
+        <p class="text-[12px] text-white/45 mt-1.5 leading-relaxed">
           이미 해당 이메일로 가입된 계정이 있습니다.<br>
           <span class="text-[#c9a227]/80 font-bold">{{ PROVIDER_LABELS[provider] }}</span> 계정을 기존 계정에 연동하시겠습니까?
         </p>
       </div>
 
-      <p v-if="error" role="alert" class="text-[9px] text-red-400/80 text-center mb-3">{{ error }}</p>
+      <p v-if="error" role="alert" class="text-[11px] text-red-400/80 text-center mb-3">{{ error }}</p>
 
       <div class="flex gap-2">
         <button

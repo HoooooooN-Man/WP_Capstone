@@ -9,7 +9,7 @@
         <div class="ml-auto flex items-center gap-2">
           <!-- 새 글 작성 버튼 -->
           <button @click="openWrite"
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all
                          bg-amber-500/15 border border-amber-500/25 text-amber-300 hover:bg-amber-500/25">
             <LucidePencil class="w-3 h-3" />
             글쓰기
@@ -21,7 +21,7 @@
       <div class="flex gap-1 mt-3 p-1 rounded-xl" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07)">
         <button v-for="tab in TABS" :key="tab.key"
                 @click="activeTab = tab.key"
-                class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150"
+                class="flex-1 py-1.5 rounded-lg text-[12px] font-bold transition-all duration-150"
                 :class="activeTab === tab.key ? 'bg-white/15 text-white shadow-sm' : 'text-white/38 hover:text-white/65'">
           {{ tab.label }}
         </button>
@@ -35,7 +35,7 @@
       <div v-if="loading" class="flex items-center justify-center h-32 gap-2">
         <div class="w-4 h-4 rounded-full border-2 animate-spin"
              style="border-color:rgba(251,191,36,0.5);border-top-color:transparent"></div>
-        <span class="text-[10px] text-white/35">불러오는 중...</span>
+        <span class="text-[12px] text-white/35">불러오는 중...</span>
       </div>
 
       <!-- 목록 -->
@@ -44,17 +44,17 @@
         <div v-for="post in pinnedPosts" :key="'pin-' + post.id"
              class="flex items-start gap-3 px-5 py-3.5 border-b border-white/6 cursor-pointer hover:bg-white/4 transition-colors"
              @click="openPost(post)">
-          <span class="text-[8px] font-black px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0"
+          <span class="text-[10px] font-black px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0"
                 style="background:rgba(251,191,36,0.18);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)">공지</span>
           <div class="flex-1 min-w-0">
-            <p class="text-[12px] font-bold text-white/90 truncate">{{ post.title }}</p>
+            <p class="text-[14px] font-bold text-white/90 truncate">{{ post.title }}</p>
             <div class="flex items-center gap-2 mt-0.5">
-              <span class="text-[8px] text-white/30">{{ post.author }}</span>
-              <span class="text-[8px] text-white/20">·</span>
-              <span class="text-[8px] text-white/25 font-mono">{{ post.date }}</span>
+              <span class="text-[10px] text-white/30">{{ post.author }}</span>
+              <span class="text-[10px] text-white/20">·</span>
+              <span class="text-[10px] text-white/25 font-mono">{{ post.date }}</span>
             </div>
           </div>
-          <div class="flex items-center gap-2 flex-shrink-0 text-[8px] text-white/25 font-mono">
+          <div class="flex items-center gap-2 flex-shrink-0 text-[10px] text-white/25 font-mono">
             <span>👁 {{ post.views }}</span>
             <span>💬 {{ post.comments }}</span>
           </div>
@@ -65,29 +65,29 @@
              class="flex items-start gap-3 px-5 py-3.5 border-b border-white/5 cursor-pointer hover:bg-white/4 transition-colors"
              @click="openPost(post)">
           <!-- 순위/번호 -->
-          <span class="text-[9px] font-black text-white/20 w-5 flex-shrink-0 mt-0.5 text-center font-mono">
+          <span class="text-[11px] font-black text-white/20 w-5 flex-shrink-0 mt-0.5 text-center font-mono">
             {{ post.id }}
           </span>
           <div class="flex-1 min-w-0">
             <!-- 카테고리 + 제목 -->
             <div class="flex items-center gap-1.5 mb-0.5">
               <span v-if="post.category"
-                    class="text-[8px] font-bold px-1.5 py-0.5 rounded flex-shrink-0"
+                    class="text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0"
                     :style="categoryStyle(post.category)">{{ post.category }}</span>
               <span v-if="post.ticker"
-                    class="text-[8px] font-mono px-1.5 py-0.5 rounded flex-shrink-0"
+                    class="text-[10px] font-mono px-1.5 py-0.5 rounded flex-shrink-0"
                     style="background:rgba(96,165,250,0.12);color:#93c5fd;border:1px solid rgba(96,165,250,0.22)">
                 {{ post.ticker }}
               </span>
             </div>
-            <p class="text-[12px] font-semibold text-white/88 truncate">{{ post.title }}</p>
+            <p class="text-[14px] font-semibold text-white/88 truncate">{{ post.title }}</p>
             <div class="flex items-center gap-2 mt-0.5">
-              <span class="text-[8px] text-white/30">{{ post.author }}</span>
-              <span class="text-[8px] text-white/20">·</span>
-              <span class="text-[8px] text-white/25 font-mono">{{ post.date }}</span>
+              <span class="text-[10px] text-white/30">{{ post.author }}</span>
+              <span class="text-[10px] text-white/20">·</span>
+              <span class="text-[10px] text-white/25 font-mono">{{ post.date }}</span>
             </div>
           </div>
-          <div class="flex items-center gap-2 flex-shrink-0 text-[8px] text-white/25 font-mono">
+          <div class="flex items-center gap-2 flex-shrink-0 text-[10px] text-white/25 font-mono">
             <span>👁 {{ post.views }}</span>
             <span>💬 {{ post.comments }}</span>
             <span v-if="post.likes > 0" class="text-amber-400/60">♥ {{ post.likes }}</span>
@@ -98,7 +98,7 @@
         <div v-if="displayPosts.length === 0 && !loading"
              class="flex flex-col items-center justify-center py-16 gap-2">
           <span class="text-3xl">📋</span>
-          <p class="text-[10px] text-white/30">게시글이 없습니다</p>
+          <p class="text-[12px] text-white/30">게시글이 없습니다</p>
         </div>
       </div>
     </div>
@@ -106,18 +106,18 @@
     <!-- 하단 페이지네이션 -->
     <div v-if="totalPages > 1" class="flex items-center justify-center gap-1.5 py-3 border-t border-white/8 flex-shrink-0">
       <button @click="page = Math.max(1, page - 1)" :disabled="page === 1"
-              class="w-7 h-7 rounded-lg text-[10px] font-bold transition-all disabled:opacity-25"
+              class="w-7 h-7 rounded-lg text-[12px] font-bold transition-all disabled:opacity-25"
               style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.5)">‹</button>
       <button v-for="p in totalPages" :key="p"
               @click="page = p"
-              class="w-7 h-7 rounded-lg text-[10px] font-bold transition-all"
+              class="w-7 h-7 rounded-lg text-[12px] font-bold transition-all"
               :class="page === p
                 ? 'bg-amber-500/25 text-amber-200 border border-amber-500/40'
                 : 'text-white/35 hover:bg-white/8'">
         {{ p }}
       </button>
       <button @click="page = Math.min(totalPages, page + 1)" :disabled="page === totalPages"
-              class="w-7 h-7 rounded-lg text-[10px] font-bold transition-all disabled:opacity-25"
+              class="w-7 h-7 rounded-lg text-[12px] font-bold transition-all disabled:opacity-25"
               style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.5)">›</button>
     </div>
 
@@ -135,25 +135,25 @@
               <LucideChevronLeft class="w-5 h-5" />
             </button>
             <span v-if="activePost.category"
-                  class="text-[8px] font-bold px-1.5 py-0.5 rounded"
+                  class="text-[10px] font-bold px-1.5 py-0.5 rounded"
                   :style="categoryStyle(activePost.category)">{{ activePost.category }}</span>
             <span v-if="activePost.ticker"
-                  class="text-[8px] font-mono px-1.5 py-0.5 rounded"
+                  class="text-[10px] font-mono px-1.5 py-0.5 rounded"
                   style="background:rgba(96,165,250,0.12);color:#93c5fd;border:1px solid rgba(96,165,250,0.22)">
               {{ activePost.ticker }}
             </span>
           </div>
           <h3 class="text-[16px] font-black leading-snug text-white/92">{{ activePost.title }}</h3>
           <div class="flex items-center gap-3 mt-2">
-            <span class="text-[9px] text-white/40 font-bold">{{ activePost.author }}</span>
-            <span class="text-[9px] text-white/25 font-mono">{{ activePost.date }}</span>
-            <span class="text-[8px] text-white/22 ml-auto font-mono">👁 {{ activePost.views }}</span>
+            <span class="text-[11px] text-white/40 font-bold">{{ activePost.author }}</span>
+            <span class="text-[11px] text-white/25 font-mono">{{ activePost.date }}</span>
+            <span class="text-[10px] text-white/22 ml-auto font-mono">👁 {{ activePost.views }}</span>
           </div>
         </div>
 
         <!-- 본문 -->
         <div class="flex-1 overflow-y-auto px-5 py-4">
-          <p class="text-[12px] text-white/72 leading-relaxed whitespace-pre-wrap">{{ activePost.body }}</p>
+          <p class="text-[14px] text-white/72 leading-relaxed whitespace-pre-wrap">{{ activePost.body }}</p>
 
           <!-- 좋아요 -->
           <div class="flex justify-center mt-6">
@@ -161,29 +161,29 @@
                     class="flex items-center gap-2 px-5 py-2 rounded-full border transition-all"
                     style="background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.22);color:rgba(251,191,36,0.75)">
               <span class="text-sm">♥</span>
-              <span class="text-[10px] font-bold">{{ activePost.likes }}</span>
+              <span class="text-[12px] font-bold">{{ activePost.likes }}</span>
             </button>
           </div>
 
           <!-- 댓글 -->
           <div class="mt-5 border-t border-white/8 pt-4">
-            <p class="text-[9px] text-white/35 uppercase tracking-widest mb-3">댓글 {{ activePost.commentList?.length ?? 0 }}</p>
+            <p class="text-[11px] text-white/35 uppercase tracking-widest mb-3">댓글 {{ activePost.commentList?.length ?? 0 }}</p>
             <div v-for="c in (activePost.commentList ?? [])" :key="c.id"
                  class="mb-3 p-3 rounded-xl"
                  style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07)">
               <div class="flex items-center gap-2 mb-1">
-                <span class="text-[9px] font-bold text-white/55">{{ c.author }}</span>
-                <span class="text-[8px] text-white/22 font-mono ml-auto">{{ c.date }}</span>
+                <span class="text-[11px] font-bold text-white/55">{{ c.author }}</span>
+                <span class="text-[10px] text-white/22 font-mono ml-auto">{{ c.date }}</span>
               </div>
-              <p class="text-[11px] text-white/70">{{ c.text }}</p>
+              <p class="text-[13px] text-white/70">{{ c.text }}</p>
             </div>
             <!-- 댓글 입력 -->
             <div class="flex gap-2 mt-2">
               <input v-model="newComment" type="text" placeholder="댓글을 입력하세요"
-                     class="flex-1 px-3 py-2 rounded-xl text-[11px] bg-black/25 border border-white/10 text-white/80 outline-none placeholder:text-white/22"
+                     class="flex-1 px-3 py-2 rounded-xl text-[13px] bg-black/25 border border-white/10 text-white/80 outline-none placeholder:text-white/22"
                      @keydown.enter="submitComment" />
               <button @click="submitComment"
-                      class="px-3 py-2 rounded-xl text-[10px] font-bold flex-shrink-0 transition-all"
+                      class="px-3 py-2 rounded-xl text-[12px] font-bold flex-shrink-0 transition-all"
                       style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.28)">
                 등록
               </button>
@@ -205,7 +205,7 @@
           </button>
           <span class="text-[13px] font-black text-white/85 flex-1">새 게시글</span>
           <button @click="submitPost"
-                  class="px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all"
+                  class="px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all"
                   style="background:rgba(251,191,36,0.2);color:#fbbf24;border:1px solid rgba(251,191,36,0.35)">
             등록
           </button>
@@ -214,11 +214,11 @@
         <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3">
           <!-- 카테고리 -->
           <div>
-            <p class="text-[9px] text-white/35 uppercase tracking-widest mb-1.5">카테고리</p>
+            <p class="text-[11px] text-white/35 uppercase tracking-widest mb-1.5">카테고리</p>
             <div class="flex gap-1.5 flex-wrap">
               <button v-for="cat in CATEGORIES" :key="cat"
                       @click="newPost.category = cat"
-                      class="px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all"
+                      class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all"
                       :style="newPost.category === cat ? categoryStyle(cat) : 'background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.10)'">
                 {{ cat }}
               </button>
@@ -226,21 +226,21 @@
           </div>
           <!-- 티커 (선택) -->
           <div>
-            <p class="text-[9px] text-white/35 uppercase tracking-widest mb-1.5">종목 티커 (선택)</p>
+            <p class="text-[11px] text-white/35 uppercase tracking-widest mb-1.5">종목 티커 (선택)</p>
             <input v-model="newPost.ticker" type="text" placeholder="예) 005930"
-                   class="w-full px-3 py-2 rounded-xl text-[11px] bg-black/25 border border-white/10 text-white/80 outline-none placeholder:text-white/22" />
+                   class="w-full px-3 py-2 rounded-xl text-[13px] bg-black/25 border border-white/10 text-white/80 outline-none placeholder:text-white/22" />
           </div>
           <!-- 제목 -->
           <div>
-            <p class="text-[9px] text-white/35 uppercase tracking-widest mb-1.5">제목</p>
+            <p class="text-[11px] text-white/35 uppercase tracking-widest mb-1.5">제목</p>
             <input v-model="newPost.title" type="text" placeholder="제목을 입력하세요"
-                   class="w-full px-3 py-2 rounded-xl text-[11px] bg-black/25 border border-white/10 text-white/80 outline-none placeholder:text-white/22" />
+                   class="w-full px-3 py-2 rounded-xl text-[13px] bg-black/25 border border-white/10 text-white/80 outline-none placeholder:text-white/22" />
           </div>
           <!-- 본문 -->
           <div>
-            <p class="text-[9px] text-white/35 uppercase tracking-widest mb-1.5">내용</p>
+            <p class="text-[11px] text-white/35 uppercase tracking-widest mb-1.5">내용</p>
             <textarea v-model="newPost.body" rows="8" placeholder="내용을 입력하세요"
-                      class="w-full px-3 py-2 rounded-xl text-[11px] bg-black/25 border border-white/10 text-white/80 outline-none placeholder:text-white/22 resize-none leading-relaxed">
+                      class="w-full px-3 py-2 rounded-xl text-[13px] bg-black/25 border border-white/10 text-white/80 outline-none placeholder:text-white/22 resize-none leading-relaxed">
             </textarea>
           </div>
         </div>

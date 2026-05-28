@@ -8,7 +8,7 @@
         <LucideChevronLeft class="w-3.5 h-3.5 text-white/60" />
       </button>
       <div>
-        <p class="text-[8px] text-[#9a7418] font-bold uppercase tracking-[0.3em]">Account Recovery</p>
+        <p class="text-[10px] text-[#9a7418] font-bold uppercase tracking-[0.3em]">Account Recovery</p>
         <h2 class="text-base font-black text-white tracking-tight uppercase leading-none">계정 찾기</h2>
       </div>
     </div>
@@ -16,12 +16,12 @@
     <!-- 탭 -->
     <div class="flex border-b border-white/10">
       <button @click="tab = 'id'; resetPwState()"
-              class="flex-1 pb-2 text-[10px] font-bold tracking-widest uppercase transition-all"
+              class="flex-1 pb-2 text-[12px] font-bold tracking-widest uppercase transition-all"
               :class="tab === 'id' ? 'text-[#c9a227] border-b-2 border-[#c9a227] -mb-px' : 'text-white/30 hover:text-white/55'">
         아이디 찾기
       </button>
       <button @click="tab = 'pw'; resetIdState()"
-              class="flex-1 pb-2 text-[10px] font-bold tracking-widest uppercase transition-all"
+              class="flex-1 pb-2 text-[12px] font-bold tracking-widest uppercase transition-all"
               :class="tab === 'pw' ? 'text-[#c9a227] border-b-2 border-[#c9a227] -mb-px' : 'text-white/30 hover:text-white/55'">
         비밀번호 찾기
       </button>
@@ -38,10 +38,10 @@
         아이디 찾기
       </button>
       <div v-else class="px-4 py-3 bg-[#c9a227]/10 border border-[#c9a227]/25 rounded-xl">
-        <p class="text-[9px] text-[#c9a227]/60 uppercase tracking-widest mb-1">찾은 아이디</p>
+        <p class="text-[11px] text-[#c9a227]/60 uppercase tracking-widest mb-1">찾은 아이디</p>
         <p class="text-sm font-bold text-white tracking-wider">user@example.com</p>
         <button @click="emit('go-login'); resetIdState()"
-                class="mt-2 text-[9px] text-[#c9a227]/70 hover:text-[#c9a227] transition-colors font-semibold">
+                class="mt-2 text-[11px] text-[#c9a227]/70 hover:text-[#c9a227] transition-colors font-semibold">
           로그인으로 돌아가기 →
         </button>
       </div>
@@ -56,7 +56,7 @@
              class="flex-1 h-0.5 rounded-full transition-colors duration-300"
              :class="pwStep >= s ? 'bg-[#c9a227]/70' : 'bg-white/10'"></div>
       </div>
-      <p class="text-[9px] text-white/35 text-center">
+      <p class="text-[11px] text-white/35 text-center">
         {{ ['이메일 입력', '인증코드 확인', '새 비밀번호 설정'][pwStep - 1] }}
       </p>
 
@@ -64,7 +64,7 @@
       <template v-if="pwStep === 1">
         <input v-model="findEmail" type="text" placeholder="가입한 이메일"
           class="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all focus:border-[#c9a227]/40" />
-        <p v-if="pwError" class="text-[9px] text-red-400/80 px-1">{{ pwError }}</p>
+        <p v-if="pwError" class="text-[11px] text-red-400/80 px-1">{{ pwError }}</p>
         <button @click="handleSendCode" :disabled="pwLoading"
                 class="w-full py-2.5 bg-gradient-to-r from-[#c9a227]/80 to-[#9a7218]/80 rounded-xl text-[11px] font-black text-[#1a0e04] tracking-[0.2em] uppercase hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(0,0,0,0.4)] disabled:opacity-60 disabled:cursor-not-allowed">
           {{ pwLoading ? '발송 중...' : '인증코드 발송' }}
@@ -73,17 +73,17 @@
 
       <!-- Step 2: 인증코드 입력 -->
       <template v-else-if="pwStep === 2">
-        <p class="text-[10px] text-white/50 leading-relaxed px-1">
+        <p class="text-[12px] text-white/50 leading-relaxed px-1">
           <span class="text-[#c9a227]/80">{{ findEmail }}</span> 으로<br>발송된 6자리 코드를 입력하세요
         </p>
         <input v-model="verifyCode" type="text" placeholder="인증코드 6자리" maxlength="6"
           class="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all focus:border-[#c9a227]/40 text-center font-mono tracking-[0.5em]" />
-        <p v-if="pwError" class="text-[9px] text-red-400/80 px-1">{{ pwError }}</p>
+        <p v-if="pwError" class="text-[11px] text-red-400/80 px-1">{{ pwError }}</p>
         <button @click="handleVerifyCode" :disabled="pwLoading"
                 class="w-full py-2.5 bg-gradient-to-r from-[#c9a227]/80 to-[#9a7218]/80 rounded-xl text-[11px] font-black text-[#1a0e04] tracking-[0.2em] uppercase hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(0,0,0,0.4)] disabled:opacity-60 disabled:cursor-not-allowed">
           {{ pwLoading ? '확인 중...' : '코드 확인' }}
         </button>
-        <button @click="pwStep = 1; pwError = ''" class="text-[9px] text-white/30 hover:text-white/50 transition-colors text-center w-full">
+        <button @click="pwStep = 1; pwError = ''" class="text-[11px] text-white/30 hover:text-white/50 transition-colors text-center w-full">
           ← 이메일 다시 입력
         </button>
       </template>
@@ -96,8 +96,8 @@
           :class="['w-full px-4 py-2.5 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all focus:border-[#c9a227]/40',
             newPasswordConfirm && newPassword !== newPasswordConfirm ? 'border-red-500/60' : 'border-white/10']" />
         <p v-if="newPasswordConfirm && newPassword !== newPasswordConfirm"
-           class="text-[9px] text-red-400/80 px-1">비밀번호가 일치하지 않습니다</p>
-        <p v-if="pwError" class="text-[9px] text-red-400/80 px-1">{{ pwError }}</p>
+           class="text-[11px] text-red-400/80 px-1">비밀번호가 일치하지 않습니다</p>
+        <p v-if="pwError" class="text-[11px] text-red-400/80 px-1">{{ pwError }}</p>
         <button @click="handleResetPw" :disabled="pwLoading || newPassword !== newPasswordConfirm"
                 class="w-full py-2.5 bg-gradient-to-r from-[#c9a227]/80 to-[#9a7218]/80 rounded-xl text-[11px] font-black text-[#1a0e04] tracking-[0.2em] uppercase hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(0,0,0,0.4)] disabled:opacity-60 disabled:cursor-not-allowed">
           {{ pwLoading ? '변경 중...' : '비밀번호 변경' }}
@@ -106,10 +106,10 @@
 
       <!-- 완료 -->
       <div v-else class="px-4 py-3 bg-[#c9a227]/10 border border-[#c9a227]/25 rounded-xl">
-        <p class="text-[10px] font-bold text-white mb-1">비밀번호가 변경되었습니다</p>
-        <p class="text-[9px] text-white/50 leading-relaxed">새 비밀번호로 로그인해주세요.</p>
+        <p class="text-[12px] font-bold text-white mb-1">비밀번호가 변경되었습니다</p>
+        <p class="text-[11px] text-white/50 leading-relaxed">새 비밀번호로 로그인해주세요.</p>
         <button @click="emit('go-login'); resetPwState()"
-                class="mt-2 text-[9px] text-[#c9a227]/70 hover:text-[#c9a227] transition-colors font-semibold">
+                class="mt-2 text-[11px] text-[#c9a227]/70 hover:text-[#c9a227] transition-colors font-semibold">
           로그인으로 돌아가기 →
         </button>
       </div>

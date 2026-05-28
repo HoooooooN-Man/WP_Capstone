@@ -3,6 +3,7 @@ Front/node_modules/
 Front/dist/
 
 # Back
+Back/project_data/
 Back/.venv/
 Back/**/__pycache__/
 Back/__pycache__/

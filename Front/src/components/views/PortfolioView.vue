@@ -2,12 +2,11 @@
   <div class="w-full h-full overflow-hidden relative select-none text-white"
        style="background: linear-gradient(160deg, #1a2e4a 0%, #0e1d30 100%)">
 
-    <!-- ── 스크롤 메인 컨텐츠 ── -->
-    <!-- bottom:210px 고정 → 팬 스트립(고정 영역)과 겹치지 않음 -->
-    <div class="absolute top-0 left-0 right-0 overflow-y-auto" style="scrollbar-width:thin;bottom:210px;padding-bottom:12px">
+    <!-- 스크롤 메인 컨텐츠 — 팬 스트립은 CardWallet 레벨에 있으므로 전체 높이 사용 -->
+    <div class="absolute inset-0 overflow-y-auto" style="scrollbar-width:thin;padding-bottom:12px">
       <transition name="page-switch" mode="out-in">
 
-        <!-- ── [0] 오버뷰: main 브랜치 포트폴리오 그대로 (다크 테마) ── -->
+        <!-- ── [0] 오버뷰: AI 추천 포트폴리오 (다크 테마) ── -->
         <div v-if="currentIndex === 0" key="overview"
              class="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-8">
 
@@ -15,7 +14,7 @@
           <div class="flex flex-col gap-4">
             <h1 class="text-xl font-semibold text-white">포트폴리오</h1>
 
-            <!-- Strategy Tabs (다크) -->
+            <!-- Strategy Tabs -->
             <div class="flex items-center justify-between">
               <div class="flex gap-2">
                 <button v-for="t in [{ value:'growth', label:'성장형' },{ value:'stable', label:'안정형' }]" :key="t.value"
@@ -39,7 +38,7 @@
               </div>
             </div>
 
-            <!-- Portfolio Card Grid (다크) -->
+            <!-- Portfolio Card Grid -->
             <div v-if="portfolioError === 'not_ready'"
                  class="rounded-xl px-4 py-3 text-sm text-amber-400"
                  style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15)">
@@ -88,7 +87,7 @@
               </div>
             </div>
 
-            <!-- Strategy Explanation (다크) -->
+            <!-- Strategy Explanation -->
             <div v-if="store.activeType === 'growth'"
                  class="rounded-xl p-4" style="background:rgba(255,255,255,0.04)">
               <p class="text-sm font-semibold text-white mb-1">성장형 전략</p>
@@ -145,14 +144,13 @@
               <button class="text-xs text-white/40 hover:text-white/70 transition-colors rounded-lg px-2.5 py-1.5 border"
                       style="border-color:rgba(255,255,255,0.12)"
                       @click="backtestOpen = !backtestOpen">
-                {{ backtestOpen ? '▲ 접기' : '▼ 펼치기' }}
+                {{ backtestOpen ? '▲ 접기' : '▼ 결과 보기' }}
               </button>
             </div>
             <template v-if="backtestOpen">
               <div v-if="store.backtestLoading" class="h-32 rounded-xl animate-pulse"
                    style="background:rgba(255,255,255,0.05)"/>
               <template v-else>
-                <!-- BacktestSummaryTable 다크 -->
                 <div v-if="store.backtestSummary?.comparison"
                      class="overflow-auto rounded-xl border" style="border-color:rgba(255,255,255,0.1)">
                   <table class="w-full text-sm">
@@ -172,7 +170,6 @@
                   </table>
                 </div>
                 <div v-else class="text-center text-white/30 py-6 text-sm">백테스트 데이터 없음</div>
-                <!-- BacktestMonthlyChart (차트는 그대로 사용) -->
                 <BacktestMonthlyChart :data="store.backtestMonthly" />
                 <div>
                   <button class="text-sm text-white/40 hover:text-white/65 transition-colors"
@@ -193,7 +190,7 @@
 
           <!-- 오버뷰로 돌아가기 -->
           <button class="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors w-fit"
-                  @click="currentIndex = 0">
+                  @click="$emit('update:currentIndex', 0)">
             <LucideChevronLeft class="w-4 h-4" />
             <span class="text-sm">포트폴리오</span>
           </button>
@@ -206,12 +203,12 @@
                }">
             <div class="flex items-start justify-between mb-4">
               <div>
-                <p class="text-[10px] text-white/40 uppercase tracking-widest mb-1">{{ activeStock.sector }}</p>
+                <p class="text-[12px] text-white/40 uppercase tracking-widest mb-1">{{ activeStock.sector }}</p>
                 <p class="text-2xl font-black tracking-tight">{{ activeStock.company }}</p>
-                <p class="text-[11px] font-mono text-white/35 mt-0.5">{{ activeStock.ticker }}</p>
+                <p class="text-[13px] font-mono text-white/35 mt-0.5">{{ activeStock.ticker }}</p>
               </div>
               <div class="text-right">
-                <span class="inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold mb-1"
+                <span class="inline-block px-2.5 py-1 rounded-lg text-[13px] font-bold mb-1"
                       :class="activeStock.change >= 0 ? 'text-green-300' : 'text-red-300'"
                       :style="activeStock.change >= 0 ? 'background:rgba(52,211,153,0.15)' : 'background:rgba(248,113,113,0.15)'">
                   {{ activeStock.change >= 0 ? '+' : '' }}{{ activeStock.change }}%
@@ -220,32 +217,10 @@
               </div>
             </div>
 
-            <!-- 보유 정보 그리드 -->
-            <div class="grid grid-cols-2 gap-2.5 mb-4">
-              <div class="rounded-xl px-3 py-2.5 text-center" style="background:rgba(0,0,0,0.25)">
-                <p class="text-[8px] text-white/30 uppercase mb-1">보유수량</p>
-                <p class="text-base font-bold">{{ activeStock.shares }}<span class="text-xs text-white/40 ml-0.5">주</span></p>
-              </div>
-              <div class="rounded-xl px-3 py-2.5 text-center" style="background:rgba(0,0,0,0.25)">
-                <p class="text-[8px] text-white/30 uppercase mb-1">평균단가</p>
-                <p class="text-base font-bold">₩{{ activeStock.avgPrice.toLocaleString() }}</p>
-              </div>
-              <div class="rounded-xl px-3 py-2.5 text-center" style="background:rgba(0,0,0,0.25)">
-                <p class="text-[8px] text-white/30 uppercase mb-1">평가금액</p>
-                <p class="text-base font-bold">₩{{ (activeStock.shares * activeStock.currentPrice).toLocaleString() }}</p>
-              </div>
-              <div class="rounded-xl px-3 py-2.5 text-center" style="background:rgba(0,0,0,0.25)">
-                <p class="text-[8px] text-white/30 uppercase mb-1">평가손익</p>
-                <p class="text-base font-bold" :class="calcPL(activeStock) >= 0 ? 'text-green-300' : 'text-red-300'">
-                  {{ calcPL(activeStock) >= 0 ? '+' : '' }}₩{{ Math.abs(calcPL(activeStock)).toLocaleString() }}
-                </p>
-              </div>
-            </div>
-
             <!-- Quant 점수 -->
             <div>
               <div class="flex items-center justify-between mb-1.5">
-                <p class="text-[9px] text-white/35 uppercase tracking-wide">Quant Score</p>
+                <p class="text-[11px] text-white/35 uppercase tracking-wide">Quant Score</p>
                 <p class="text-sm font-black"
                    :class="(activeStock.quantScore ?? 50) >= 70 ? 'text-green-300' : (activeStock.quantScore ?? 50) >= 45 ? 'text-yellow-300' : 'text-red-300'">
                   {{ activeStock.quantScore ?? '—' }}
@@ -260,10 +235,10 @@
           </div>
 
           <!-- 안내 -->
-          <div class="rounded-xl px-4 py-3 text-center text-[11px] text-white/25"
+          <div class="rounded-xl px-4 py-3 text-center text-[13px] text-white/25"
                style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">
             하단 팬 메뉴에서 해당 카드를 <strong class="text-white/40">길게 누른 후</strong> 좌우로 드래그 →
-            <span class="text-red-300/70">청산</span> / <span class="text-emerald-300/70">교체</span>
+            <span class="text-red-300/70">삭제</span> / <span class="text-emerald-300/70">교체</span>
           </div>
 
           <!-- Company 상세 보기 버튼 -->
@@ -278,71 +253,26 @@
       </transition>
     </div><!-- /scrollable -->
 
-    <!-- ── 팬 스트립 컴포넌트 ── -->
-    <PortfolioFanStrip
-      :display-items="displayItems"
-      :current-index="currentIndex"
-      :total-value="totalValue"
-      :total-return="totalReturn"
-      :active-stocks-count="activeStocks.length"
-      :auto-trade-state="autoTradeState"
-      :wallet-locked="walletLocked"
-      @update:current-index="currentIndex = $event"
-      @back="emit('back')"
-      @liquidate="onFanLiquidate"
-      @replace="(si) => emit('replace', si)"
-      @view-company="(t) => emit('view-company', t)"
-      @toggle-auto-trade="emit('toggle-auto-trade')"
-    />
-
-    <!-- 자동매매 결과 -->
-    <transition name="trade-log">
-      <div v-if="tradeLog"
-           class="absolute z-40 left-4 right-4 rounded-xl border border-white/10 overflow-hidden text-[10px] text-white"
-           style="bottom:225px;background:linear-gradient(135deg,#0a1e0e,#0d1a0a)">
-        <div class="px-3 py-1.5 border-b border-white/10 flex items-center gap-1.5">
-          <div class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
-          <p class="text-[8px] text-green-400 font-bold uppercase tracking-widest">자동매매 완료</p>
-        </div>
-        <div class="px-3 py-1.5 space-y-0.5">
-          <div v-if="tradeLog.bought.length" class="flex gap-2">
-            <span class="text-blue-400 font-black flex-shrink-0">매수</span>
-            <span class="text-white/55">{{ tradeLog.bought.join(', ') }}</span>
-          </div>
-          <div v-if="tradeLog.sold.length" class="flex gap-2">
-            <span class="text-red-400 font-black flex-shrink-0">청산</span>
-            <span class="text-white/55">{{ tradeLog.sold.join(', ') }}</span>
-          </div>
-        </div>
-      </div>
-    </transition>
-
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { LucideChevronLeft } from 'lucide-vue-next'
 import { usePortfolioStore } from '@/stores/portfolio.js'
 import BacktestMonthlyChart  from '@/components/portfolio/BacktestMonthlyChart.vue'
-import PortfolioFanStrip     from '@/components/portfolio/PortfolioFanStrip.vue'
 
 const props = defineProps({
-  portfolioGroups: { type: Array,   required: true },
-  activeGroupId:   { type: Number,  required: true },
-  autoTradeState:  { type: String,  default: 'off' },
-  tradeLog:        { type: Object,  default: null  },
-  walletLocked:    { type: Boolean, default: false },
+  portfolioGroups: { type: Array,  required: true },
+  activeGroupId:   { type: Number, required: true },
+  currentIndex:    { type: Number, default: 0 },
 })
-const emit = defineEmits([
-  'liquidate','replace','remove-group',
-  'rename-group','switch-group','view-company','toggle-auto-trade','back',
-])
+const emit = defineEmits(['update:currentIndex', 'view-company'])
 
-// ── 포트폴리오 스토어 (백테스트·버전) ──────────────
+// ── 포트폴리오 스토어 (AI 추천 / 백테스트) ──
 const store          = usePortfolioStore()
 const portfolioError = ref(null)
-const backtestOpen   = ref(true)
+const backtestOpen   = ref(false)
 const rawOpen        = ref(false)
 
 async function onTypeChange(type) {
@@ -354,17 +284,17 @@ async function onVersionChange(ver) {
   try   { await store.changeVersion(ver) }
   catch (e) { portfolioError.value = e?.response?.status === 404 ? 'not_ready' : 'error' }
 }
-onMounted(async () => {
-  await store.initVersions().catch(() => {})
-  await Promise.all([
+onMounted(() => {
+  nextTick(() => setTimeout(() => {
+    store.initVersions().catch(() => {})
     store.fetchPortfolio('growth').catch(e => {
       portfolioError.value = e?.response?.status === 404 ? 'not_ready' : 'error'
-    }),
-    store.fetchBacktest().catch(() => {}),
-  ])
+    })
+    store.fetchBacktest().catch(() => {})
+  }, 320))
 })
 
-// ── 색상 헬퍼 ───────────────────────────────────
+// ── 색상 헬퍼 ──
 const BAR_COLORS = { A:'#1D9E75', B:'#378ADD', C:'#EF9F27', D:'#E24B4A' }
 const barColor  = (s) => s>=80?BAR_COLORS.A:s>=60?BAR_COLORS.B:s>=40?BAR_COLORS.C:BAR_COLORS.D
 const tierStyle = (t) => ({
@@ -381,32 +311,10 @@ const valueClass = (val) => {
   return 'text-white/60'
 }
 
-// ── 개인 포트폴리오 (팬 카드용 데이터) ──────────
+// ── 개인 포트폴리오 (보유 종목 상세용) ──
 const activeGroup  = computed(() => props.portfolioGroups.find(g => g.id === props.activeGroupId))
 const activeStocks = computed(() => activeGroup.value?.stocks || [])
-
-const displayItems = computed(() => [
-  { isOverview: true, id: '__overview__', color: '#c9a227' },
-  ...activeStocks.value,
-])
-
-const currentIndex = ref(0)
-watch(() => props.activeGroupId, () => { currentIndex.value = 0 })
-
-const activeStock  = computed(() => currentIndex.value === 0 ? null : activeStocks.value[currentIndex.value - 1] ?? null)
-const totalValue   = computed(() => activeStocks.value.reduce((s, p) => s + p.shares * p.currentPrice, 0))
-const totalReturn  = computed(() => {
-  const cost = activeStocks.value.reduce((s, p) => s + p.shares * p.avgPrice, 0)
-  return cost ? ((totalValue.value - cost) / cost) * 100 : 0
-})
-const calcPL = (p) => p.shares ? (p.currentPrice - p.avgPrice) * p.shares : 0
-
-// ── 팬 스트립에서 올라온 청산/교체 이벤트 처리 ──
-const onFanLiquidate = (si) => {
-  emit('liquidate', si)
-  if (currentIndex.value > 1 && currentIndex.value >= displayItems.value.length - 1)
-    currentIndex.value--
-}
+const activeStock  = computed(() => props.currentIndex === 0 ? null : activeStocks.value[props.currentIndex - 1] ?? null)
 </script>
 
 <style scoped>
@@ -414,11 +322,4 @@ const onFanLiquidate = (si) => {
 .page-switch-leave-active { transition: opacity 0.15s ease; }
 .page-switch-enter-from   { opacity: 0; transform: translateY(10px); }
 .page-switch-leave-to     { opacity: 0; }
-
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from,  .fade-leave-to      { opacity: 0; }
-
-.trade-log-enter-active { transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1); }
-.trade-log-leave-active { transition: opacity 0.18s ease; }
-.trade-log-enter-from, .trade-log-leave-to { opacity: 0; transform: translateY(8px); }
 </style>

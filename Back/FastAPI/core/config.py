@@ -12,13 +12,14 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()  # Back/FastAPI/.env 가 있으면 읽어들임
-
 # ── 루트 경로 ─────────────────────────────────────────────────────────────────
 # Back/FastAPI/core/config.py → Back/FastAPI/ → Back/ → WP_Capstone/ → Capstone Data/
 _FASTAPI_DIR  = Path(__file__).resolve().parent.parent   # Back/FastAPI/
 _BACK_DIR     = _FASTAPI_DIR.parent                      # Back/
 _REPO_DIR     = _BACK_DIR.parent                         # WP_Capstone/
+
+# .env 경로를 파일 기준으로 명시적으로 로드 (실행 디렉토리에 무관하게 동작)
+load_dotenv(_FASTAPI_DIR / ".env")
 
 CAPSTONE_ROOT: Path = Path(os.getenv("CAPSTONE_ROOT", str(_REPO_DIR.parent)))
 MODELS_DIR:    Path = CAPSTONE_ROOT / "models"

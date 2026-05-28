@@ -15,12 +15,12 @@
         <div class="px-4 pt-4 pb-3 border-b border-white/10 flex-shrink-0 flex items-center justify-between"
              :class="front === 'A' ? 'pr-[62px]' : 'pr-4'">
           <div>
-            <p class="text-[8px] text-white/35 font-mono tracking-widest uppercase mb-0.5">FinBERT Sentiment</p>
+            <p class="text-[10px] text-white/35 font-mono tracking-widest uppercase mb-0.5">FinBERT Sentiment</p>
             <h2 class="text-lg font-black text-white tracking-tight leading-none">뉴스 감성 피드</h2>
           </div>
           <div class="px-2 py-0.5 rounded-full flex-shrink-0"
                style="background:rgba(52,211,153,0.15); border:1px solid rgba(52,211,153,0.35)">
-            <span class="text-[9px] font-bold" style="color:#34d399">LIVE</span>
+            <span class="text-[11px] font-bold" style="color:#34d399">LIVE</span>
           </div>
         </div>
 
@@ -28,7 +28,7 @@
         <div class="px-3 pt-2.5 pb-2 flex gap-1.5 flex-shrink-0">
           <button v-for="f in ['전체','긍정','중립','부정']" :key="f"
                   @click="newsFilter = f"
-                  class="px-2.5 py-1 rounded-full text-[9px] font-bold transition-all duration-150"
+                  class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all duration-150"
                   :style="newsFilter === f ? activeFilterStyle(f) : inactiveFilterStyle">
             {{ f }}
           </button>
@@ -40,7 +40,7 @@
           <div v-if="newsFeedLoading" class="flex flex-col items-center justify-center h-24 gap-2">
             <div class="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
                  style="border-color:rgba(52,211,153,0.6); border-top-color:transparent"></div>
-            <span class="text-[9px]" style="color:rgba(255,255,255,0.3)">뉴스 로딩 중...</span>
+            <span class="text-[11px]" style="color:rgba(255,255,255,0.3)">뉴스 로딩 중...</span>
           </div>
           <!-- 아이템 -->
           <div v-else v-for="item in filteredFeedNews" :key="item.id"
@@ -48,17 +48,17 @@
                style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)"
                @click="openUrl(item.url)">
             <div class="flex items-center gap-1.5 mb-1">
-              <span class="text-[8px] font-mono" style="color:rgba(255,255,255,0.35)">{{ item.source }}</span>
+              <span class="text-[10px] font-mono" style="color:rgba(255,255,255,0.35)">{{ item.source }}</span>
               <span class="px-1.5 py-0.5 rounded text-[7.5px] font-bold" :style="sentimentStyle(item.sentiment)">
                 {{ sentimentKo(item.sentiment) }}
               </span>
-              <span class="ml-auto text-[8px] font-mono"
+              <span class="ml-auto text-[10px] font-mono"
                     :style="{ color: item.confidence >= 0.5 ? 'rgba(52,211,153,0.7)' : 'rgba(255,255,255,0.25)' }">
                 {{ Math.round(item.confidence * 100) }}%
               </span>
             </div>
-            <p class="text-[11px] font-semibold leading-snug" style="color:rgba(255,255,255,0.88)">{{ item.title }}</p>
-            <p class="text-[8.5px] mt-0.5 font-mono" style="color:rgba(255,255,255,0.28)">{{ formatDate(item.published_at) }}</p>
+            <p class="text-[13px] font-semibold leading-snug" style="color:rgba(255,255,255,0.88)">{{ item.title }}</p>
+            <p class="text-[10px] mt-0.5 font-mono" style="color:rgba(255,255,255,0.28)">{{ formatDate(item.published_at) }}</p>
           </div>
         </div>
       </div>
@@ -77,13 +77,13 @@
         <div class="px-4 pt-4 pb-3 border-b border-white/10 flex-shrink-0 flex items-center justify-between"
              :class="front === 'B' ? 'pr-[62px]' : 'pr-4'">
           <div>
-            <p class="text-[8px] text-white/35 font-mono tracking-widest uppercase mb-0.5">FinBERT · Daily Ranking</p>
+            <p class="text-[10px] text-white/35 font-mono tracking-widest uppercase mb-0.5">FinBERT · Daily Ranking</p>
             <h2 class="text-lg font-black text-white tracking-tight leading-none">뉴스 감성 랭킹</h2>
           </div>
           <!-- 날짜 배지 -->
           <div v-if="rankingDisplayDate" class="px-2 py-0.5 rounded-full flex-shrink-0"
                style="background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.35)">
-            <span class="text-[9px] font-bold" style="color:#a78bfa">{{ rankingDisplayDate }}</span>
+            <span class="text-[11px] font-bold" style="color:#a78bfa">{{ rankingDisplayDate }}</span>
           </div>
         </div>
 
@@ -91,7 +91,7 @@
         <div class="px-3 pt-2.5 pb-2 flex gap-1.5 flex-shrink-0">
           <button v-for="f in ['전체','긍정','중립','부정']" :key="f"
                   @click="rankingFilter = f"
-                  class="px-2.5 py-1 rounded-full text-[9px] font-bold transition-all duration-150"
+                  class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all duration-150"
                   :style="rankingFilter === f ? activeFilterStyle(f) : inactiveFilterStyle">
             {{ f }}
           </button>
@@ -103,13 +103,13 @@
           <div v-if="rankingLoading" class="flex flex-col items-center justify-center h-24 gap-2">
             <div class="w-4 h-4 rounded-full border-2 animate-spin"
                  style="border-color:rgba(139,92,246,0.6); border-top-color:transparent"></div>
-            <span class="text-[9px]" style="color:rgba(255,255,255,0.3)">랭킹 로딩 중...</span>
+            <span class="text-[11px]" style="color:rgba(255,255,255,0.3)">랭킹 로딩 중...</span>
           </div>
           <!-- 오류 -->
           <div v-else-if="rankingError" class="flex flex-col items-center justify-center h-24 gap-1.5 text-center">
             <span class="text-[18px]">📡</span>
-            <span class="text-[10px]" style="color:rgba(255,255,255,0.4)">랭킹 데이터를 불러올 수 없습니다</span>
-            <span class="text-[8px]" style="color:rgba(255,255,255,0.2)">뉴스 DB가 아직 생성되지 않았을 수 있습니다</span>
+            <span class="text-[12px]" style="color:rgba(255,255,255,0.4)">랭킹 데이터를 불러올 수 없습니다</span>
+            <span class="text-[10px]" style="color:rgba(255,255,255,0.2)">뉴스 DB가 아직 생성되지 않았을 수 있습니다</span>
           </div>
           <!-- 아이템 -->
           <div v-else v-for="item in filteredRankingNews" :key="item.news_id"
@@ -119,21 +119,21 @@
             <!-- 순위 -->
             <div class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
                  :style="rankBadgeStyle(item.rank)">
-              <span class="text-[9px] font-black">{{ item.rank }}</span>
+              <span class="text-[11px] font-black">{{ item.rank }}</span>
             </div>
             <!-- 내용 -->
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1.5 mb-0.5">
-                <span class="text-[8px] font-mono truncate" style="color:rgba(255,255,255,0.35)">{{ item.provider }}</span>
+                <span class="text-[10px] font-mono truncate" style="color:rgba(255,255,255,0.35)">{{ item.provider }}</span>
                 <span class="px-1.5 py-0.5 rounded text-[7.5px] font-bold flex-shrink-0"
                       :style="sentimentStyle(item.sentiment_label)">
                   {{ sentimentKo(item.sentiment_label) }}
                 </span>
               </div>
-              <p class="text-[11px] font-semibold leading-snug" style="color:rgba(255,255,255,0.88)">{{ item.title }}</p>
+              <p class="text-[13px] font-semibold leading-snug" style="color:rgba(255,255,255,0.88)">{{ item.title }}</p>
               <div class="flex items-center justify-between mt-0.5">
-                <p class="text-[8.5px] font-mono" style="color:rgba(255,255,255,0.28)">{{ formatDate(item.published_at) }}</p>
-                <span class="text-[8px] font-mono" style="color:rgba(139,92,246,0.6)">
+                <p class="text-[10px] font-mono" style="color:rgba(255,255,255,0.28)">{{ formatDate(item.published_at) }}</p>
+                <span class="text-[10px] font-mono" style="color:rgba(139,92,246,0.6)">
                   {{ (item.ranking_score ?? 0).toFixed(2) }}pt
                 </span>
               </div>
@@ -146,17 +146,17 @@
                  style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); opacity:0.6">
               <div class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
                    :style="rankBadgeStyle(item.rank)">
-                <span class="text-[9px] font-black">{{ item.rank }}</span>
+                <span class="text-[11px] font-black">{{ item.rank }}</span>
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-1.5 mb-0.5">
-                  <span class="text-[8px] font-mono" style="color:rgba(255,255,255,0.3)">{{ item.provider }}</span>
+                  <span class="text-[10px] font-mono" style="color:rgba(255,255,255,0.3)">{{ item.provider }}</span>
                   <span class="px-1.5 py-0.5 rounded text-[7.5px] font-bold"
                         :style="sentimentStyle(item.sentiment_label)">
                     {{ sentimentKo(item.sentiment_label) }}
                   </span>
                 </div>
-                <p class="text-[11px] font-semibold leading-snug" style="color:rgba(255,255,255,0.7)">{{ item.title }}</p>
+                <p class="text-[13px] font-semibold leading-snug" style="color:rgba(255,255,255,0.7)">{{ item.title }}</p>
               </div>
             </div>
           </template>
@@ -173,7 +173,7 @@
              px-3 py-1.5 rounded-full
              bg-white/12 hover:bg-white/22 active:scale-95
              border border-white/15
-             text-[10px] font-bold text-white/70 uppercase tracking-wide
+             text-[12px] font-bold text-white/70 uppercase tracking-wide
              transition-all duration-150 focus:outline-none"
       style="top:14px; right:12px; z-index:50"
     >

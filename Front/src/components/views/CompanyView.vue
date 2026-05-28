@@ -20,12 +20,12 @@
           {{ detailCompany ? detailCompany.name : 'Company List' }}
         </h2>
         <div v-if="replaceMode && !detailCompany" class="px-2.5 py-1 bg-emerald-500/25 rounded-full border border-emerald-500/40">
-          <span class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">교체 선택 중</span>
+          <span class="text-[12px] text-emerald-300 font-bold uppercase tracking-wider">교체 선택 중</span>
         </div>
         <!-- 재무제표 버튼: 상세 뷰 + 일반 모드 -->
         <button v-if="detailCompany && !replaceMode"
                 @click="showFinancial = true"
-                class="ml-auto px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/15 text-[10px] text-white/55 hover:bg-white/14 hover:text-white/80 transition-all font-bold tracking-wide flex-shrink-0 flex items-center gap-1">
+                class="ml-auto px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/15 text-[12px] text-white/55 hover:bg-white/14 hover:text-white/80 transition-all font-bold tracking-wide flex-shrink-0 flex items-center gap-1">
           <LucideBarChart2 class="w-3 h-3" />
           재무제표
         </button>
@@ -48,7 +48,7 @@
           </button>
         </div>
       </div>
-      <p v-if="replaceMode && !detailCompany" class="text-[10px] text-white/35 mt-1">교체할 종목을 선택하세요</p>
+      <p v-if="replaceMode && !detailCompany" class="text-[12px] text-white/35 mt-1">교체할 종목을 선택하세요</p>
     </div>
 
     <!-- 탭 바: 리스트 뷰에서만 -->
@@ -56,7 +56,7 @@
       <div class="flex gap-1 p-1 rounded-xl" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.07)">
         <button v-for="tab in STOCK_TABS" :key="tab.key"
                 @click="switchTab(tab.key)"
-                class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150"
+                class="flex-1 py-1.5 rounded-lg text-[12px] font-bold transition-all duration-150"
                 :class="activeTab === tab.key
                   ? 'bg-white/15 text-white shadow-sm'
                   : 'text-white/38 hover:text-white/65'">
@@ -75,7 +75,7 @@
         <div class="flex gap-0.5 px-3 pt-3 pb-1 flex-shrink-0">
           <button v-for="p in ['1M','3M','6M','1Y']" :key="p"
                   @click="chartPeriod = p"
-                  class="px-2 py-0.5 rounded text-[9px] font-bold transition-all duration-150"
+                  class="px-2 py-0.5 rounded text-[11px] font-bold transition-all duration-150"
                   :class="chartPeriod === p ? 'bg-white/15 text-white' : 'text-white/30 hover:text-white/55'">
             {{ p }}
           </button>
@@ -120,11 +120,11 @@
 
           <!-- 가격 + 등락 -->
           <div>
-            <p class="text-[8px] uppercase tracking-widest mb-0.5" style="color:rgba(255,255,255,0.35)">
+            <p class="text-[10px] uppercase tracking-widest mb-0.5" style="color:rgba(255,255,255,0.35)">
               {{ detailCompany.sector }}
             </p>
             <p class="text-xl font-black leading-tight">₩{{ detailCompany.price.toLocaleString() }}</p>
-            <span class="inline-block mt-0.5 px-2 py-0.5 rounded-lg text-[10px] font-bold"
+            <span class="inline-block mt-0.5 px-2 py-0.5 rounded-lg text-[12px] font-bold"
                   :class="detailCompany.change >= 0 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'">
               {{ detailCompany.change >= 0 ? '+' : '' }}{{ detailCompany.change }}%
             </span>
@@ -136,70 +136,20 @@
           <!-- 재무 지표 -->
           <div class="space-y-1.5">
             <div v-for="m in detailMetrics" :key="m.label" class="flex justify-between items-center">
-              <span class="text-[8.5px]" style="color:rgba(255,255,255,0.38)">{{ m.label }}</span>
-              <span class="text-[10px] font-bold">{{ m.value }}</span>
+              <span class="text-[10px]" style="color:rgba(255,255,255,0.38)">{{ m.label }}</span>
+              <span class="text-[12px] font-bold">{{ m.value }}</span>
             </div>
           </div>
 
-          <!-- 구분선 -->
-          <div class="h-px" style="background:rgba(255,255,255,0.08)"></div>
-
-          <!-- 포트폴리오 보유 현황 -->
-          <div>
-            <p class="text-[7.5px] uppercase tracking-widest mb-1.5" style="color:rgba(255,255,255,0.3)">보유 현황</p>
-            <template v-if="mockHoldings.length > 0">
-              <div v-for="h in mockHoldings" :key="h.portfolio"
-                   class="rounded-lg p-2 mb-1.5 space-y-1"
-                   style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)">
-                <div class="flex justify-between items-center">
-                  <span class="text-[9px] font-bold" style="color:rgba(255,255,255,0.72)">{{ h.portfolio }}</span>
-                  <span class="text-[9px] font-mono" style="color:rgba(255,255,255,0.5)">{{ h.shares }}주</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-[8px]" style="color:rgba(255,255,255,0.32)">매수단가</span>
-                  <span class="text-[8.5px] font-mono">₩{{ h.avgPrice.toLocaleString() }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-[8px]" style="color:rgba(255,255,255,0.32)">평가금액</span>
-                  <span class="text-[8.5px] font-bold"
-                        :class="detailCompany.price >= h.avgPrice ? 'text-green-300' : 'text-red-300'">
-                    ₩{{ (detailCompany.price * h.shares).toLocaleString() }}
-                  </span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-[8px]" style="color:rgba(255,255,255,0.32)">수익률</span>
-                  <span class="text-[8.5px] font-bold"
-                        :class="detailCompany.price >= h.avgPrice ? 'text-green-400' : 'text-red-400'">
-                    {{ ((detailCompany.price - h.avgPrice) / h.avgPrice * 100 >= 0 ? '+' : '') }}{{ ((detailCompany.price - h.avgPrice) / h.avgPrice * 100).toFixed(1) }}%
-                  </span>
-                </div>
-              </div>
-            </template>
-            <p v-else class="text-[9px]" style="color:rgba(255,255,255,0.22)">보유 없음</p>
-          </div>
         </div>
 
-        <!-- 매수 / 매도 버튼 (하단 고정) -->
-        <div class="px-3 pb-3 pt-2 flex gap-1.5 flex-shrink-0 border-t border-white/8">
-          <template v-if="replaceMode">
-            <button @click="openCompare(detailCompany)"
-              class="flex-1 py-2 rounded-xl text-xs font-bold transition-colors
-                     bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30">
-              교체 비교
-            </button>
-          </template>
-          <template v-else>
-            <button @click="openOrderModal(detailCompany, 'buy')"
-              class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200
-                     bg-blue-500/20 border border-blue-500/40 text-blue-200 hover:bg-blue-500/35">
-              매수
-            </button>
-            <button @click="openOrderModal(detailCompany, 'sell')"
-              class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200
-                     bg-red-500/20 border border-red-500/40 text-red-200 hover:bg-red-500/35">
-              매도
-            </button>
-          </template>
+        <!-- 교체 비교 버튼 (교체 모드일 때만) -->
+        <div v-if="replaceMode" class="px-3 pb-3 pt-2 flex gap-1.5 flex-shrink-0 border-t border-white/8">
+          <button @click="openCompare(detailCompany)"
+            class="flex-1 py-2 rounded-xl text-xs font-bold transition-colors
+                   bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30">
+            교체 비교
+          </button>
         </div>
       </div>
 
@@ -219,12 +169,12 @@
           <div v-if="screenerStore.loading" class="flex items-center justify-center h-20 gap-2">
             <div class="w-4 h-4 rounded-full border-2 animate-spin"
                  style="border-color:rgba(96,165,250,0.5);border-top-color:transparent"></div>
-            <span class="text-[9px] text-white/30">종목 분석 중...</span>
+            <span class="text-[11px] text-white/30">종목 분석 중...</span>
           </div>
           <!-- 결과 없음 -->
           <div v-else-if="recommendList.length === 0" class="flex flex-col items-center justify-center h-20 gap-1">
             <span class="text-[20px]">🔍</span>
-            <span class="text-[10px] text-white/35">조건에 맞는 종목이 없습니다</span>
+            <span class="text-[12px] text-white/35">조건에 맞는 종목이 없습니다</span>
           </div>
           <div v-else
             v-for="company in recommendList" :key="company.id"
@@ -238,9 +188,9 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
                 <p class="font-bold text-sm truncate">{{ company.name }}</p>
-                <span class="text-[9px] text-white/35 font-mono flex-shrink-0">{{ company.ticker }}</span>
+                <span class="text-[11px] text-white/35 font-mono flex-shrink-0">{{ company.ticker }}</span>
               </div>
-              <p class="text-[9px] text-white/40">{{ company.sector }}</p>
+              <p class="text-[11px] text-white/40">{{ company.sector }}</p>
             </div>
             <div class="flex flex-col items-center flex-shrink-0 min-w-[36px]">
               <p class="text-[7px] text-white/30 uppercase tracking-wide">Quant</p>
@@ -252,18 +202,12 @@
             </div>
             <div class="text-right flex-shrink-0">
               <p class="text-sm font-bold">₩{{ company.price.toLocaleString() }}</p>
-              <p class="text-[10px] font-semibold"
+              <p class="text-[12px] font-semibold"
                  :class="company.change >= 0 ? 'text-green-400' : 'text-red-400'">
                 {{ company.change >= 0 ? '+' : '' }}{{ company.change }}%
               </p>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
-              <template v-if="!replaceMode">
-                <button @click.stop="openOrderModal(company, 'buy')"
-                        class="px-2 py-1 rounded-lg text-[10px] font-bold border transition-all bg-blue-500/15 border-blue-500/30 text-blue-300 hover:bg-blue-500/30">매수</button>
-                <button @click.stop="openOrderModal(company, 'sell')"
-                        class="px-2 py-1 rounded-lg text-[10px] font-bold border transition-all bg-red-500/15 border-red-500/30 text-red-300 hover:bg-red-500/30">매도</button>
-              </template>
               <LucideChevronRight class="w-4 h-4 text-white/25 ml-0.5" />
             </div>
           </div>
@@ -278,12 +222,12 @@
           <div v-if="communityLoading" class="flex items-center justify-center h-20 gap-2">
             <div class="w-4 h-4 rounded-full border-2 animate-spin"
                  style="border-color:rgba(251,191,36,0.5);border-top-color:transparent"></div>
-            <span class="text-[9px] text-white/30">커뮤니티 데이터 로딩 중...</span>
+            <span class="text-[11px] text-white/30">커뮤니티 데이터 로딩 중...</span>
           </div>
           <div v-else-if="communityError" class="flex flex-col items-center justify-center h-20 gap-1.5">
             <span class="text-[18px]">💬</span>
-            <span class="text-[10px] text-white/35">커뮤니티 데이터를 불러올 수 없습니다</span>
-            <span class="text-[8px] text-white/20">게시판 DB 연결을 확인해주세요</span>
+            <span class="text-[12px] text-white/35">커뮤니티 데이터를 불러올 수 없습니다</span>
+            <span class="text-[10px] text-white/20">게시판 DB 연결을 확인해주세요</span>
           </div>
           <div v-else
             v-for="(post, idx) in communityList" :key="post.id"
@@ -294,22 +238,22 @@
               <!-- 순위 -->
               <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
                    :style="rankBadge(idx + 1)">
-                <span class="text-[9px] font-black">{{ idx + 1 }}</span>
+                <span class="text-[11px] font-black">{{ idx + 1 }}</span>
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-1.5 mb-0.5">
                   <span v-if="post.ticker"
-                        class="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold"
+                        class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold"
                         style="background:rgba(96,165,250,0.15);color:#93c5fd;border:1px solid rgba(96,165,250,0.25)">
                     {{ post.ticker }}
                   </span>
                 </div>
-                <p class="text-[11px] font-semibold leading-snug text-white/88">{{ post.title }}</p>
+                <p class="text-[13px] font-semibold leading-snug text-white/88">{{ post.title }}</p>
                 <div class="flex items-center gap-3 mt-1">
-                  <span class="text-[8px] text-white/25 font-mono">👁 {{ post.views }}</span>
-                  <span class="text-[8px] text-white/25 font-mono">♥ {{ post.likes }}</span>
-                  <span class="text-[8px] text-white/25 font-mono">💬 {{ post.comment_count }}</span>
-                  <span class="text-[8px] font-bold ml-auto"
+                  <span class="text-[10px] text-white/25 font-mono">👁 {{ post.views }}</span>
+                  <span class="text-[10px] text-white/25 font-mono">♥ {{ post.likes }}</span>
+                  <span class="text-[10px] text-white/25 font-mono">💬 {{ post.comment_count }}</span>
+                  <span class="text-[10px] font-bold ml-auto"
                         style="color:rgba(251,191,36,0.7)">
                     🔥 {{ post.popularity }}
                   </span>
@@ -328,37 +272,37 @@
           <div v-if="risingLoading" class="flex items-center justify-center h-20 gap-2">
             <div class="w-4 h-4 rounded-full border-2 animate-spin"
                  style="border-color:rgba(52,211,153,0.5);border-top-color:transparent"></div>
-            <span class="text-[9px] text-white/30">급상승 종목 탐색 중...</span>
+            <span class="text-[11px] text-white/30">급상승 종목 탐색 중...</span>
           </div>
           <div v-else-if="risingError" class="flex flex-col items-center justify-center h-20 gap-1.5">
             <span class="text-[18px]">📈</span>
-            <span class="text-[10px] text-white/35">급상승 데이터를 불러올 수 없습니다</span>
+            <span class="text-[12px] text-white/35">급상승 데이터를 불러올 수 없습니다</span>
           </div>
           <div v-else
             v-for="(s, idx) in risingList" :key="s.ticker"
             class="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/8 hover:border-white/12 transition-all cursor-pointer"
             @click="openDetailByTicker(s.ticker)"
           >
-            <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black"
+            <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black"
                  style="background:rgba(52,211,153,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.3)">
               {{ idx + 1 }}
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1.5">
                 <p class="font-bold text-sm truncate">{{ s.name ?? s.ticker }}</p>
-                <span class="text-[9px] text-white/35 font-mono flex-shrink-0">{{ s.ticker }}</span>
+                <span class="text-[11px] text-white/35 font-mono flex-shrink-0">{{ s.ticker }}</span>
               </div>
-              <p class="text-[9px] text-white/38">{{ s.sector }}</p>
+              <p class="text-[11px] text-white/38">{{ s.sector }}</p>
             </div>
             <!-- 점수 변화 -->
             <div class="text-right flex-shrink-0">
-              <p class="text-[11px] font-black text-green-300">
+              <p class="text-[13px] font-black text-green-300">
                 △ {{ s.score_change >= 0 ? '+' : '' }}{{ s.score_change?.toFixed(1) }}
               </p>
-              <p class="text-[8.5px] font-mono text-white/38">점수 {{ s.score?.toFixed(0) }}</p>
+              <p class="text-[10px] font-mono text-white/38">점수 {{ s.score?.toFixed(0) }}</p>
             </div>
             <!-- Tier 뱃지 -->
-            <span class="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
+            <span class="text-[11px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
                   :style="tierBadgeStyle(s.tier)">{{ s.tier }}</span>
           </div>
         </div>
@@ -385,12 +329,12 @@
                    v-model="searchQuery"
                    type="text"
                    placeholder="종목명 · 티커 검색"
-                   class="flex-1 bg-transparent outline-none text-[11px] text-white placeholder:text-white/25 min-w-0" />
+                   class="flex-1 bg-transparent outline-none text-[13px] text-white placeholder:text-white/25 min-w-0" />
             <button v-if="searchQuery" @click="searchQuery = ''"
-                    class="text-white/28 hover:text-white/55 text-[10px] flex-shrink-0">✕</button>
+                    class="text-white/28 hover:text-white/55 text-[12px] flex-shrink-0">✕</button>
           </div>
           <button @click="closeSearch"
-                  class="text-[10px] font-bold text-white/40 hover:text-white/65 flex-shrink-0 px-1 transition-colors">
+                  class="text-[12px] font-bold text-white/40 hover:text-white/65 flex-shrink-0 px-1 transition-colors">
             닫기
           </button>
         </div>
@@ -404,10 +348,10 @@
 
             <!-- ▸ 모델 버전 -->
             <div class="px-3 pt-3 pb-2 border-b border-white/6">
-              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1.5">버전</p>
+              <p class="text-[11px] text-white/40 uppercase tracking-widest mb-1.5">버전</p>
               <select :value="searchFilters.model_version"
                       @change="searchFilters.model_version = $event.target.value"
-                      class="w-full text-[9px] bg-black/25 border border-white/12 text-white/80 rounded-md px-2 py-1 outline-none">
+                      class="w-full text-[11px] bg-black/25 border border-white/12 text-white/80 rounded-md px-2 py-1 outline-none">
                 <option value="latest">최신</option>
                 <option v-for="v in searchVersions" :key="v" :value="v">{{ v }}</option>
               </select>
@@ -415,20 +359,20 @@
 
             <!-- ▸ 기준일 -->
             <div class="px-3 py-2 border-b border-white/6">
-              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1.5">기준일</p>
+              <p class="text-[11px] text-white/40 uppercase tracking-widest mb-1.5">기준일</p>
               <select :value="searchFilters.date"
                       @change="searchFilters.date = $event.target.value"
-                      class="w-full text-[9px] bg-black/25 border border-white/12 text-white/80 rounded-md px-2 py-1 outline-none">
+                      class="w-full text-[11px] bg-black/25 border border-white/12 text-white/80 rounded-md px-2 py-1 outline-none">
                 <option v-for="d in searchDates" :key="d" :value="d">{{ d }}</option>
               </select>
             </div>
 
             <!-- ▸ 섹터 -->
             <div class="px-3 py-2 border-b border-white/6">
-              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1.5">섹터</p>
+              <p class="text-[11px] text-white/40 uppercase tracking-widest mb-1.5">섹터</p>
               <select :value="searchFilters.sector ?? ''"
                       @change="searchFilters.sector = $event.target.value || null"
-                      class="w-full text-[9px] bg-black/25 border border-white/12 text-white/80 rounded-md px-2 py-1 outline-none">
+                      class="w-full text-[11px] bg-black/25 border border-white/12 text-white/80 rounded-md px-2 py-1 outline-none">
                 <option value="">전체</option>
                 <option v-for="s in SECTOR_LIST" :key="s" :value="s">{{ s }}</option>
               </select>
@@ -437,32 +381,32 @@
             <!-- ▸ 최소 점수 슬라이더 -->
             <div class="px-3 py-2 border-b border-white/6">
               <div class="flex justify-between mb-1.5">
-                <p class="text-[9px] text-white/40 uppercase tracking-widest">최소 점수</p>
-                <span class="text-[10px] font-bold text-blue-300">{{ searchFilters.min_score }}</span>
+                <p class="text-[11px] text-white/40 uppercase tracking-widest">최소 점수</p>
+                <span class="text-[12px] font-bold text-blue-300">{{ searchFilters.min_score }}</span>
               </div>
               <input type="range" min="0" max="100" step="1"
                      v-model.number="searchFilters.min_score"
                      class="w-full h-1 rounded-full appearance-none cursor-pointer"
                      style="accent-color:#60a5fa" />
               <div class="flex justify-between mt-1">
-                <span class="text-[8px] text-white/25">0</span>
-                <span class="text-[8px] text-white/25">100</span>
+                <span class="text-[10px] text-white/25">0</span>
+                <span class="text-[10px] text-white/25">100</span>
               </div>
             </div>
 
             <!-- ▸ Tier 빠른 선택 -->
             <div class="px-3 py-2 border-b border-white/6">
-              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-1.5">Tier</p>
+              <p class="text-[11px] text-white/40 uppercase tracking-widest mb-1.5">Tier</p>
               <div class="grid grid-cols-2 gap-1">
                 <button v-for="t in TIER_PRESETS.filter(p => p.tier !== null)" :key="t.label"
                         @click="searchFilters.min_score = t.min; searchFilters.tier = t.tier"
-                        class="py-1 rounded-md text-[9px] font-bold text-center transition-all"
+                        class="py-1 rounded-md text-[11px] font-bold text-center transition-all"
                         :style="searchFilters.tier === t.tier && searchFilters.min_score === t.min
                           ? tierActiveStyle(t.tier)
                           : 'background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.42);border:1px solid rgba(255,255,255,0.10)'">
                   {{ t.label.split(' ')[0] }}
                 </button>
-                <button class="col-span-2 mt-0.5 py-1 rounded-md text-[9px] font-bold text-center transition-all"
+                <button class="col-span-2 mt-0.5 py-1 rounded-md text-[11px] font-bold text-center transition-all"
                         @click="searchFilters.min_score = 0; searchFilters.tier = null"
                         :style="searchFilters.tier === null && searchFilters.min_score === 0
                           ? tierActiveStyle('all')
@@ -475,7 +419,7 @@
             <!-- ══ 부가설정 (접기/펼치기) ══ -->
             <div class="px-3 pt-2">
               <button @click="financialOpen = !financialOpen"
-                      class="w-full flex items-center justify-between text-[9px] font-bold uppercase tracking-widest mb-1.5 transition-colors"
+                      class="w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-widest mb-1.5 transition-colors"
                       :class="financialOpen ? 'text-white/55' : 'text-white/28'">
                 <span>부가설정</span>
                 <span>{{ financialOpen ? '▲' : '▼' }}</span>
@@ -483,20 +427,20 @@
 
               <template v-if="financialOpen">
                 <div v-for="f in ALL_FINANCE_FILTERS" :key="f.key" class="mb-2">
-                  <p class="text-[8px] text-white/28 mb-0.5">{{ f.shortLabel }}</p>
+                  <p class="text-[10px] text-white/28 mb-0.5">{{ f.shortLabel }}</p>
                   <input type="number" :placeholder="f.placeholder"
                          :value="searchFilters[f.key]"
                          @change="searchFilters[f.key] = $event.target.value === '' ? null : +$event.target.value"
-                         class="w-full px-2 py-1 rounded-md text-[9px] font-mono bg-black/25 border border-white/10 text-white/75 outline-none" />
+                         class="w-full px-2 py-1 rounded-md text-[11px] font-mono bg-black/25 border border-white/10 text-white/75 outline-none" />
                 </div>
 
                 <div class="border-t border-white/6 my-2"></div>
 
                 <div class="mb-2">
-                  <p class="text-[8px] text-white/28 mb-0.5">정렬</p>
+                  <p class="text-[10px] text-white/28 mb-0.5">정렬</p>
                   <select :value="searchFilters.sort_by"
                           @change="searchFilters.sort_by = $event.target.value"
-                          class="w-full text-[9px] bg-black/25 border border-white/10 text-white/70 rounded-md px-2 py-1 outline-none">
+                          class="w-full text-[11px] bg-black/25 border border-white/10 text-white/70 rounded-md px-2 py-1 outline-none">
                     <option value="composite_score">복합점수</option>
                     <option value="score">ML점수</option>
                     <option value="roe">ROE</option>
@@ -506,10 +450,10 @@
                 </div>
 
                 <div class="mb-2">
-                  <p class="text-[8px] text-white/28 mb-0.5">결과 수</p>
+                  <p class="text-[10px] text-white/28 mb-0.5">결과 수</p>
                   <select :value="searchFilters.limit"
                           @change="searchFilters.limit = +$event.target.value"
-                          class="w-full text-[9px] bg-black/25 border border-white/10 text-white/70 rounded-md px-2 py-1 outline-none">
+                          class="w-full text-[11px] bg-black/25 border border-white/10 text-white/70 rounded-md px-2 py-1 outline-none">
                     <option :value="50">50개</option>
                     <option :value="100">100개</option>
                     <option :value="200">200개</option>
@@ -520,13 +464,13 @@
                 <div class="border-t border-white/6 my-2"></div>
 
                 <div class="mb-2">
-                  <p class="text-[8px] text-white/28 mb-1">프리셋</p>
+                  <p class="text-[10px] text-white/28 mb-1">프리셋</p>
                   <div class="flex gap-1 mb-1">
                     <input v-model="presetName" type="text" placeholder="이름"
-                           class="flex-1 px-1.5 py-1 rounded-md text-[9px] bg-black/25 border border-white/10 text-white/75 outline-none min-w-0"
+                           class="flex-1 px-1.5 py-1 rounded-md text-[11px] bg-black/25 border border-white/10 text-white/75 outline-none min-w-0"
                            @keydown.enter="savePreset" />
                     <button @click="savePreset"
-                            class="px-2 py-1 rounded-md text-[9px] font-bold flex-shrink-0 transition-colors"
+                            class="px-2 py-1 rounded-md text-[11px] font-bold flex-shrink-0 transition-colors"
                             style="background:rgba(96,165,250,0.2);color:#93c5fd;border:1px solid rgba(96,165,250,0.3)">
                       저장
                     </button>
@@ -534,22 +478,22 @@
                   <div v-for="name in savedPresets" :key="name"
                        class="flex items-center justify-between mb-1">
                     <button @click="loadPreset(name)"
-                            class="text-[8.5px] text-white/50 hover:text-white/75 truncate flex-1 text-left transition-colors">
+                            class="text-[10px] text-white/50 hover:text-white/75 truncate flex-1 text-left transition-colors">
                       {{ name }}
                     </button>
                     <button @click="deletePreset(name)"
-                            class="text-[9px] text-white/22 hover:text-red-400 ml-1 flex-shrink-0 transition-colors">✕</button>
+                            class="text-[11px] text-white/22 hover:text-red-400 ml-1 flex-shrink-0 transition-colors">✕</button>
                   </div>
-                  <p v-if="!savedPresets.length" class="text-[8px] text-white/22">저장된 프리셋 없음</p>
+                  <p v-if="!savedPresets.length" class="text-[10px] text-white/22">저장된 프리셋 없음</p>
                 </div>
 
                 <div class="flex flex-col gap-1 pb-3">
                   <button @click="resetFinancialFilters"
-                          class="text-[8px] text-red-400/60 hover:text-red-400 text-left transition-colors">
+                          class="text-[10px] text-red-400/60 hover:text-red-400 text-left transition-colors">
                     재무 조건 초기화
                   </button>
                   <button @click="resetSearchFilters"
-                          class="text-[8px] text-red-400/60 hover:text-red-400 text-left transition-colors">
+                          class="text-[10px] text-red-400/60 hover:text-red-400 text-left transition-colors">
                     전체 초기화
                   </button>
                 </div>
@@ -564,23 +508,23 @@
             <div v-if="searchLoading" class="flex items-center justify-center h-32 gap-2">
               <div class="w-4 h-4 rounded-full border-2 animate-spin"
                    style="border-color:rgba(96,165,250,0.5);border-top-color:transparent"></div>
-              <span class="text-[10px] text-white/35">로딩 중...</span>
+              <span class="text-[12px] text-white/35">로딩 중...</span>
             </div>
 
             <!-- 결과 없음 -->
             <div v-else-if="searchDisplayList.length === 0"
                  class="flex flex-col items-center justify-center h-32 gap-2">
               <span class="text-[22px]">🔍</span>
-              <span class="text-[10px] text-white/35">결과 없음</span>
+              <span class="text-[12px] text-white/35">결과 없음</span>
             </div>
 
             <!-- 리스트 -->
             <div v-else>
               <!-- 건수 + CSV -->
               <div class="px-3 py-2 border-b border-white/6 flex items-center justify-between">
-                <span class="text-[9px] text-white/35 font-medium">{{ searchDisplayList.length }}개 종목 · 가나다순</span>
+                <span class="text-[11px] text-white/35 font-medium">{{ searchDisplayList.length }}개 종목 · 가나다순</span>
                 <button @click="exportCsv"
-                        class="text-[8px] px-2 py-0.5 rounded-md font-bold flex-shrink-0 transition-all"
+                        class="text-[10px] px-2 py-0.5 rounded-md font-bold flex-shrink-0 transition-all"
                         style="background:rgba(52,211,153,0.12);color:rgba(52,211,153,0.75);border:1px solid rgba(52,211,153,0.22)">
                   CSV ↓
                 </button>
@@ -592,11 +536,11 @@
                 <div class="w-0.5 h-8 rounded-full flex-shrink-0" :style="{ background: s.color }"></div>
                 <!-- 이름 + 티커 + 점수 바 -->
                 <div class="flex-1 min-w-0">
-                  <p class="text-[11px] font-bold truncate text-white/90">{{ s.name }}</p>
+                  <p class="text-[13px] font-bold truncate text-white/90">{{ s.name }}</p>
                   <div class="flex items-center gap-1.5 mt-0.5">
-                    <p class="text-[8px] font-mono text-white/35">{{ s.ticker }}</p>
-                    <span class="text-[8px] text-white/25">·</span>
-                    <p class="text-[8px] text-white/35 truncate">{{ s.sector }}</p>
+                    <p class="text-[10px] font-mono text-white/35">{{ s.ticker }}</p>
+                    <span class="text-[10px] text-white/25">·</span>
+                    <p class="text-[10px] text-white/35 truncate">{{ s.sector }}</p>
                   </div>
                   <div class="w-full h-1 bg-black/30 rounded-full mt-1">
                     <div class="h-full rounded-full transition-all"
@@ -605,11 +549,11 @@
                 </div>
                 <!-- ML 점수 -->
                 <div class="text-right flex-shrink-0">
-                  <p class="text-[8px] text-white/30">ML</p>
-                  <p class="text-[10px] font-mono font-bold text-white/65">{{ s.mlScore }}</p>
+                  <p class="text-[10px] text-white/30">ML</p>
+                  <p class="text-[12px] font-mono font-bold text-white/65">{{ s.mlScore }}</p>
                 </div>
                 <!-- Tier 뱃지 -->
-                <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md flex-shrink-0"
+                <span class="text-[12px] font-black px-1.5 py-0.5 rounded-md flex-shrink-0"
                       :style="tierBadgeStyle(s.tier)">{{ s.tier }}</span>
                 <!-- 복합점수 -->
                 <span class="text-[13px] font-black flex-shrink-0 w-8 text-right"
@@ -627,12 +571,12 @@
 
             <!-- 결과 요약 -->
             <div class="px-3 pt-3 pb-2.5 border-b border-white/6">
-              <p class="text-[9px] text-white/35 uppercase tracking-widest mb-2.5">결과 요약</p>
+              <p class="text-[11px] text-white/35 uppercase tracking-widest mb-2.5">결과 요약</p>
               <div class="space-y-2">
                 <div class="rounded-lg p-2" style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.15)">
-                  <p class="text-[8px] text-blue-300/60 mb-0.5">검색 결과</p>
+                  <p class="text-[10px] text-blue-300/60 mb-0.5">검색 결과</p>
                   <p class="text-[16px] font-black text-blue-200 leading-none">{{ searchAllItems.length }}</p>
-                  <p class="text-[8px] text-blue-300/50 mt-0.5">종목</p>
+                  <p class="text-[10px] text-blue-300/50 mt-0.5">종목</p>
                 </div>
                 <div class="rounded-lg p-2"
                      :style="avgScore >= 70
@@ -640,7 +584,7 @@
                        : avgScore >= 45
                          ? 'background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.15)'
                          : 'background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.15)'">
-                  <p class="text-[8px] mb-0.5"
+                  <p class="text-[10px] mb-0.5"
                      :class="avgScore >= 70 ? 'text-green-300/60' : avgScore >= 45 ? 'text-yellow-300/60' : 'text-red-300/60'">
                     평균 점수
                   </p>
@@ -648,7 +592,7 @@
                      :class="avgScore >= 70 ? 'text-green-300' : avgScore >= 45 ? 'text-yellow-300' : 'text-red-300'">
                     {{ avgScore }}
                   </p>
-                  <p class="text-[8px] mt-0.5"
+                  <p class="text-[10px] mt-0.5"
                      :class="avgScore >= 70 ? 'text-green-300/50' : avgScore >= 45 ? 'text-yellow-300/50' : 'text-red-300/50'">
                     점 (0-100)
                   </p>
@@ -658,7 +602,7 @@
 
             <!-- Tier 분포 -->
             <div class="px-3 py-2.5 border-b border-white/6">
-              <p class="text-[9px] text-white/35 uppercase tracking-widest mb-2.5">Tier 분포</p>
+              <p class="text-[11px] text-white/35 uppercase tracking-widest mb-2.5">Tier 분포</p>
 
               <!-- SVG 도넛 차트 -->
               <div class="flex justify-center mb-3">
@@ -687,7 +631,7 @@
               <!-- Tier 바 -->
               <div class="space-y-1.5">
                 <div v-for="tk in ['A','B','C','D']" :key="tk" class="flex items-center gap-1.5">
-                  <span class="text-[9px] font-black w-3.5 flex-shrink-0"
+                  <span class="text-[11px] font-black w-3.5 flex-shrink-0"
                         :style="{ color: {A:'#34d399',B:'#93c5fd',C:'#fbbf24',D:'#f87171'}[tk] }">{{ tk }}</span>
                   <div class="flex-1 h-1.5 rounded-full" style="background:rgba(255,255,255,0.06)">
                     <div class="h-full rounded-full transition-all duration-500"
@@ -698,7 +642,7 @@
                            background: {A:'#34d399',B:'#93c5fd',C:'#fbbf24',D:'#f87171'}[tk]
                          }"></div>
                   </div>
-                  <span class="text-[8px] text-white/45 w-5 text-right flex-shrink-0 font-mono font-bold">
+                  <span class="text-[10px] text-white/45 w-5 text-right flex-shrink-0 font-mono font-bold">
                     {{ tierCounts[tk] ?? 0 }}
                   </span>
                 </div>
@@ -707,7 +651,7 @@
 
             <!-- 점수 분포 히스토그램 -->
             <div class="px-3 py-2.5">
-              <p class="text-[9px] text-white/35 uppercase tracking-widest mb-2.5">점수 분포</p>
+              <p class="text-[11px] text-white/35 uppercase tracking-widest mb-2.5">점수 분포</p>
               <div class="flex items-end gap-0.5 h-20">
                 <div v-for="(count, i) in scoreBuckets" :key="i"
                      class="flex-1 rounded-t-sm transition-all duration-500 cursor-default"
@@ -755,7 +699,7 @@
           <LucideArrowLeftRight class="w-4 h-4 text-blue-300/70 flex-shrink-0" />
           <p class="text-[13px] font-black text-white/90 tracking-tight flex-1">종목 비교</p>
           <button @click="closeCompareOverlay"
-                  class="text-[10px] font-bold text-white/40 hover:text-white/65 transition-colors px-1">
+                  class="text-[12px] font-bold text-white/40 hover:text-white/65 transition-colors px-1">
             닫기
           </button>
         </div>
@@ -771,27 +715,27 @@
                    ? 'border-white/15 bg-white/5'
                    : 'border-white/10 bg-white/3 hover:bg-white/6'"
                @click="startSelectSlot('A')">
-            <p class="text-[8px] font-bold uppercase tracking-widest mb-1"
+            <p class="text-[10px] font-bold uppercase tracking-widest mb-1"
                :class="compareSelectingSlot === 'A' ? 'text-blue-300' : 'text-white/35'">
               {{ compareSelectingSlot === 'A' ? '▶ 비교 A 선택 중' : '종목 비교 A' }}
             </p>
             <template v-if="compareStockA">
               <div class="h-0.5 rounded-full mb-1.5" :style="{ background: compareStockA.color }"></div>
-              <p class="text-[12px] font-black truncate">{{ compareStockA.name }}</p>
-              <p class="text-[9px] font-mono text-white/40">{{ compareStockA.ticker }}</p>
+              <p class="text-[14px] font-black truncate">{{ compareStockA.name }}</p>
+              <p class="text-[11px] font-mono text-white/40">{{ compareStockA.ticker }}</p>
               <div class="flex items-center gap-1.5 mt-1.5">
-                <span class="text-[9px] font-black px-1.5 py-0.5 rounded" :style="tierBadgeStyle(compareStockA.tier)">{{ compareStockA.tier }}</span>
-                <span class="text-[12px] font-black ml-auto" :class="quantTextColor(compareStockA.quantScore)">{{ compareStockA.quantScore }}</span>
+                <span class="text-[11px] font-black px-1.5 py-0.5 rounded" :style="tierBadgeStyle(compareStockA.tier)">{{ compareStockA.tier }}</span>
+                <span class="text-[14px] font-black ml-auto" :class="quantTextColor(compareStockA.quantScore)">{{ compareStockA.quantScore }}</span>
               </div>
             </template>
             <template v-else>
-              <p class="text-[10px] text-white/22 mt-1">클릭하여 종목 선택</p>
+              <p class="text-[12px] text-white/22 mt-1">클릭하여 종목 선택</p>
             </template>
           </div>
 
           <!-- VS -->
           <div class="flex items-center justify-center px-1 flex-shrink-0">
-            <span class="text-[10px] font-black text-white/20">VS</span>
+            <span class="text-[12px] font-black text-white/20">VS</span>
           </div>
 
           <!-- 슬롯 B -->
@@ -802,21 +746,21 @@
                    ? 'border-white/15 bg-white/5'
                    : 'border-white/10 bg-white/3 hover:bg-white/6'"
                @click="startSelectSlot('B')">
-            <p class="text-[8px] font-bold uppercase tracking-widest mb-1"
+            <p class="text-[10px] font-bold uppercase tracking-widest mb-1"
                :class="compareSelectingSlot === 'B' ? 'text-emerald-300' : 'text-white/35'">
               {{ compareSelectingSlot === 'B' ? '▶ 비교 B 선택 중' : '종목 비교 B' }}
             </p>
             <template v-if="compareStockB">
               <div class="h-0.5 rounded-full mb-1.5" :style="{ background: compareStockB.color }"></div>
-              <p class="text-[12px] font-black truncate">{{ compareStockB.name }}</p>
-              <p class="text-[9px] font-mono text-white/40">{{ compareStockB.ticker }}</p>
+              <p class="text-[14px] font-black truncate">{{ compareStockB.name }}</p>
+              <p class="text-[11px] font-mono text-white/40">{{ compareStockB.ticker }}</p>
               <div class="flex items-center gap-1.5 mt-1.5">
-                <span class="text-[9px] font-black px-1.5 py-0.5 rounded" :style="tierBadgeStyle(compareStockB.tier)">{{ compareStockB.tier }}</span>
-                <span class="text-[12px] font-black ml-auto" :class="quantTextColor(compareStockB.quantScore)">{{ compareStockB.quantScore }}</span>
+                <span class="text-[11px] font-black px-1.5 py-0.5 rounded" :style="tierBadgeStyle(compareStockB.tier)">{{ compareStockB.tier }}</span>
+                <span class="text-[14px] font-black ml-auto" :class="quantTextColor(compareStockB.quantScore)">{{ compareStockB.quantScore }}</span>
               </div>
             </template>
             <template v-else>
-              <p class="text-[10px] text-white/22 mt-1">클릭하여 종목 선택</p>
+              <p class="text-[12px] text-white/22 mt-1">클릭하여 종목 선택</p>
             </template>
           </div>
         </div>
@@ -828,7 +772,7 @@
                :class="compareSelectingSlot === 'A' ? 'bg-blue-500/8' : 'bg-emerald-500/8'">
             <div class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0"
                  :class="compareSelectingSlot === 'A' ? 'bg-blue-400' : 'bg-emerald-400'"></div>
-            <span class="text-[10px] font-bold"
+            <span class="text-[12px] font-bold"
                   :class="compareSelectingSlot === 'A' ? 'text-blue-300' : 'text-emerald-300'">
               종목 비교 {{ compareSelectingSlot }} 선택 중 — 아래에서 종목을 클릭하세요
             </span>
@@ -840,14 +784,14 @@
                  @click="assignCompareSlot(s)">
               <div class="w-0.5 h-8 rounded-full flex-shrink-0" :style="{ background: s.color }"></div>
               <div class="flex-1 min-w-0">
-                <p class="text-[11px] font-bold truncate text-white/90">{{ s.name }}</p>
+                <p class="text-[13px] font-bold truncate text-white/90">{{ s.name }}</p>
                 <div class="flex items-center gap-1.5 mt-0.5">
-                  <p class="text-[8px] font-mono text-white/35">{{ s.ticker }}</p>
-                  <span class="text-[8px] text-white/25">·</span>
-                  <p class="text-[8px] text-white/35 truncate">{{ s.sector }}</p>
+                  <p class="text-[10px] font-mono text-white/35">{{ s.ticker }}</p>
+                  <span class="text-[10px] text-white/25">·</span>
+                  <p class="text-[10px] text-white/35 truncate">{{ s.sector }}</p>
                 </div>
               </div>
-              <span class="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
+              <span class="text-[11px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
                     :style="tierBadgeStyle(s.tier)">{{ s.tier }}</span>
               <span class="text-[13px] font-black flex-shrink-0 w-8 text-right"
                     :class="s.quantScore >= 70 ? 'text-green-300' : s.quantScore >= 45 ? 'text-yellow-300' : 'text-red-300'">
@@ -863,14 +807,14 @@
 
             <!-- AI 점수 바 비교 -->
             <div class="rounded-xl p-3 border border-white/8 bg-white/4 space-y-3">
-              <p class="text-[9px] text-white/40 uppercase tracking-widest">AI 점수 비교</p>
+              <p class="text-[11px] text-white/40 uppercase tracking-widest">AI 점수 비교</p>
               <div class="space-y-2.5">
                 <div v-for="(stk, key) in { A: compareStockA, B: compareStockB }" :key="key">
                   <div class="flex justify-between mb-1">
-                    <span class="text-[10px] font-bold" :style="{ color: stk.color }">
+                    <span class="text-[12px] font-bold" :style="{ color: stk.color }">
                       {{ key }} · {{ stk.name }}
                     </span>
-                    <span class="text-[11px] font-black" :class="quantTextColor(stk.quantScore)">
+                    <span class="text-[13px] font-black" :class="quantTextColor(stk.quantScore)">
                       {{ stk.quantScore }}점
                     </span>
                   </div>
@@ -882,12 +826,12 @@
               </div>
               <!-- 우위 표시 -->
               <div class="pt-1 border-t border-white/6 flex items-center gap-1.5">
-                <span class="text-[9px] text-white/35">AI 점수 우위</span>
-                <span class="text-[10px] font-black"
+                <span class="text-[11px] text-white/35">AI 점수 우위</span>
+                <span class="text-[12px] font-black"
                       :style="{ color: compareStockA.quantScore >= compareStockB.quantScore ? compareStockA.color : compareStockB.color }">
                   {{ compareStockA.quantScore >= compareStockB.quantScore ? compareStockA.name : compareStockB.name }}
                 </span>
-                <span class="text-[9px] font-bold ml-auto"
+                <span class="text-[11px] font-bold ml-auto"
                       :class="Math.abs(compareStockA.quantScore - compareStockB.quantScore) >= 15 ? 'text-green-300' : 'text-yellow-300'">
                   +{{ Math.abs(compareStockA.quantScore - compareStockB.quantScore) }}점 차
                 </span>
@@ -897,23 +841,23 @@
             <!-- 지표 비교 테이블 -->
             <div class="rounded-xl border border-white/8 overflow-hidden">
               <div class="grid grid-cols-3 border-b border-white/8" style="background:rgba(0,0,0,0.3)">
-                <div class="px-3 py-2 text-[9px] text-white/35 font-bold uppercase tracking-widest">지표</div>
-                <div class="px-3 py-2 text-[10px] font-black text-center" :style="{ color: compareStockA.color }">
+                <div class="px-3 py-2 text-[11px] text-white/35 font-bold uppercase tracking-widest">지표</div>
+                <div class="px-3 py-2 text-[12px] font-black text-center" :style="{ color: compareStockA.color }">
                   A · {{ compareStockA.ticker }}
                 </div>
-                <div class="px-3 py-2 text-[10px] font-black text-center" :style="{ color: compareStockB.color }">
+                <div class="px-3 py-2 text-[12px] font-black text-center" :style="{ color: compareStockB.color }">
                   B · {{ compareStockB.ticker }}
                 </div>
               </div>
               <div v-for="row in compareMetricRows" :key="row.label"
                    class="grid grid-cols-3 border-b border-white/5 last:border-0"
                    style="background:rgba(255,255,255,0.02)">
-                <div class="px-3 py-2.5 text-[9px] text-white/40">{{ row.label }}</div>
-                <div class="px-3 py-2.5 text-center text-[11px] font-black"
+                <div class="px-3 py-2.5 text-[11px] text-white/40">{{ row.label }}</div>
+                <div class="px-3 py-2.5 text-center text-[13px] font-black"
                      :class="row.betterA ? 'text-green-300' : (row.valA === '—' ? 'text-white/25' : 'text-white/70')">
                   {{ row.valA }}
                 </div>
-                <div class="px-3 py-2.5 text-center text-[11px] font-black"
+                <div class="px-3 py-2.5 text-center text-[13px] font-black"
                      :class="row.betterB ? 'text-green-300' : (row.valB === '—' ? 'text-white/25' : 'text-white/70')">
                   {{ row.valB }}
                 </div>
@@ -922,22 +866,22 @@
 
             <!-- 점수 이력 스파크라인 -->
             <div class="rounded-xl p-3 border border-white/8 bg-white/4">
-              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-2">AI 점수 이력</p>
+              <p class="text-[11px] text-white/40 uppercase tracking-widest mb-2">AI 점수 이력</p>
               <div v-if="compareHistoryLoading" class="flex items-center justify-center py-4 gap-2">
                 <div class="w-3.5 h-3.5 rounded-full border-2 animate-spin"
                      style="border-color:rgba(96,165,250,0.5);border-top-color:transparent"></div>
-                <span class="text-[9px] text-white/30">로딩 중...</span>
+                <span class="text-[11px] text-white/30">로딩 중...</span>
               </div>
               <template v-else>
                 <div class="flex items-center gap-4 mb-2">
                   <div class="flex items-center gap-1.5">
                     <div class="w-4 h-0.5 rounded-full" :style="{ background: compareStockA.color }"></div>
-                    <span class="text-[8px] text-white/50">A · {{ compareStockA.ticker }}</span>
+                    <span class="text-[10px] text-white/50">A · {{ compareStockA.ticker }}</span>
                   </div>
                   <div class="flex items-center gap-1.5">
                     <div class="w-4 h-0.5 rounded-full opacity-60" style="border-top:2px dashed"
                          :style="{ borderColor: compareStockB.color }"></div>
-                    <span class="text-[8px] text-white/50">B · {{ compareStockB.ticker }}</span>
+                    <span class="text-[10px] text-white/50">B · {{ compareStockB.ticker }}</span>
                   </div>
                 </div>
                 <svg viewBox="0 0 300 70" class="w-full" style="height:70px">
@@ -958,12 +902,12 @@
             <!-- 다시 선택 버튼 -->
             <div class="flex gap-2 pb-2">
               <button @click="compareStockA = null; compareSelectingSlot = 'A'"
-                      class="flex-1 py-2 rounded-xl border text-[10px] font-bold transition-colors"
+                      class="flex-1 py-2 rounded-xl border text-[12px] font-bold transition-colors"
                       :style="{ borderColor: compareStockA ? compareStockA.color + '50' : 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }">
                 A 다시 선택
               </button>
               <button @click="compareStockB = null; compareSelectingSlot = 'B'"
-                      class="flex-1 py-2 rounded-xl border text-[10px] font-bold transition-colors"
+                      class="flex-1 py-2 rounded-xl border text-[12px] font-bold transition-colors"
                       :style="{ borderColor: compareStockB ? compareStockB.color + '50' : 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }">
                 B 다시 선택
               </button>
@@ -975,7 +919,7 @@
         <!-- ③ 초기 안내 -->
         <div v-else class="flex-1 flex flex-col items-center justify-center gap-2">
           <span class="text-[32px]">⚖️</span>
-          <p class="text-[11px] text-white/35 text-center px-6">
+          <p class="text-[13px] text-white/35 text-center px-6">
             위 A, B 슬롯을 클릭해서<br>비교할 종목을 선택하세요
           </p>
         </div>
@@ -1003,16 +947,16 @@
             <div class="w-8 h-1 rounded-full bg-white/20"></div>
           </div>
           <div class="px-4 pb-5 pt-2">
-            <p class="text-[10px] text-white/40 uppercase tracking-widest text-center mb-3">종목 교체 비교</p>
+            <p class="text-[12px] text-white/40 uppercase tracking-widest text-center mb-3">종목 교체 비교</p>
 
             <div class="grid grid-cols-2 gap-2 mb-4">
               <!-- 현재 보유 -->
               <div class="rounded-xl p-3 border border-red-500/25 bg-red-500/8 space-y-2.5">
                 <div>
-                  <p class="text-[8px] text-red-300/60 uppercase tracking-wide mb-1">현재 보유</p>
+                  <p class="text-[10px] text-red-300/60 uppercase tracking-wide mb-1">현재 보유</p>
                   <div class="h-0.5 rounded-full mb-2" :style="{ background: replaceStock?.color ?? '#888' }"></div>
                   <p class="text-sm font-black truncate">{{ replaceStock?.company }}</p>
-                  <p class="text-[8px] text-white/35 font-mono">{{ replaceStock?.ticker }}</p>
+                  <p class="text-[10px] text-white/35 font-mono">{{ replaceStock?.ticker }}</p>
                 </div>
                 <div class="space-y-1.5 text-xs">
                   <div class="flex justify-between">
@@ -1051,10 +995,10 @@
               <!-- 교체 종목 -->
               <div class="rounded-xl p-3 border border-blue-500/25 bg-blue-500/8 space-y-2.5">
                 <div>
-                  <p class="text-[8px] text-blue-300/60 uppercase tracking-wide mb-1">교체 종목</p>
+                  <p class="text-[10px] text-blue-300/60 uppercase tracking-wide mb-1">교체 종목</p>
                   <div class="h-0.5 rounded-full mb-2" :style="{ background: compareCandidate.color }"></div>
                   <p class="text-sm font-black truncate">{{ compareCandidate.name }}</p>
-                  <p class="text-[8px] text-white/35 font-mono">{{ compareCandidate.ticker }}</p>
+                  <p class="text-[10px] text-white/35 font-mono">{{ compareCandidate.ticker }}</p>
                 </div>
                 <div class="space-y-1.5 text-xs">
                   <div class="flex justify-between">
@@ -1089,179 +1033,17 @@
               </div>
             </div>
 
-            <!-- 인라인 주문 폼 -->
-            <transition name="order-inline">
-              <div v-if="compareAction" class="mb-3 rounded-xl border overflow-hidden"
-                :class="compareAction === 'sell'
-                  ? 'border-red-500/30 bg-red-500/8'
-                  : 'border-blue-500/30 bg-blue-500/8'">
-                <div class="flex items-center justify-between px-3 pt-2.5 pb-1.5 border-b"
-                  :class="compareAction === 'sell' ? 'border-red-500/20' : 'border-blue-500/20'">
-                  <div class="flex items-center gap-2">
-                    <p class="text-[10px] font-black"
-                      :class="compareAction === 'sell' ? 'text-red-300' : 'text-blue-300'">
-                      {{ compareAction === 'sell' ? '매도' : '매수' }}
-                    </p>
-                    <p class="text-[10px] text-white/50 font-bold">
-                      {{ compareAction === 'sell' ? replaceStock?.company : compareCandidate.name }}
-                    </p>
-                  </div>
-                  <button @click="compareAction = null" class="text-white/30 hover:text-white/60 text-xs">✕</button>
-                </div>
-                <div class="px-3 py-2.5 space-y-2">
-                  <!-- 가격 -->
-                  <div class="flex items-center gap-2 bg-black/20 rounded-lg px-2.5 py-2 border border-white/8">
-                    <span class="text-white/40 text-xs flex-shrink-0">₩</span>
-                    <input v-model.number="comparePrice" type="number"
-                      class="flex-1 bg-transparent outline-none text-sm font-black text-white min-w-0" />
-                  </div>
-                  <!-- 수량 -->
-                  <div class="flex items-center gap-2">
-                    <button @click="compareQty = Math.max(1, compareQty - 1)"
-                      class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 font-bold text-base flex-shrink-0 transition-colors">−</button>
-                    <input v-model.number="compareQty" type="number"
-                      class="flex-1 bg-black/20 border border-white/8 rounded-lg outline-none text-center text-sm font-black py-1.5" />
-                    <button @click="compareQty++"
-                      class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 font-bold text-base flex-shrink-0 transition-colors">+</button>
-                  </div>
-                  <!-- 총액 + 확정 -->
-                  <div class="flex items-center gap-2">
-                    <div class="flex-1">
-                      <p class="text-[7px] text-white/35 uppercase tracking-wide">총 금액</p>
-                      <p class="text-sm font-black"
-                        :class="compareAction === 'sell' ? 'text-red-200' : 'text-blue-200'">
-                        ₩{{ (comparePrice * compareQty).toLocaleString() }}
-                      </p>
-                    </div>
-                    <button @click="confirmCompareOrder"
-                      class="px-4 py-2 rounded-xl text-xs font-black transition-colors"
-                      :class="compareAction === 'sell'
-                        ? 'bg-red-500/30 border border-red-500/40 text-red-100 hover:bg-red-500/45'
-                        : 'bg-blue-500/30 border border-blue-500/40 text-blue-100 hover:bg-blue-500/45'">
-                      {{ compareAction === 'sell' ? '매도 확정' : '매수 확정' }}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </transition>
-
-            <!-- 매도 / 매수 버튼 -->
+            <!-- 교체 확정 / 취소 버튼 -->
             <div class="flex gap-2">
-              <button @click="compareCandidate = null; compareAction = null"
+              <button @click="compareCandidate = null"
                 class="px-3 py-2.5 rounded-xl bg-white/8 border border-white/15 text-white/50 text-xs font-bold hover:bg-white/12 transition-colors flex-shrink-0">
                 취소
               </button>
-              <button @click="openCompareOrder('sell')"
-                class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200"
-                :class="compareAction === 'sell'
-                  ? 'bg-red-500/35 border border-red-500/50 text-red-200'
-                  : 'bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25'">
-                현재 매도
-              </button>
-              <button @click="openCompareOrder('buy')"
-                class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200"
-                :class="compareAction === 'buy'
-                  ? 'bg-blue-500/35 border border-blue-500/50 text-blue-200'
-                  : 'bg-blue-500/15 border border-blue-500/30 text-blue-300 hover:bg-blue-500/25'">
-                신규 매수
+              <button @click="confirmReplace"
+                class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 bg-blue-500/20 border border-blue-500/35 text-blue-200 hover:bg-blue-500/30">
+                교체 확정
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-    </transition>
-
-    <!-- 주문 모달 (슬라이드업) -->
-    <transition name="order-modal">
-      <div v-if="orderCompany" class="absolute inset-0 z-50 flex flex-col justify-end">
-        <!-- 배경 딤 -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-[2rem]" @click="closeOrderModal"></div>
-
-        <!-- 모달 시트 -->
-        <div class="relative rounded-t-[2rem] border-t border-x border-white/15 overflow-hidden"
-          style="background: linear-gradient(160deg, #0f1e30 0%, #0a1420 100%)">
-
-          <!-- 핸들 -->
-          <div class="flex justify-center pt-3 pb-1">
-            <div class="w-8 h-1 rounded-full bg-white/20"></div>
-          </div>
-
-          <div class="px-5 pb-6 pt-2 space-y-4">
-
-            <!-- 종목 정보 + 타입 배지 -->
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2.5">
-                <div class="w-2 h-8 rounded-full flex-shrink-0" :style="{ background: orderCompany.color }"></div>
-                <div>
-                  <p class="text-sm font-black leading-tight">{{ orderCompany.name }}</p>
-                  <p class="text-[9px] text-white/40 font-mono">{{ orderCompany.ticker }}</p>
-                </div>
-              </div>
-              <div class="flex flex-col items-end gap-1">
-                <span class="px-2.5 py-1 rounded-lg text-xs font-black"
-                  :class="orderType === 'buy'
-                    ? 'bg-blue-500/25 text-blue-200 border border-blue-500/40'
-                    : 'bg-red-500/25 text-red-200 border border-red-500/40'">
-                  {{ orderType === 'buy' ? '매수' : '매도' }}
-                </span>
-                <p class="text-xs text-white/40">₩{{ orderCompany.price.toLocaleString() }}</p>
-              </div>
-            </div>
-
-            <!-- 가격 입력 -->
-            <div class="bg-white/5 rounded-xl border border-white/10 p-3">
-              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-2">주문 가격</p>
-              <div class="flex items-center gap-2">
-                <span class="text-white/50 font-bold">₩</span>
-                <input
-                  v-model.number="orderPrice"
-                  type="number"
-                  class="flex-1 bg-transparent outline-none text-lg font-black text-white"
-                  min="1"
-                />
-              </div>
-            </div>
-
-            <!-- 수량 입력 -->
-            <div class="bg-white/5 rounded-xl border border-white/10 p-3">
-              <p class="text-[9px] text-white/40 uppercase tracking-widest mb-2">수량</p>
-              <div class="flex items-center gap-3">
-                <button
-                  @click="orderQty = Math.max(1, orderQty - 1)"
-                  class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-lg transition-colors"
-                >−</button>
-                <input
-                  v-model.number="orderQty"
-                  type="number"
-                  class="flex-1 bg-transparent outline-none text-center text-xl font-black text-white"
-                  min="1"
-                />
-                <button
-                  @click="orderQty++"
-                  class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-lg transition-colors"
-                >+</button>
-              </div>
-            </div>
-
-            <!-- 총 금액 -->
-            <div class="flex items-center justify-between px-1">
-              <p class="text-[10px] text-white/40 uppercase tracking-widest">총 {{ orderType === 'buy' ? '매수' : '매도' }}금액</p>
-              <p class="text-lg font-black"
-                :class="orderType === 'buy' ? 'text-blue-200' : 'text-red-200'">
-                ₩{{ (orderPrice * orderQty).toLocaleString() }}
-              </p>
-            </div>
-
-            <!-- 확인 버튼 -->
-            <button
-              @click="confirmOrder"
-              class="w-full py-3 rounded-xl font-black text-sm tracking-wide transition-all duration-200"
-              :class="orderType === 'buy'
-                ? 'bg-blue-500/30 hover:bg-blue-500/45 text-blue-100 border border-blue-500/40'
-                : 'bg-red-500/30 hover:bg-red-500/45 text-red-100 border border-red-500/40'"
-            >
-              {{ orderType === 'buy' ? '매수 주문 확인' : '매도 주문 확인' }}
-            </button>
           </div>
         </div>
       </div>
@@ -1281,7 +1063,7 @@
               <LucideChevronLeft class="w-5 h-5" />
             </button>
             <div class="flex-1 min-w-0">
-              <p class="text-[8px] text-white/30 font-mono uppercase tracking-[0.2em]">Financial Statements</p>
+              <p class="text-[10px] text-white/30 font-mono uppercase tracking-[0.2em]">Financial Statements</p>
               <h2 class="text-xl font-black tracking-tight leading-tight truncate">{{ detailCompany?.name }}</h2>
             </div>
             <!-- [API] 실제 재무 데이터 연동 후 제거 -->
@@ -1293,7 +1075,7 @@
         <div class="flex px-4 gap-1 pt-2.5 pb-0 flex-shrink-0">
           <button v-for="tab in FIN_TABS" :key="tab.key"
                   @click="finTab = tab.key"
-                  class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all text-center"
+                  class="flex-1 py-1.5 rounded-lg text-[12px] font-bold transition-all text-center"
                   :class="finTab === tab.key ? 'bg-white/14 text-white' : 'text-white/30 hover:text-white/60'">
             {{ tab.label }}
           </button>
@@ -1301,8 +1083,8 @@
 
         <!-- 단위 레이블 -->
         <div class="px-5 pt-2 pb-0.5 flex-shrink-0 flex items-center justify-between">
-          <span class="text-[8px] text-white/25">(단위: 억원)</span>
-          <span class="text-[8px] text-white/25 font-mono" v-if="finData">{{ detailCompany?.ticker }}</span>
+          <span class="text-[10px] text-white/25">(단위: 억원)</span>
+          <span class="text-[10px] text-white/25 font-mono" v-if="finData">{{ detailCompany?.ticker }}</span>
         </div>
 
         <!-- 재무 데이터 본문 -->
@@ -1314,22 +1096,22 @@
             <div class="grid grid-cols-4 gap-1 pb-1.5 mb-0.5 border-b border-white/10">
               <span></span>
               <span v-for="y in finData.years" :key="y"
-                    class="text-[9px] text-white/40 font-mono text-right font-bold">{{ y }}</span>
+                    class="text-[11px] text-white/40 font-mono text-right font-bold">{{ y }}</span>
             </div>
             <!-- 데이터 행 -->
             <div v-for="row in incomeRows" :key="row.key"
                  class="grid grid-cols-4 gap-1 py-2 border-b border-white/6 last:border-0"
                  :class="row.hl ? 'bg-white/5 -mx-1 px-1 rounded-lg border-0 my-0.5' : ''">
-              <span class="text-[9px] text-white/45 leading-tight">{{ row.label }}</span>
+              <span class="text-[11px] text-white/45 leading-tight">{{ row.label }}</span>
               <span v-for="(val, i) in row.values" :key="i"
-                    class="text-[9px] text-right font-bold tabular-nums"
+                    class="text-[11px] text-right font-bold tabular-nums"
                     :class="row.color ? (val >= 0 ? 'text-green-300' : 'text-red-300') : 'text-white/82'">
                 {{ row.pct ? val + '%' : val.toLocaleString() }}
               </span>
             </div>
             <!-- 매출액 미니 바 차트 -->
             <div class="mt-4">
-              <p class="text-[8px] text-white/25 uppercase tracking-widest mb-2">매출액 추이</p>
+              <p class="text-[10px] text-white/25 uppercase tracking-widest mb-2">매출액 추이</p>
               <div class="flex items-end gap-2 h-14">
                 <div v-for="(d, i) in finData.income" :key="i"
                      class="flex-1 flex flex-col items-center gap-1.5">
@@ -1346,13 +1128,13 @@
 
           <!-- ─── 재무상태표 ─── -->
           <template v-else-if="finTab === 'balance' && finData">
-            <p class="text-[8px] text-white/28 mb-3">기준: {{ finData.years[2] }}년</p>
+            <p class="text-[10px] text-white/28 mb-3">기준: {{ finData.years[2] }}년</p>
             <!-- 자산 / 부채 / 자본 -->
             <div v-for="row in balanceRows" :key="row.key"
                  class="flex items-center justify-between py-2.5 border-b border-white/6 last:border-0"
                  :class="row.hl ? 'bg-white/5 -mx-1 px-1 rounded-lg border-0 my-0.5' : ''">
-              <span class="text-[10px] text-white/45">{{ row.label }}</span>
-              <span class="text-[11px] font-black tabular-nums"
+              <span class="text-[12px] text-white/45">{{ row.label }}</span>
+              <span class="text-[13px] font-black tabular-nums"
                     :class="row.hl ? 'text-white' : 'text-white/72'">
                 {{ row.val.toLocaleString() }}
               </span>
@@ -1360,8 +1142,8 @@
             <!-- 부채비율 게이지 -->
             <div class="mt-4">
               <div class="flex justify-between mb-1.5">
-                <span class="text-[9px] text-white/40">부채비율</span>
-                <span class="text-[10px] font-black"
+                <span class="text-[11px] text-white/40">부채비율</span>
+                <span class="text-[12px] font-black"
                       :class="finData.balance.debtRatio < 100 ? 'text-green-300' : finData.balance.debtRatio < 200 ? 'text-yellow-300' : 'text-red-300'">
                   {{ finData.balance.debtRatio }}%
                 </span>
@@ -1391,11 +1173,11 @@
                 <div class="flex items-center gap-2">
                   <div class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
                        :style="{ background: detailCompany?.color ?? '#60a5fa', opacity: 0.72 }"></div>
-                  <span class="text-[9px] text-white/55">자본 {{ (equityRatio * 100).toFixed(1) }}%</span>
+                  <span class="text-[11px] text-white/55">자본 {{ (equityRatio * 100).toFixed(1) }}%</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <div class="w-2.5 h-2.5 rounded-sm bg-white/12 flex-shrink-0"></div>
-                  <span class="text-[9px] text-white/55">부채 {{ ((1 - equityRatio) * 100).toFixed(1) }}%</span>
+                  <span class="text-[11px] text-white/55">부채 {{ ((1 - equityRatio) * 100).toFixed(1) }}%</span>
                 </div>
               </div>
             </div>
@@ -1406,21 +1188,21 @@
             <div class="grid grid-cols-4 gap-1 pb-1.5 mb-0.5 border-b border-white/10">
               <span></span>
               <span v-for="y in finData.years" :key="y"
-                    class="text-[9px] text-white/40 font-mono text-right font-bold">{{ y }}</span>
+                    class="text-[11px] text-white/40 font-mono text-right font-bold">{{ y }}</span>
             </div>
             <div v-for="row in cashflowRows" :key="row.key"
                  class="grid grid-cols-4 gap-1 py-2 border-b border-white/6 last:border-0"
                  :class="row.key === 'net' ? 'bg-white/5 -mx-1 px-1 rounded-lg border-0 mt-0.5' : ''">
-              <span class="text-[9px] text-white/45">{{ row.label }}</span>
+              <span class="text-[11px] text-white/45">{{ row.label }}</span>
               <span v-for="(val, i) in row.values" :key="i"
-                    class="text-[9px] text-right font-bold tabular-nums"
+                    class="text-[11px] text-right font-bold tabular-nums"
                     :class="val >= 0 ? 'text-green-300' : 'text-red-300'">
                 {{ (val >= 0 ? '+' : '') + val.toLocaleString() }}
               </span>
             </div>
             <!-- 영업활동 현금흐름 미니 바차트 -->
             <div class="mt-4">
-              <p class="text-[8px] text-white/25 uppercase tracking-widest mb-2">영업활동 현금흐름</p>
+              <p class="text-[10px] text-white/25 uppercase tracking-widest mb-2">영업활동 현금흐름</p>
               <div class="flex items-end gap-2 h-14">
                 <div v-for="(d, i) in finData.cashflow" :key="i"
                      class="flex-1 flex flex-col items-center gap-1.5">
@@ -1457,7 +1239,7 @@ const props = defineProps({
   replaceStock: { type: Object,  default: null  },
   viewTicker:   { type: String,  default: null  },
 });
-const emit = defineEmits(['select-company', 'add-company', 'back', 'sell-replace']);
+const emit = defineEmits(['select-company', 'add-company', 'back']);
 
 const stocksStore   = useStocksStore()
 const screenerStore = useScreenerStore()
@@ -2017,9 +1799,6 @@ const quantTextColor = (s) => s >= 70 ? 'text-green-300' : s >= 45 ? 'text-yello
 
 // ── 교체 비교 ──────────────────────────────────
 const compareCandidate = ref(null);
-const compareAction    = ref(null); // 'sell' | 'buy' | null
-const comparePrice     = ref(0);
-const compareQty       = ref(1);
 
 const currentStockInfo = computed(() =>
   props.replaceStock ? companies.value.find(c => c.ticker === props.replaceStock.ticker) : null
@@ -2027,39 +1806,21 @@ const currentStockInfo = computed(() =>
 
 const openCompare = (company) => {
   compareCandidate.value = company;
-  compareAction.value    = null;
 };
 
-const openCompareOrder = (type) => {
-  compareAction.value = type;
-  comparePrice.value  = type === 'sell'
-    ? (props.replaceStock?.currentPrice ?? 0)
-    : compareCandidate.value.price;
-  compareQty.value = type === 'sell'
-    ? (props.replaceStock?.shares ?? 1)
-    : 1;
-};
-
-const confirmCompareOrder = () => {
-  if (compareAction.value === 'buy') {
-    emit('select-company', {
-      id:           Date.now(),
-      company:      compareCandidate.value.name,
-      ticker:       compareCandidate.value.ticker,
-      sector:       compareCandidate.value.sector,
-      shares:       compareQty.value,
-      avgPrice:     comparePrice.value,
-      currentPrice: compareCandidate.value.price,
-      change:       compareCandidate.value.change,
-      color:        compareCandidate.value.color,
-      weight:       10,
-      quantScore:   compareCandidate.value.quantScore,
-    });
-  } else if (compareAction.value === 'sell') {
-    emit('sell-replace');
-  }
+const confirmReplace = () => {
+  emit('select-company', {
+    id:           Date.now(),
+    company:      compareCandidate.value.name,
+    ticker:       compareCandidate.value.ticker,
+    sector:       compareCandidate.value.sector,
+    currentPrice: compareCandidate.value.price,
+    change:       compareCandidate.value.change,
+    color:        compareCandidate.value.color,
+    weight:       10,
+    quantScore:   compareCandidate.value.quantScore,
+  });
   compareCandidate.value = null;
-  compareAction.value    = null;
 };
 
 // ── 상세 차트 ─────────────────────────────────
@@ -2138,24 +1899,6 @@ const detailMetrics = computed(() => {
   ];
 });
 
-// ── 보유 현황 (임시 데이터) ──────────────────────
-const mockHoldings = computed(() => {
-  if (!detailCompany.value) return [];
-  const t = detailCompany.value.ticker;
-  let seed = t.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  if (seed % 3 === 0) return [];
-  const n = (seed % 2) + 1;
-  const pfNames = ['포트폴리오 A', '포트폴리오 B', '포트폴리오 C'];
-  return Array.from({ length: n }, (_, i) => {
-    const adj = ((seed + i * 13) % 30) - 10;
-    return {
-      portfolio: pfNames[i],
-      shares:    5 + (seed + i * 7) % 20,
-      avgPrice:  Math.round(detailCompany.value.price * (1 + adj / 100)),
-    };
-  });
-});
-
 // ── 상세 뷰 ────────────────────────────────────
 watch(() => props.viewTicker, (ticker) => {
   if (ticker) {
@@ -2176,39 +1919,6 @@ const closeDetail = () => {
   showChart.value     = false;
   showFinancial.value = false;
   if (props.viewTicker) emit('back');
-};
-
-// ── 주문 모달 ──────────────────────────────────
-const orderCompany = ref(null);
-const orderType    = ref('buy');
-const orderPrice   = ref(0);
-const orderQty     = ref(1);
-
-const openOrderModal = (company, type = 'buy') => {
-  orderCompany.value = company;
-  orderType.value    = type;
-  orderPrice.value   = company.price;
-  orderQty.value     = 1;
-};
-const closeOrderModal = () => { orderCompany.value = null; };
-
-const confirmOrder = () => {
-  if (orderType.value === 'buy') {
-    addedIds.value = new Set([...addedIds.value, orderCompany.value.id]);
-    emit('add-company', {
-      id:           Date.now(),
-      company:      orderCompany.value.name,
-      ticker:       orderCompany.value.ticker,
-      sector:       orderCompany.value.sector,
-      shares:       orderQty.value,
-      avgPrice:     orderPrice.value,
-      currentPrice: orderCompany.value.price,
-      change:       orderCompany.value.change,
-      color:        orderCompany.value.color,
-      weight:       10,
-    });
-  }
-  closeOrderModal();
 };
 
 // ── 교체 모드 ──────────────────────────────────

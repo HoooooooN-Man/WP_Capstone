@@ -169,37 +169,42 @@ function getNaverToken() {
 }
 
 const emit = defineEmits(['done'])
+
+// 원형 버튼 배경색
+function circleBg(p) {
+  if (p.kakaoColor) return { background: '#FEE500', boxShadow: '0 2px 10px rgba(254,229,0,0.3)' }
+  if (p.naverColor)  return { background: '#03C75A', boxShadow: '0 2px 10px rgba(3,199,90,0.3)' }
+  // Google: 흰 배경
+  return { background: 'rgba(255,255,255,0.95)', boxShadow: '0 2px 10px rgba(0,0,0,0.35)' }
+}
 </script>
 
 <template>
-  <div class="space-y-3">
-    <button
-      v-for="p in PROVIDERS"
-      :key="p.id"
-      type="button"
-      :disabled="!!loadingProvider"
-      class="w-full flex items-center justify-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed border"
-      :class="[
-        p.kakaoColor
-          ? 'bg-[#FEE500] border-[#FEE500] text-[#3C1E1E] hover:bg-[#F0D800]'
-          : p.naverColor
-            ? 'bg-[#03C75A] border-[#03C75A] text-white hover:bg-[#02B350]'
-            : theme.isDark
-              ? 'bg-white/5 border-[#2A2D3A] text-gray-300 hover:bg-white/10'
-              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-      ]"
-      @click="handleSocialLogin(p.id)"
-    >
-      <!-- 로딩 스피너 or 아이콘 -->
-      <span v-if="loadingProvider === p.id" class="w-[18px] h-[18px] flex items-center justify-center">
-        <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="20" stroke-linecap="round"/>
-        </svg>
-      </span>
-      <span v-else class="w-[18px] h-[18px] flex items-center justify-center" v-html="p.icon" />
-      {{ p.label }}로 계속하기
-    </button>
+  <div class="flex flex-col items-center gap-2">
+    <!-- 가로 원형 버튼 행 -->
+    <div class="flex items-center gap-4">
+      <button
+        v-for="p in PROVIDERS"
+        :key="p.id"
+        type="button"
+        :disabled="!!loadingProvider"
+        :title="p.label"
+        class="relative flex items-center justify-center rounded-full transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed active:scale-90 hover:scale-105"
+        :style="circleBg(p)"
+        style="width: 48px; height: 48px;"
+        @click="handleSocialLogin(p.id)"
+      >
+        <!-- 로딩 스피너 -->
+        <span v-if="loadingProvider === p.id" class="flex items-center justify-center">
+          <svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"
+                    stroke-dasharray="60" stroke-dashoffset="20" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span v-else class="flex items-center justify-center" v-html="p.icon" />
+      </button>
+    </div>
 
-    <p v-if="error" role="alert" class="text-red-500 text-xs text-center">{{ error }}</p>
+    <p v-if="error" role="alert" class="text-[11px] text-red-400/75 text-center mt-0.5">{{ error }}</p>
   </div>
 </template>

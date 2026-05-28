@@ -1,27 +1,29 @@
 <template>
-  <div class="auth-wallet min-h-screen w-full flex items-center justify-center relative font-sans perspective-container pl-4 pr-10 py-4">
+  <div class="auth-wallet min-h-screen w-full flex items-center justify-center relative font-sans perspective-container px-6 py-4">
 
-    <!-- 배경: 다크골드 그라데이션 -->
-    <div class="fixed inset-0 z-[-1] overflow-hidden bg-gradient-to-br from-[#0a0804] via-[#060402] to-[#0d0a05]">
-      <div class="absolute w-[140vw] h-[80vh] bg-[#2a1e08] rounded-full blur-[160px] -top-[20vh] left-0 opacity-25"></div>
-      <div class="absolute w-[100vw] h-[60vh] bg-[#1a1208] rounded-full blur-[120px] -bottom-[10vh] right-0 opacity-20"></div>
-      <div class="absolute w-[60vw] h-[60vh] bg-[#3a2a0a] rounded-full blur-[100px] top-[20vh] right-[10vw] opacity-10"></div>
-      <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30"></div>
+    <!-- 배경 -->
+    <div class="fixed inset-0 z-[-1] overflow-hidden bg-[#07080b]">
+      <div class="absolute w-[90vw] h-[70vh] rounded-full blur-[180px] -top-[25%] -left-[15%] bg-[#1d1306] opacity-75"></div>
+      <div class="absolute w-[70vw] h-[60vh] rounded-full blur-[150px] -bottom-[20%] right-0 bg-[#120e04] opacity-55"></div>
+      <div class="absolute w-[50vw] h-[50vh] rounded-full blur-[120px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+           style="background: radial-gradient(circle, rgba(201,162,39,0.06) 0%, transparent 70%)"></div>
     </div>
 
     <!-- 지갑 래퍼 -->
     <div
-      class="relative z-10 w-full max-w-[600px] preserve-3d transition-transform duration-[1200ms] ease-in-out"
-      style="height: clamp(380px, 55vh, 460px)"
+      class="relative z-10 w-full max-w-[540px] preserve-3d transition-transform duration-[1200ms] ease-in-out"
+      style="height: clamp(380px, 52vh, 440px)"
       :class="{
         'translate-x-1/2': step === 2,
         'translate-x-1/2 translate-y-[120vh]': step >= 3
       }"
     >
-      <!-- 지갑 두께감 (오른쪽 패널 — 뒷면의 좌우 대칭) -->
-      <div class="absolute inset-0 bg-gradient-to-br from-[#2a1a0d] via-[#1e1209] to-[#261608] rounded-r-[2.5rem] shadow-[inset_-10px_0_30px_rgba(0,0,0,0.9)] border border-white/5 overflow-hidden">
-        <div class="absolute inset-0 opacity-55 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]"></div>
-        <div class="absolute top-4 right-4 bottom-4 left-0 border-t-2 border-r-2 border-b-2 border-dashed border-[#c9a227]/18 rounded-tr-[2rem] rounded-br-[2rem] pointer-events-none"></div>
+      <!-- 지갑 두께감 패널 (우측) -->
+      <div class="absolute inset-0 rounded-r-[2rem] overflow-hidden"
+           style="background: linear-gradient(180deg, #181108 0%, #0d0a05 50%, #161009 100%);
+                  box-shadow: inset -8px 0 28px rgba(0,0,0,0.85);">
+        <div class="absolute inset-y-10 right-0 w-px"
+             style="background: linear-gradient(180deg, transparent, rgba(201,162,39,0.18) 25%, rgba(201,162,39,0.3) 50%, rgba(201,162,39,0.18) 75%, transparent)"></div>
       </div>
 
       <!-- 3D 플립 -->
@@ -30,14 +32,20 @@
         :class="{'rotate-y-flip': step >= 2}"
       >
         <!-- ── 앞면 ── -->
-        <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#3d2616] via-[#2c1a0d] to-[#3a2210] rounded-r-[2.5rem] shadow-[30px_80px_150px_-20px_rgba(0,0,0,0.95)] border-t border-white/5">
+        <div class="absolute inset-0 backface-hidden rounded-r-[2rem]"
+             style="background: linear-gradient(155deg, #1f1509 0%, #140f07 30%, #1b1309 65%, #100d06 100%);
+                    box-shadow: 18px 36px 110px -10px rgba(0,0,0,0.98), inset 0 1px 0 rgba(201,162,39,0.09);">
 
-          <div class="absolute inset-0 rounded-r-[2.5rem] overflow-hidden pointer-events-none">
-            <div class="absolute inset-0 opacity-65 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]"></div>
-            <div class="absolute left-0 inset-y-0 w-8 bg-gradient-to-r from-black/30 via-white/5 to-transparent z-10"></div>
-            <div class="absolute left-0 inset-y-0 w-px bg-black/40"></div>
-          </div>
-          <div class="absolute top-4 right-4 bottom-4 left-0 border-t-2 border-r-2 border-b-2 border-dashed border-[#c9a227]/20 rounded-tr-[2rem] rounded-br-[2rem] pointer-events-none z-20"></div>
+          <!-- 좌측 접힘선 -->
+          <div class="absolute left-0 inset-y-0 w-8 pointer-events-none"
+               style="background: linear-gradient(to right, rgba(0,0,0,0.5) 0%, rgba(255,255,255,0.025) 60%, transparent 100%)"></div>
+          <div class="absolute left-0 inset-y-0 w-[1.5px]" style="background: rgba(0,0,0,0.55)"></div>
+
+          <!-- 상하 골드 엣지 라인 -->
+          <div class="absolute top-0 left-6 right-14 h-px"
+               style="background: linear-gradient(to right, rgba(201,162,39,0.55) 0%, rgba(201,162,39,0.15) 60%, transparent 100%)"></div>
+          <div class="absolute bottom-0 left-6 right-14 h-px"
+               style="background: linear-gradient(to right, rgba(201,162,39,0.4) 0%, rgba(201,162,39,0.1) 60%, transparent 100%)"></div>
 
           <!-- 뷰 컨텐츠 -->
           <div
@@ -45,74 +53,50 @@
             :class="{'opacity-0 pointer-events-none': step >= 1}"
           >
             <transition name="auth-slide" mode="out-in">
-
-              <AuthLogin
-                v-if="authView === 'login'"
-                key="login"
-                ref="authLoginRef"
-                @go-signup="authView = 'signup'"
-                @go-find="authView = 'find'"
-              />
-
-              <AuthSignup
-                v-else-if="authView === 'signup'"
-                key="signup"
-                @go-login="authView = 'login'"
-              />
-
-              <AuthFind
-                v-else-if="authView === 'find'"
-                key="find"
-                @go-login="authView = 'login'"
-              />
-
+              <AuthLogin  v-if="authView === 'login'"   key="login"   ref="authLoginRef"
+                          @go-signup="authView = 'signup'" @go-find="authView = 'find'" />
+              <AuthSignup v-else-if="authView === 'signup'" key="signup" @go-login="authView = 'login'" />
+              <AuthFind   v-else-if="authView === 'find'"   key="find"   @go-login="authView = 'login'" />
             </transition>
           </div>
 
-          <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-               스냅 스트랩 & 단추 조정 가이드
-               ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-               [스트랩 전체 위치] -right-[??px] : 지갑 오른쪽에서 얼마나 튀어나올지
-               [스트랩 너비]      w-??          : 스트랩 가로 크기  ← 현재 w-28
-               [스트랩 높이]      h-??          : 스트랩 세로 크기  ← 현재 h-24
-               [스트랩 좌측 라운드] rounded-l-?? ← 현재 rounded-l-2xl
-               [스트랩 우측 라운드] rounded-r-?? ← 현재 rounded-r-lg
-               [단추 왼쪽 여백]   ml-??         : 단추의 좌측 위치  ← 현재 ml-2
-               [단추 크기]        w-?? h-??     ← 현재 w-16 h-16
-               [여닫이 단면 너비]  w-[??px]     ← 현재 20px
-               ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+          <!-- 스냅 버튼 -->
           <div
             @click="submitLogin"
-            class="absolute -right-4 top-1/2 -translate-y-1/2 z-30 cursor-pointer group transition-opacity duration-300"
+            class="absolute z-30 cursor-pointer group"
+            style="right: -30px; top: 50%; transform: translateY(-50%); transition: opacity 0.3s"
             :class="{'opacity-0 pointer-events-none': step >= 1}"
           >
-            <div class="relative w-25 h-24 bg-[#2c1a0e] border-y border-l border-white/10 rounded-l-2xl rounded-r-lg shadow-[-10px_10px_20px_rgba(0,0,0,0.6)] overflow-hidden flex items-center">
-              <!-- 가죽 질감 -->
-              <div class="absolute inset-0 opacity-40 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]"></div>
-
-              <!-- 오른쪽 여닫이 단면 그라데이션 -->
-              <div class="absolute right-0 top-0 bottom-0 w-[20px] pointer-events-none"
-                   style="background: linear-gradient(to right,
-                     transparent          0%,
-                     rgba(50,28,10,0.35) 20%,
-                     rgba(95,52,18,0.60) 46%,
-                     rgba(30,15,5,0.88)  74%,
-                     rgba(4,2,1,1)      100%)">
-              </div>
-
-              <!-- 스냅 단추 — ml-?? 로 좌우 위치 조정 / 현재 왼쪽에 붙임(ml-2) -->
-              <div class="relative w-16 h-16 ml-2 rounded-full bg-gradient-to-br from-[#e0c96a] to-[#a87820] border-4 border-[#2c1a0e] shadow-[0_0_20px_rgba(180,140,40,0.3)] flex items-center justify-center active:scale-90 transition-transform group-hover:brightness-110"
-                   :class="{'animate-snap-shake': shakeActive}">
-                <LucideLock class="w-6 h-6 text-[#1a0e04]" />
+            <!-- 스트랩 본체 -->
+            <div class="relative flex items-center justify-center overflow-hidden"
+                 style="width: 78px; height: 78px;
+                        border-radius: 50% 14px 14px 50%;
+                        background: linear-gradient(135deg, #1d1409 0%, #110e06 100%);
+                        box-shadow: -5px 0 18px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.04);">
+              <!-- 우측 단면 그라데이션 -->
+              <div class="absolute right-0 top-0 bottom-0 w-5 pointer-events-none"
+                   style="background: linear-gradient(to right, transparent 0%, rgba(55,33,8,0.45) 40%, rgba(5,3,1,0.96) 100%)"></div>
+              <!-- 골드 단추 -->
+              <div
+                class="relative z-10 flex items-center justify-center rounded-full transition-transform group-hover:scale-105 active:scale-90"
+                :class="{'animate-snap-shake': shakeActive}"
+                style="width: 54px; height: 54px;
+                       background: linear-gradient(145deg, #edd876 0%, #c9a227 45%, #8a6b10 100%);
+                       box-shadow: 0 0 22px rgba(201,162,39,0.24), 0 4px 12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.22);">
+                <LucideLock class="w-[18px] h-[18px]" style="color: #120c02" />
               </div>
             </div>
           </div>
         </div>
 
         <!-- ── 뒷면 ── -->
-        <div class="absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br from-[#2a1a0d] via-[#1e1209] to-[#261608] rounded-l-[2.5rem] shadow-inner border-t border-b border-l border-white/5 overflow-hidden">
-          <div class="absolute inset-0 opacity-55 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]"></div>
-          <div class="absolute top-4 left-4 bottom-4 right-0 border-t-2 border-l-2 border-b-2 border-dashed border-[#c9a227]/18 rounded-tl-[2rem] rounded-bl-[2rem] pointer-events-none"></div>
+        <div class="absolute inset-0 backface-hidden rotate-y-180 rounded-l-[2rem] overflow-hidden"
+             style="background: linear-gradient(145deg, #141009 0%, #0d0a05 50%, #181108 100%);
+                    box-shadow: inset 2px 0 20px rgba(0,0,0,0.45);">
+          <div class="absolute top-0 left-0 right-8 h-px"
+               style="background: linear-gradient(to right, transparent, rgba(201,162,39,0.18) 50%, rgba(201,162,39,0.32) 100%)"></div>
+          <div class="absolute bottom-0 left-0 right-8 h-px"
+               style="background: linear-gradient(to right, transparent, rgba(201,162,39,0.14) 50%, rgba(201,162,39,0.26) 100%)"></div>
         </div>
       </div>
     </div>
@@ -140,20 +124,15 @@ const triggerShake = () => {
 const submitLogin = async () => {
   if (step.value !== 0 || authView.value !== 'login') return
 
-  // 1. 폼 유효성 검사
   const valid = authLoginRef.value?.validate()
   if (!valid) { triggerShake(); return }
 
-  // 2. 실제 API 로그인 (authStore.login() 내부에서 호출됨)
   const success = await authLoginRef.value?.login()
   if (!success) { triggerShake(); return }
 
-  // 3. 성공 → 지갑 닫기 애니메이션
-  // authStore.isLoggedIn = true가 되었으므로 App.vue가 자동 전환하기 전에 애니메이션
   step.value = 1
   setTimeout(() => { step.value = 2 }, 300)
   setTimeout(() => { step.value = 3 }, 1700)
-  // App.vue는 authStore.isLoggedIn을 감시하여 CardWallet으로 자동 전환
 }
 </script>
 
@@ -165,22 +144,18 @@ const submitLogin = async () => {
 .rotate-y-180 { transform: rotateY(180deg); }
 .rotate-y-flip { transform: rotateY(-180deg); }
 
-/* 뷰 전환 슬라이드 */
 .auth-slide-enter-active,
-.auth-slide-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
-.auth-slide-enter-from   { opacity: 0; transform: translateX(18px); }
-.auth-slide-leave-to     { opacity: 0; transform: translateX(-18px); }
+.auth-slide-leave-active { transition: opacity 0.22s ease, transform 0.22s ease; }
+.auth-slide-enter-from   { opacity: 0; transform: translateX(16px); }
+.auth-slide-leave-to     { opacity: 0; transform: translateX(-16px); }
 
-/* 스냅 버튼만 흔들리는 애니메이션 */
 @keyframes snap-shake {
-  0%, 100% { transform: translateX(0);    }
+  0%, 100% { transform: translateX(0); }
   15%       { transform: translateX(-6px); }
-  30%       { transform: translateX(5px);  }
+  30%       { transform: translateX(5px); }
   45%       { transform: translateX(-4px); }
-  60%       { transform: translateX(3px);  }
+  60%       { transform: translateX(3px); }
   75%       { transform: translateX(-2px); }
 }
-.animate-snap-shake {
-  animation: snap-shake 0.45s ease-in-out;
-}
+.animate-snap-shake { animation: snap-shake 0.45s ease-in-out; }
 </style>

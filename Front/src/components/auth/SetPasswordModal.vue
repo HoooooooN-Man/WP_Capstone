@@ -15,7 +15,7 @@
           </svg>
         </div>
         <h2 class="text-sm font-black text-white tracking-tight uppercase">비밀번호 설정</h2>
-        <p class="text-[10px] text-white/45 mt-1.5 leading-relaxed">
+        <p class="text-[12px] text-white/45 mt-1.5 leading-relaxed">
           <span class="text-[#c9a227]/80 font-bold">{{ nickname }}</span>님,<br>비밀번호를 설정하면 이메일로도 로그인할 수 있어요.
         </p>
       </div>
@@ -30,7 +30,7 @@
             class="w-full px-4 py-2.5 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all"
             :class="passwordError ? 'border-red-500/60' : 'border-white/10'"
           />
-          <p v-if="passwordError" class="text-[9px] text-red-400/80 px-1 mt-0.5">{{ passwordError }}</p>
+          <p v-if="passwordError" class="text-[11px] text-red-400/80 px-1 mt-0.5">{{ passwordError }}</p>
         </div>
         <div>
           <input
@@ -41,10 +41,10 @@
             class="w-full px-4 py-2.5 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all"
             :class="confirmError ? 'border-red-500/60' : 'border-white/10'"
           />
-          <p v-if="confirmError" class="text-[9px] text-red-400/80 px-1 mt-0.5">{{ confirmError }}</p>
+          <p v-if="confirmError" class="text-[11px] text-red-400/80 px-1 mt-0.5">{{ confirmError }}</p>
         </div>
 
-        <p v-if="apiError" role="alert" class="text-[9px] text-red-400/80 text-center">{{ apiError }}</p>
+        <p v-if="apiError" role="alert" class="text-[11px] text-red-400/80 text-center">{{ apiError }}</p>
 
         <button
           type="button"
@@ -57,7 +57,7 @@
 
         <button
           type="button"
-          class="w-full py-1.5 text-[10px] text-[#7a5c20]/55 hover:text-[#c9a227]/70 transition-colors font-semibold text-center"
+          class="w-full py-1.5 text-[12px] text-[#7a5c20]/55 hover:text-[#c9a227]/70 transition-colors font-semibold text-center"
           @click="emit('skip')"
         >
           나중에 설정하기

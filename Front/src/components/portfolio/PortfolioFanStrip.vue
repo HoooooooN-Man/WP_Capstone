@@ -17,7 +17,7 @@
                style="background:rgba(239,68,68,0.2);border:1.5px solid rgba(239,68,68,0.4)">
             <LucideTrash2 class="w-3.5 h-3.5 text-red-400" />
           </div>
-          <p class="text-[8px] text-red-400 font-bold uppercase tracking-wide">청산</p>
+          <p class="text-[10px] text-red-400 font-bold uppercase tracking-wide">삭제</p>
         </div>
         <div class="absolute right-5 top-[30%] -translate-y-1/2 flex flex-col items-center gap-1.5"
              :style="{ opacity: dragX > 20 ? Math.min(1, (dragX-20)/55) : 0.15 }">
@@ -25,7 +25,7 @@
                style="background:rgba(16,185,129,0.2);border:1.5px solid rgba(16,185,129,0.4)">
             <LucideRefreshCw class="w-3.5 h-3.5 text-emerald-400" />
           </div>
-          <p class="text-[8px] text-emerald-400 font-bold uppercase tracking-wide">교체</p>
+          <p class="text-[10px] text-emerald-400 font-bold uppercase tracking-wide">교체</p>
         </div>
       </div>
     </transition>
@@ -62,19 +62,19 @@
               <div v-for="s in displayItems.slice(1, 7)" :key="s.id"
                    class="h-full flex-1" :style="{ background: s.color ?? '#4A90E2' }"></div>
             </div>
-            <p class="text-[11px] font-black"
+            <p class="text-[12px] font-black"
                :class="totalReturn >= 0 ? 'text-green-300' : 'text-red-300'">
               {{ totalReturn >= 0 ? '+' : '' }}{{ totalReturn.toFixed(1) }}%
             </p>
-            <p class="text-[7px] mt-0.5" style="color:rgba(255,255,255,0.38)">{{ activeStocksCount }}종목</p>
+            <p class="text-[9px] mt-0.5" style="color:rgba(255,255,255,0.38)">{{ activeStocksCount }}종목</p>
           </div>
         </div>
 
         <!-- 종목 카드 -->
         <div v-else class="relative h-full flex flex-col justify-between p-2.5">
           <div>
-            <p class="text-[9px] font-black leading-tight truncate">{{ item.company }}</p>
-            <p class="text-[7px] font-mono mt-0.5" style="color:rgba(255,255,255,0.38)">{{ item.ticker }}</p>
+            <p class="text-[10px] font-black leading-tight truncate">{{ item.company }}</p>
+            <p class="text-[8px] font-mono mt-0.5" style="color:rgba(255,255,255,0.38)">{{ item.ticker }}</p>
           </div>
           <div>
             <div class="w-full h-0.5 rounded-full mb-1.5" style="background:rgba(255,255,255,0.12)">
@@ -83,15 +83,14 @@
                    :style="{ width:`${item.quantScore??50}%` }"></div>
             </div>
             <div class="flex items-center justify-between">
-              <p class="text-[9px] font-bold" :class="item.change>=0?'text-green-300':'text-red-300'">
+              <p class="text-[10px] font-bold" :class="item.change>=0?'text-green-300':'text-red-300'">
                 {{ item.change>=0?'+':'' }}{{ item.change }}%
               </p>
-              <p class="text-[11px] font-black"
+              <p class="text-[12px] font-black"
                  :class="(item.quantScore??50)>=70?'text-green-300':(item.quantScore??50)>=45?'text-yellow-300':'text-red-300'">
                 {{ item.quantScore??'—' }}
               </p>
             </div>
-            <p class="text-[6.5px] mt-0.5" style="color:rgba(255,255,255,0.28)">{{ item.shares }}주</p>
           </div>
         </div>
 
@@ -149,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { LucideX, LucideChevronLeft, LucideTrash2, LucideRefreshCw } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -171,15 +170,27 @@ const emit = defineEmits([
 const fanVisible          = ref(false)
 const effectiveFanVisible = computed(() => props.walletLocked || fanVisible.value)
 
+// 팬 열림/닫힘 상태를 부모(PortfolioView)에 알림 → 콘텐츠 영역 bottom 동적 조정
+watch(effectiveFanVisible, (v) => emit('fan-open', v), { immediate: true })
+
 // ── 카드 포지셔닝 상수 ─────────────────────────────
-const BTN_BOTTOM   = 14
+const BTN_BOTTOM   = 22
 const BTN_SIZE     = 50
 const BTN_CENTER_Y = BTN_BOTTOM + BTN_SIZE / 2
 
 const CARD_W     = 74
 const CARD_H     = 114
-const FAN_RADIUS = 95
-const ANGLE_STEP = 22
+const FAN_RADIUS = 108
+const ANGLE_STEP = 27
+
+// ── 색상 헬퍼 (불투명 카드용) ──────────────────────
+const darkenHex = (hex, amount) => {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const d = (v) => Math.max(0, v - amount).toString(16).padStart(2, '0')
+  return `#${d(r)}${d(g)}${d(b)}`
+}
 
 // ── 스와이프 상태 ──────────────────────────────────
 const swipeMode       = ref(false)
@@ -208,10 +219,14 @@ const cardFanStyle = (i) => {
   const isLP       = longPressingIdx.value === i
 
   const scale   = isLP ? 1.18 : (swipeMode.value && isActive) ? 1.18 : isActive ? 1.10 : Math.max(0.80, 1 - Math.abs(relIdx) * 0.09)
-  const opacity  = (swipeMode.value && !isActive) ? 0.18 : isActive ? 1 : Math.max(0.35, 1 - Math.abs(relIdx) * 0.18)
+  const opacity  = (swipeMode.value && !isActive) ? 0.15 : 1
   const zIndex   = isActive ? 25 : Math.max(1, 20 - Math.abs(relIdx) * 2)
   const rotate   = angleDeg * 0.28 + (isSwipeDragging(i) ? swipeDX * 0.06 : 0)
   const col      = props.displayItems[i]?.color ?? '#888888'
+
+  // 불투명 그라디언트: active는 선명하게, 비활성은 더 어둡게
+  const bgTop    = isActive ? col                : darkenHex(col, 30)
+  const bgBottom = isActive ? darkenHex(col, 65) : darkenHex(col, 95)
 
   return {
     position: 'absolute', width: `${CARD_W}px`, height: `${CARD_H}px`,
@@ -222,11 +237,13 @@ const cardFanStyle = (i) => {
     transition: (isSwipeDragging(i) && isDragging.value)
       ? 'opacity 0.1s, transform 0.1s'
       : isLP ? 'transform 0.2s ease' : 'all 0.38s cubic-bezier(0.22,1,0.36,1)',
-    background: `linear-gradient(145deg,${col}${isActive ? 'ee' : '99'} 0%,${col}${isActive ? '55' : '30'} 100%)`,
+    background: `linear-gradient(145deg, ${bgTop} 0%, ${bgBottom} 100%)`,
     boxShadow: isLP
-      ? `0 16px 40px ${col}66,0 0 0 2px rgba(255,255,255,0.3)`
-      : isActive ? `0 8px 26px ${col}55,0 0 0 1px rgba(255,255,255,0.18)` : 'none',
-    border: isActive ? '1px solid rgba(255,255,255,0.22)' : '1px solid rgba(255,255,255,0.08)',
+      ? `0 16px 40px ${col}88, 0 0 0 2px rgba(255,255,255,0.3)`
+      : isActive
+        ? `0 8px 28px ${col}66, 0 0 0 1px rgba(255,255,255,0.22)`
+        : `0 3px 12px rgba(0,0,0,0.55)`,
+    border: isActive ? '1px solid rgba(255,255,255,0.28)' : '1px solid rgba(255,255,255,0.12)',
     cursor: 'pointer', borderRadius: '16px', overflow: 'hidden',
     pointerEvents: (swipeMode.value && !isActive) || Math.abs(relIdx) > 3 ? 'none' : 'auto',
   }
@@ -309,10 +326,9 @@ onUnmounted(() => clearLP())
 </script>
 
 <style scoped>
-/* 지갑 바와 동일한 소재감 배경 — 그라데이션 오버레이 제거 */
+/* 팬바 배경 제거 — 앱 배경이 그대로 보여 지갑바처럼 구분됨 */
 .fan-bar {
-  background: linear-gradient(to bottom, #152030, #0e1a28 55%, #0a1420);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }

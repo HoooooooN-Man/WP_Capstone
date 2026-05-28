@@ -8,7 +8,7 @@
         <LucideChevronLeft class="w-3.5 h-3.5 text-white/60" />
       </button>
       <div>
-        <p class="text-[8px] text-[#9a7418] font-bold uppercase tracking-[0.3em]">New Account</p>
+        <p class="text-[10px] text-[#9a7418] font-bold uppercase tracking-[0.3em]">New Account</p>
         <h2 class="text-base font-black text-white tracking-tight uppercase leading-none">회원가입</h2>
       </div>
     </div>
@@ -18,28 +18,28 @@
       <input v-model="nickname" type="text" placeholder="닉네임"
         :class="['w-full px-4 py-2.5 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all',
           nicknameError ? 'border-red-500/60' : 'border-white/10']" />
-      <p v-if="nicknameError" class="text-[9px] text-red-400/80 px-1 -mt-1">{{ nicknameError }}</p>
+      <p v-if="nicknameError" class="text-[11px] text-red-400/80 px-1 -mt-1">{{ nicknameError }}</p>
       <input v-model="email" type="text" placeholder="이메일"
         :class="['w-full px-4 py-2.5 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all',
           emailError ? 'border-red-500/60' : 'border-white/10']" />
-      <p v-if="emailError" class="text-[9px] text-red-400/80 px-1 -mt-1">{{ emailError }}</p>
+      <p v-if="emailError" class="text-[11px] text-red-400/80 px-1 -mt-1">{{ emailError }}</p>
       <input v-model="pw" type="password" placeholder="비밀번호 (영문+숫자+특수문자 8~24자)"
         :class="['w-full px-4 py-2.5 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all',
           pwError ? 'border-red-500/60' : 'border-white/10']" />
-      <p v-if="pwError" class="text-[9px] text-red-400/80 px-1 -mt-1">{{ pwError }}</p>
+      <p v-if="pwError" class="text-[11px] text-red-400/80 px-1 -mt-1">{{ pwError }}</p>
       <div>
         <input v-model="pwConfirm" type="password" placeholder="비밀번호 확인"
           class="w-full px-4 py-2.5 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.15em] shadow-inner transition-all"
           :class="pwConfirm && pw !== pwConfirm ? 'border-red-500/60' : 'border-white/10'" />
         <p v-if="pwConfirm && pw !== pwConfirm"
-           class="text-[9px] text-red-400/80 flex items-center gap-1 px-1 mt-0.5">
+           class="text-[11px] text-red-400/80 flex items-center gap-1 px-1 mt-0.5">
           <LucideAlertCircle class="w-2.5 h-2.5 flex-shrink-0"/>비밀번호가 일치하지 않습니다
         </p>
       </div>
     </div>
 
-    <p v-if="apiError" class="text-[9px] text-red-400/80 text-center">{{ apiError }}</p>
-    <p v-if="successMsg" class="text-[9px] text-green-400/80 text-center">{{ successMsg }}</p>
+    <p v-if="apiError" class="text-[11px] text-red-400/80 text-center">{{ apiError }}</p>
+    <p v-if="successMsg" class="text-[11px] text-green-400/80 text-center">{{ successMsg }}</p>
 
     <button
       :disabled="loading"
@@ -49,7 +49,7 @@
       {{ loading ? '처리 중...' : '가입하기' }}
     </button>
 
-    <p class="text-center text-[9px] text-[#7a5c20]/60">
+    <p class="text-center text-[11px] text-[#7a5c20]/60">
       이미 계정이 있으신가요?
       <button @click="emit('go-login')" class="text-[#c9a227]/70 hover:text-[#c9a227] ml-1 font-semibold transition-colors">로그인</button>
     </p>

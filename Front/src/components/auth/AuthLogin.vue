@@ -1,48 +1,62 @@
 <template>
-  <div class="flex flex-col items-center gap-4 w-full max-w-[320px] px-6">
+  <div class="flex flex-col items-center gap-3.5 w-full max-w-[320px] px-7">
 
-    <div class="text-center w-full">
-      <h1 class="font-black text-white tracking-tighter uppercase italic leading-none"
-          style="font-size: clamp(24px, 5vw, 38px); text-shadow: 0 2px 30px rgba(0,0,0,0.9), 0 0 50px rgba(100,75,15,0.25)"
-      >WALLET PROTECTOR</h1>
-      <div class="h-px w-16 bg-gradient-to-r from-transparent via-[#c9a227]/55 to-transparent mt-2.5 mx-auto"></div>
-      <p class="text-[8px] text-[#9a7418] font-bold uppercase tracking-[0.35em] mt-1.5">Advanced Security Access</p>
+    <!-- 브랜드 마크 -->
+    <div class="flex flex-col items-center gap-2">
+      <h1 class="text-white font-black text-[28px] tracking-tight leading-none">Wallet Protector</h1>
+      <p class="text-[11px] font-semibold tracking-[0.28em]"
+         style="color: rgba(201,162,39,0.6)">SMART INVESTMENT</p>
     </div>
 
+    <!-- 구분선 -->
+    <div class="w-full h-px"
+         style="background: linear-gradient(to right, transparent, rgba(201,162,39,0.28), transparent)"></div>
+
+    <!-- 로그인 폼 -->
     <form @submit.prevent class="w-full space-y-1.5">
+
+      <!-- 이메일 -->
       <div>
-        <input v-model="email" type="text" placeholder="EMAIL ADDRESS"
-          @input="emailTouched = true" @blur="emailTouched = true"
-          class="w-full px-4 py-3 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.18em] shadow-inner transition-all"
-          :class="emailError ? 'border-red-500/60' : (email && !emailError ? 'border-green-500/40' : 'border-white/10')" />
+        <div class="relative">
+          <LucideMail class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                      style="color: rgba(255,255,255,0.25)" />
+          <input v-model="email" type="text" placeholder="이메일"
+            @input="emailTouched = true" @blur="emailTouched = true"
+            class="w-full pl-11 pr-4 py-3.5 rounded-xl text-[15px] outline-none transition-all auth-input"
+            :class="emailError ? 'err' : (email && !emailError ? 'ok' : '')" />
+        </div>
         <div class="min-h-[14px] mt-0.5 px-1">
-          <p v-if="emailError" class="text-[9px] text-red-400/80 flex items-center gap-1">
-            <LucideAlertCircle class="w-2.5 h-2.5 flex-shrink-0"/>{{ emailError }}
+          <p v-if="emailError" class="text-[11px] flex items-center gap-1" style="color: rgba(248,113,113,0.8)">
+            <LucideAlertCircle class="w-3 h-3 flex-shrink-0" />{{ emailError }}
           </p>
         </div>
       </div>
+
+      <!-- 비밀번호 -->
       <div>
-        <input v-model="password" type="password" placeholder="PASSWORD"
-          @blur="passwordTouched = true"
-          class="w-full px-4 py-3 bg-black/50 border rounded-xl text-[11px] text-white/90 placeholder:text-[#5a4020]/80 outline-none tracking-[0.18em] shadow-inner transition-all"
-          :class="passwordError ? 'border-red-500/60' : (password && !passwordError ? 'border-green-500/40' : 'border-white/10')" />
+        <div class="relative">
+          <LucideKeyRound class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                          style="color: rgba(255,255,255,0.25)" />
+          <input v-model="password" type="password" placeholder="비밀번호"
+            @blur="passwordTouched = true"
+            class="w-full pl-11 pr-4 py-3.5 rounded-xl text-[15px] outline-none transition-all auth-input"
+            :class="passwordError ? 'err' : (password && !passwordError ? 'ok' : '')" />
+        </div>
         <div class="min-h-[14px] mt-0.5 px-1">
-          <p v-if="passwordError" class="text-[9px] text-red-400/80 flex items-center gap-1">
-            <LucideAlertCircle class="w-2.5 h-2.5 flex-shrink-0"/>{{ passwordError }}
-          </p>
-          <p v-else-if="apiError" class="text-[9px] text-red-400/80 flex items-center gap-1">
-            <LucideAlertCircle class="w-2.5 h-2.5 flex-shrink-0"/>{{ apiError }}
+          <p v-if="passwordError || apiError" class="text-[11px] flex items-center gap-1" style="color: rgba(248,113,113,0.8)">
+            <LucideAlertCircle class="w-3 h-3 flex-shrink-0" />{{ passwordError || apiError }}
           </p>
         </div>
       </div>
+
     </form>
 
     <!-- 소셜 로그인 -->
-    <div class="flex flex-col items-center w-full">
-      <div class="flex items-center gap-3 mb-2.5 w-full">
-        <div class="flex-1 h-px bg-gradient-to-r from-transparent to-white/10"></div>
-        <span class="text-[8px] text-[#7a5c20]/70 uppercase tracking-[0.3em] font-semibold">or</span>
-        <div class="flex-1 h-px bg-gradient-to-l from-transparent to-white/10"></div>
+    <div class="w-full flex flex-col items-center gap-2">
+      <div class="flex items-center gap-2.5 w-full">
+        <div class="flex-1 h-px" style="background: rgba(255,255,255,0.08)"></div>
+        <span class="text-[11px] font-medium" style="color: rgba(255,255,255,0.28)">소셜 로그인</span>
+        <div class="flex-1 h-px" style="background: rgba(255,255,255,0.08)"></div>
       </div>
       <SocialLoginButtons
         @done="emit('login-success')"
@@ -51,7 +65,7 @@
       />
     </div>
 
-    <!-- 소셜 계정 연동 확인 모달 -->
+    <!-- 소셜 계정 연동 모달 -->
     <LinkConfirmModal
       v-if="showLinkModal"
       :linkHintToken="linkHintToken"
@@ -59,8 +73,6 @@
       @confirmed="onLinkConfirmed"
       @cancel="showLinkModal = false"
     />
-
-    <!-- 비밀번호 설정 모달 -->
     <SetPasswordModal
       v-if="showPwModal"
       :nickname="pwModalNickname"
@@ -69,15 +81,15 @@
     />
 
     <!-- 하단 링크 -->
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-4">
       <button @click="emit('go-signup')"
-              class="text-[9px] text-[#7a5c20]/70 hover:text-[#c9a227]/80 transition-colors uppercase tracking-widest font-semibold">
+              class="text-[12px] font-medium transition-colors auth-link">
         회원가입
       </button>
-      <span class="w-px h-3 bg-white/15 flex-shrink-0"></span>
+      <span class="w-px h-3.5" style="background: rgba(255,255,255,0.15)"></span>
       <button @click="emit('go-find')"
-              class="text-[9px] text-[#7a5c20]/70 hover:text-[#c9a227]/80 transition-colors uppercase tracking-widest font-semibold">
-        아이디 / 비밀번호 찾기
+              class="text-[12px] font-medium transition-colors auth-link">
+        비밀번호 찾기
       </button>
     </div>
 
@@ -86,15 +98,14 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { LucideAlertCircle } from 'lucide-vue-next'
+import { LucideAlertCircle, LucideMail, LucideKeyRound } from 'lucide-vue-next'
 import authApi from '@/api/auth.js'
 import { useAuthStore } from '@/stores/auth.js'
-import SocialLoginButtons  from './SocialLoginButtons.vue'
-import LinkConfirmModal    from './LinkConfirmModal.vue'
-import SetPasswordModal    from './SetPasswordModal.vue'
+import SocialLoginButtons from './SocialLoginButtons.vue'
+import LinkConfirmModal   from './LinkConfirmModal.vue'
+import SetPasswordModal   from './SetPasswordModal.vue'
 
 const emit = defineEmits(['go-signup', 'go-find', 'login-success'])
-
 const authStore = useAuthStore()
 
 const email           = ref('')
@@ -105,21 +116,20 @@ const apiError        = ref('')
 
 const emailError = computed(() => {
   if (!emailTouched.value) return null
-  if (!email.value)                                        return '이메일을 입력해주세요'
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))   return '올바른 이메일 형식을 입력해주세요'
+  if (!email.value)                                       return '이메일을 입력해주세요'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))  return '올바른 이메일 형식을 입력해주세요'
   return null
 })
 
 const passwordError = computed(() => {
   if (!passwordTouched.value) return null
-  if (!password.value)        return '비밀번호를 입력해주세요'
+  if (!password.value)           return '비밀번호를 입력해주세요'
   if (password.value.length < 6) return '비밀번호는 6자 이상이어야 합니다'
   return null
 })
 
 const isFormValid = computed(() =>
-  email.value && password.value &&
-  !emailError.value && !passwordError.value
+  email.value && password.value && !emailError.value && !passwordError.value
 )
 
 function validate() {
@@ -132,7 +142,7 @@ function validate() {
 async function login() {
   if (!validate()) return false
 
-  // ── 테스트 계정 (API 없이 즉시 로그인) ──────────────
+  // 테스트 계정
   if (email.value === 'test1234@gmail.com' && password.value === 'test1234') {
     authStore.login('test-session-token', 'Admin', 'test-user-001')
     return true
@@ -140,7 +150,6 @@ async function login() {
 
   try {
     const { data } = await authApi.login({ email: email.value, password: password.value })
-    // 백엔드가 user_id를 반환하지 않는 경우 email을 식별자로 사용
     authStore.login(data.session_token, data.nickname, data.user_id ?? email.value)
     return true
   } catch (err) {
@@ -148,7 +157,7 @@ async function login() {
     if (status === 401 || status === 400) {
       apiError.value = '이메일 또는 비밀번호가 올바르지 않습니다'
     } else if (status === 429) {
-      apiError.value = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요'
+      apiError.value = '잠시 후 다시 시도해주세요'
     } else {
       apiError.value = err.response?.data?.detail ?? '로그인에 실패했습니다'
     }
@@ -156,30 +165,26 @@ async function login() {
   }
 }
 
-// ── 소셜 로그인 모달 상태 ──────────────────────────────────
-const showLinkModal    = ref(false)
-const linkHintToken    = ref('')
-const linkProvider     = ref('')
-
-const showPwModal      = ref(false)
-const pwModalNickname  = ref('')
+// 소셜 로그인 모달 상태
+const showLinkModal   = ref(false)
+const linkHintToken   = ref('')
+const linkProvider    = ref('')
+const showPwModal     = ref(false)
+const pwModalNickname = ref('')
 
 function handleRequiresLinkConfirm(token, provider) {
   linkHintToken.value = token
   linkProvider.value  = provider
   showLinkModal.value = true
 }
-
 function handleNeedsPassword(_token, nickname) {
   pwModalNickname.value = nickname
   showPwModal.value     = true
 }
-
 function onLinkConfirmed() {
   showLinkModal.value = false
   emit('login-success')
 }
-
 function onPwDone() {
   showPwModal.value = false
   emit('login-success')
@@ -189,8 +194,25 @@ defineExpose({ validate, login })
 </script>
 
 <style scoped>
-input:focus {
+.auth-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.9);
+}
+.auth-input::placeholder {
+  color: rgba(255, 255, 255, 0.22);
+}
+.auth-input:focus {
   border-color: rgba(201, 162, 39, 0.4);
-  box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.08), 0 0 12px rgba(150, 110, 20, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.07);
+}
+.auth-input.ok  { border-color: rgba(52, 211, 153, 0.38); }
+.auth-input.err { border-color: rgba(248, 113, 113, 0.48); }
+.auth-link {
+  color: rgba(255, 255, 255, 0.32);
+}
+.auth-link:hover {
+  color: rgba(201, 162, 39, 0.78);
 }
 </style>
