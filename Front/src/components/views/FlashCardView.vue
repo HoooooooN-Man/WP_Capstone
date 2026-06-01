@@ -1,162 +1,158 @@
 <template>
   <div class="w-full h-full relative rounded-[2rem] overflow-hidden"
-       style="background:#04080f">
+       style="background:#d4c9a8">
 
     <!-- ══════════════════════════════
-         카드 A — 뉴스 감성 피드 (첫 번째)
+         카드 A — 뉴스 감성 피드
     ══════════════════════════════ -->
     <div class="absolute rounded-[2rem] overflow-hidden flash-card"
          :class="front === 'A' ? 'at-front' : 'at-back'">
 
-      <div class="w-full h-full flex flex-col text-white"
-           style="background:linear-gradient(155deg,#0a0f1e 0%,#060b14 100%); border:1px solid rgba(255,255,255,0.09); border-radius:inherit">
+      <div class="w-full h-full flex flex-col"
+           style="background:#f0e8d0; border:1px solid rgba(0,0,0,0.18); border-radius:inherit; color:#1a1209; font-family:Georgia,'Times New Roman',serif;">
 
-        <!-- 헤더 -->
-        <div class="px-4 pt-4 pb-3 border-b border-white/10 flex-shrink-0 flex items-center justify-between"
-             :class="front === 'A' ? 'pr-[62px]' : 'pr-4'">
-          <div>
-            <p class="text-[10px] text-white/35 font-mono tracking-widest uppercase mb-0.5">FinBERT Sentiment</p>
-            <h2 class="text-lg font-black text-white tracking-tight leading-none">뉴스 감성 피드</h2>
+        <!-- 마스트헤드 -->
+        <div class="flex-shrink-0 px-4 pt-3" style="border-bottom:3px double #1a1209;">
+          <div class="flex items-center justify-between mb-0.5" style="font-family:sans-serif;">
+            <span class="text-[9px] uppercase tracking-widest" style="color:#888;">FinBERT Sentiment Analysis</span>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse inline-block"></span>
+                <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#2d6a2d;">LIVE</span>
+              </div>
+              <button @click="flip"
+                      class="flex items-center gap-1 px-2 py-0.5 active:scale-95 transition-all"
+                      style="background:#1a1209; color:#f0e8d0; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:0.05em;">
+                랭킹
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                  <path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                </svg>
+              </button>
+            </div>
           </div>
-          <div class="px-2 py-0.5 rounded-full flex-shrink-0"
-               style="background:rgba(52,211,153,0.15); border:1px solid rgba(52,211,153,0.35)">
-            <span class="text-[11px] font-bold" style="color:#34d399">LIVE</span>
+          <h2 class="text-center font-black py-1 tracking-tight"
+              style="font-size:20px; border-top:2px solid #1a1209; border-bottom:1px solid #1a1209;">
+            뉴스 감성 피드
+          </h2>
+          <!-- 섹션 필터 탭 -->
+          <div class="flex gap-0 py-1.5" style="font-family:sans-serif; border-bottom:2px solid #1a1209;">
+            <button v-for="f in ['전체','긍정','중립','부정']" :key="f"
+                    @click="newsFilter = f"
+                    class="flex-1 py-0.5 text-[10px] font-bold transition-all duration-150"
+                    :style="newsFilter === f
+                      ? 'background:#1a1209; color:#f0e8d0;'
+                      : 'background:transparent; color:#888;'">
+              {{ f }}
+            </button>
           </div>
-        </div>
-
-        <!-- 필터 탭 -->
-        <div class="px-3 pt-2.5 pb-2 flex gap-1.5 flex-shrink-0">
-          <button v-for="f in ['전체','긍정','중립','부정']" :key="f"
-                  @click="newsFilter = f"
-                  class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all duration-150"
-                  :style="newsFilter === f ? activeFilterStyle(f) : inactiveFilterStyle">
-            {{ f }}
-          </button>
         </div>
 
         <!-- 뉴스 리스트 -->
-        <div class="flex-1 overflow-y-auto px-3 pb-3 space-y-1.5">
-          <!-- 로딩 -->
+        <div class="flex-1 overflow-y-auto">
           <div v-if="newsFeedLoading" class="flex flex-col items-center justify-center h-24 gap-2">
-            <div class="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
-                 style="border-color:rgba(52,211,153,0.6); border-top-color:transparent"></div>
-            <span class="text-[11px]" style="color:rgba(255,255,255,0.3)">뉴스 로딩 중...</span>
+            <span class="text-[13px] italic" style="color:#888;">취재 중...</span>
           </div>
-          <!-- 아이템 -->
-          <div v-else v-for="item in filteredFeedNews" :key="item.id"
-               class="p-2.5 rounded-xl cursor-pointer transition-colors duration-150"
-               style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)"
+          <div v-else v-for="(item, idx) in filteredFeedNews" :key="item.id"
+               class="px-4 py-2.5 cursor-pointer hover:bg-black/5 transition-colors"
+               :style="idx < filteredFeedNews.length-1 ? 'border-bottom:1px solid #d4c8a8;' : ''"
                @click="openUrl(item.url)">
-            <div class="flex items-center gap-1.5 mb-1">
-              <span class="text-[10px] font-mono" style="color:rgba(255,255,255,0.35)">{{ item.source }}</span>
-              <span class="px-1.5 py-0.5 rounded text-[7.5px] font-bold" :style="sentimentStyle(item.sentiment)">
+            <div class="flex items-center gap-2 mb-0.5" style="font-family:sans-serif;">
+              <span class="text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 text-white"
+                    :style="{ background: sentimentColor(item.sentiment) }">
                 {{ sentimentKo(item.sentiment) }}
               </span>
-              <span class="ml-auto text-[10px] font-mono"
-                    :style="{ color: item.confidence >= 0.5 ? 'rgba(52,211,153,0.7)' : 'rgba(255,255,255,0.25)' }">
+              <span class="text-[9px] font-mono" style="color:#999;">{{ item.source }}</span>
+              <span class="ml-auto text-[9px] font-bold" style="color:#666; font-family:sans-serif;">
                 {{ Math.round(item.confidence * 100) }}%
               </span>
             </div>
-            <p class="text-[13px] font-semibold leading-snug" style="color:rgba(255,255,255,0.88)">{{ item.title }}</p>
-            <p class="text-[10px] mt-0.5 font-mono" style="color:rgba(255,255,255,0.28)">{{ formatDate(item.published_at) }}</p>
+            <p class="font-bold leading-snug" style="font-size:13px;">{{ item.title }}</p>
+            <p class="text-[10px] mt-0.5" style="color:#999; font-family:sans-serif;">{{ formatDate(item.published_at) }}</p>
           </div>
         </div>
       </div>
     </div><!-- /카드 A -->
 
     <!-- ══════════════════════════════
-         카드 B — 뉴스 감성 랭킹 (두 번째)
+         카드 B — 뉴스 감성 랭킹
     ══════════════════════════════ -->
     <div class="absolute rounded-[2rem] overflow-hidden flash-card"
          :class="front === 'B' ? 'at-front' : 'at-back'">
 
-      <div class="w-full h-full flex flex-col text-white"
-           style="background:linear-gradient(155deg,#0d0a1e 0%,#08060f 100%); border:1px solid rgba(255,255,255,0.09); border-radius:inherit">
+      <div class="w-full h-full flex flex-col"
+           style="background:#eee8d4; border:1px solid rgba(0,0,0,0.18); border-radius:inherit; color:#1a1209; font-family:Georgia,'Times New Roman',serif;">
 
-        <!-- 헤더 -->
-        <div class="px-4 pt-4 pb-3 border-b border-white/10 flex-shrink-0 flex items-center justify-between"
-             :class="front === 'B' ? 'pr-[62px]' : 'pr-4'">
-          <div>
-            <p class="text-[10px] text-white/35 font-mono tracking-widest uppercase mb-0.5">FinBERT · Daily Ranking</p>
-            <h2 class="text-lg font-black text-white tracking-tight leading-none">뉴스 감성 랭킹</h2>
+        <!-- 마스트헤드 -->
+        <div class="flex-shrink-0 px-4 pt-3" style="border-bottom:3px double #1a1209;">
+          <div class="flex items-center justify-between mb-0.5" style="font-family:sans-serif;">
+            <span class="text-[9px] uppercase tracking-widest" style="color:#888;">FinBERT · Daily Ranking</span>
+            <div class="flex items-center gap-2">
+              <span v-if="rankingDisplayDate" class="text-[9px]" style="color:#888;">{{ rankingDisplayDate }}</span>
+              <button @click="flip"
+                      class="flex items-center gap-1 px-2 py-0.5 active:scale-95 transition-all"
+                      style="background:#1a1209; color:#eee8d4; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:0.05em;">
+                피드
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                  <path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                </svg>
+              </button>
+            </div>
           </div>
-          <!-- 날짜 배지 -->
-          <div v-if="rankingDisplayDate" class="px-2 py-0.5 rounded-full flex-shrink-0"
-               style="background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.35)">
-            <span class="text-[11px] font-bold" style="color:#a78bfa">{{ rankingDisplayDate }}</span>
+          <h2 class="text-center font-black py-1 tracking-tight"
+              style="font-size:20px; border-top:2px solid #1a1209; border-bottom:1px solid #1a1209;">
+            뉴스 감성 랭킹
+          </h2>
+          <!-- 섹션 필터 탭 -->
+          <div class="flex gap-0 py-1.5" style="font-family:sans-serif; border-bottom:2px solid #1a1209;">
+            <button v-for="f in ['전체','긍정','중립','부정']" :key="f"
+                    @click="rankingFilter = f"
+                    class="flex-1 py-0.5 text-[10px] font-bold transition-all duration-150"
+                    :style="rankingFilter === f
+                      ? 'background:#1a1209; color:#eee8d4;'
+                      : 'background:transparent; color:#888;'">
+              {{ f }}
+            </button>
           </div>
-        </div>
-
-        <!-- 감성 필터 탭 -->
-        <div class="px-3 pt-2.5 pb-2 flex gap-1.5 flex-shrink-0">
-          <button v-for="f in ['전체','긍정','중립','부정']" :key="f"
-                  @click="rankingFilter = f"
-                  class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all duration-150"
-                  :style="rankingFilter === f ? activeFilterStyle(f) : inactiveFilterStyle">
-            {{ f }}
-          </button>
         </div>
 
         <!-- 랭킹 리스트 -->
-        <div class="flex-1 overflow-y-auto px-3 pb-3 space-y-1.5">
-          <!-- 로딩 -->
-          <div v-if="rankingLoading" class="flex flex-col items-center justify-center h-24 gap-2">
-            <div class="w-4 h-4 rounded-full border-2 animate-spin"
-                 style="border-color:rgba(139,92,246,0.6); border-top-color:transparent"></div>
-            <span class="text-[11px]" style="color:rgba(255,255,255,0.3)">랭킹 로딩 중...</span>
+        <div class="flex-1 overflow-y-auto">
+          <div v-if="rankingLoading" class="flex flex-col items-center justify-center h-24">
+            <span class="text-[13px] italic" style="color:#888;">집계 중...</span>
           </div>
-          <!-- 오류 -->
-          <div v-else-if="rankingError" class="flex flex-col items-center justify-center h-24 gap-1.5 text-center">
-            <span class="text-[18px]">📡</span>
-            <span class="text-[12px]" style="color:rgba(255,255,255,0.4)">랭킹 데이터를 불러올 수 없습니다</span>
-            <span class="text-[10px]" style="color:rgba(255,255,255,0.2)">뉴스 DB가 아직 생성되지 않았을 수 있습니다</span>
+          <div v-else-if="rankingError" class="flex flex-col items-center justify-center h-24 gap-1 text-center px-4">
+            <span class="text-[13px] font-bold">데이터 준비 중</span>
+            <span class="text-[11px] italic" style="color:#888;">뉴스 DB가 아직 생성되지 않았습니다</span>
           </div>
-          <!-- 아이템 -->
-          <div v-else v-for="item in filteredRankingNews" :key="item.news_id"
-               class="flex items-start gap-2.5 p-2.5 rounded-xl cursor-pointer transition-colors duration-150"
-               style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)"
-               @click="openUrl(item.origin_url || item.google_url)">
-            <!-- 순위 -->
-            <div class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
-                 :style="rankBadgeStyle(item.rank)">
-              <span class="text-[11px] font-black">{{ item.rank }}</span>
-            </div>
-            <!-- 내용 -->
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-1.5 mb-0.5">
-                <span class="text-[10px] font-mono truncate" style="color:rgba(255,255,255,0.35)">{{ item.provider }}</span>
-                <span class="px-1.5 py-0.5 rounded text-[7.5px] font-bold flex-shrink-0"
-                      :style="sentimentStyle(item.sentiment_label)">
-                  {{ sentimentKo(item.sentiment_label) }}
-                </span>
-              </div>
-              <p class="text-[13px] font-semibold leading-snug" style="color:rgba(255,255,255,0.88)">{{ item.title }}</p>
-              <div class="flex items-center justify-between mt-0.5">
-                <p class="text-[10px] font-mono" style="color:rgba(255,255,255,0.28)">{{ formatDate(item.published_at) }}</p>
-                <span class="text-[10px] font-mono" style="color:rgba(139,92,246,0.6)">
-                  {{ (item.ranking_score ?? 0).toFixed(2) }}pt
-                </span>
-              </div>
-            </div>
-          </div>
-          <!-- 빈 상태 (목업 fallback) -->
-          <template v-if="!rankingLoading && !rankingError && filteredRankingNews.length === 0">
-            <div v-for="item in MOCK_RANKINGS" :key="item.news_id"
-                 class="flex items-start gap-2.5 p-2.5 rounded-xl"
-                 style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); opacity:0.6">
-              <div class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
-                   :style="rankBadgeStyle(item.rank)">
-                <span class="text-[11px] font-black">{{ item.rank }}</span>
-              </div>
+          <template v-else>
+            <div v-for="(item, idx) in (filteredRankingNews.length ? filteredRankingNews : MOCK_RANKINGS)"
+                 :key="item.news_id"
+                 class="flex items-start gap-3 px-4 py-2.5 cursor-pointer hover:bg-black/5 transition-colors"
+                 :style="idx < (filteredRankingNews.length || MOCK_RANKINGS.length)-1 ? 'border-bottom:1px solid #ccc0a0;' : ''"
+                 :class="!filteredRankingNews.length ? 'opacity-60' : ''"
+                 @click="openUrl(item.origin_url || item.google_url)">
+              <!-- 순위 번호 -->
+              <span class="flex-shrink-0 font-black text-center leading-none pt-0.5"
+                    style="font-size:18px; min-width:20px; font-family:Georgia,serif;"
+                    :style="{ color: item.rank <= 3 ? '#9a6e10' : '#bbb' }">
+                {{ item.rank }}
+              </span>
+              <!-- 기사 내용 -->
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-1.5 mb-0.5">
-                  <span class="text-[10px] font-mono" style="color:rgba(255,255,255,0.3)">{{ item.provider }}</span>
-                  <span class="px-1.5 py-0.5 rounded text-[7.5px] font-bold"
-                        :style="sentimentStyle(item.sentiment_label)">
+                <div class="flex items-center gap-1.5 mb-0.5" style="font-family:sans-serif;">
+                  <span class="text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 text-white"
+                        :style="{ background: sentimentColor(item.sentiment_label) }">
                     {{ sentimentKo(item.sentiment_label) }}
                   </span>
+                  <span class="text-[9px] font-mono truncate" style="color:#999;">{{ item.provider }}</span>
+                  <span class="ml-auto text-[9px] font-bold flex-shrink-0" style="color:#9a6e10; font-family:sans-serif;">
+                    {{ (item.ranking_score ?? 0).toFixed(1) }}pt
+                  </span>
                 </div>
-                <p class="text-[13px] font-semibold leading-snug" style="color:rgba(255,255,255,0.7)">{{ item.title }}</p>
+                <p class="font-bold leading-snug" style="font-size:13px;">{{ item.title }}</p>
+                <p class="text-[10px] mt-0.5" style="color:#999; font-family:sans-serif;">{{ formatDate(item.published_at) }}</p>
               </div>
             </div>
           </template>
@@ -164,26 +160,6 @@
       </div>
     </div><!-- /카드 B -->
 
-    <!-- ══════════════════════════════
-         넘기기 버튼 — 오른쪽 상단 고정 (z-50)
-    ══════════════════════════════ -->
-    <button
-      @click="flip"
-      class="absolute flex items-center gap-1.5
-             px-3 py-1.5 rounded-full
-             bg-white/12 hover:bg-white/22 active:scale-95
-             border border-white/15
-             text-[12px] font-bold text-white/70 uppercase tracking-wide
-             transition-all duration-150 focus:outline-none"
-      style="top:14px; right:12px; z-index:50"
-    >
-      {{ front === 'A' ? '랭킹' : '피드' }}
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-        <path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-      </svg>
-    </button>
 
   </div>
 </template>
@@ -236,6 +212,12 @@ const sentimentKo = (s) => ({
   positive: '긍정', negative: '부정', neutral: '중립',
   긍정: '긍정', 부정: '부정', 중립: '중립',
 }[s] ?? '중립')
+
+const sentimentColor = (s) => ({
+  긍정: '#065f46', positive: '#065f46',
+  부정: '#991b1b', negative: '#991b1b',
+  중립: '#374151', neutral: '#374151',
+}[s] ?? '#374151')
 
 const sentimentStyle = (s) => {
   const key = sentimentKo(s)

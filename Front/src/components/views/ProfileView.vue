@@ -1,27 +1,29 @@
 <template>
   <div
-    class="w-full h-full rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] flex flex-col relative overflow-hidden border transition-colors duration-300"
-    :class="darkMode ? 'bg-[#181410] border-white/10 text-gray-100' : 'bg-[#fcfbf7] border-black/10 text-gray-800'"
+    class="w-full h-full rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden border transition-colors duration-300"
+    :class="localDark ? 'bg-[#0f1520] border-white/10 text-gray-100' : 'bg-[#f7f4ee] border-black/12 text-gray-800'"
   >
-    <!-- 배경 장식 -->
-    <div class="absolute -right-32 -bottom-32 opacity-[0.015] pointer-events-none z-0">
-      <svg class="w-[600px] h-[600px]" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-      </svg>
-    </div>
+    <!-- 신분증 상단 컬러 스트라이프 -->
+    <div class="flex-shrink-0 h-1.5 bg-gradient-to-r from-[#1a3a6b] via-[#c9a227] to-[#1a3a6b] z-10"></div>
+
+    <!-- 배경 장식 (홀로그램 원) -->
+    <div class="absolute right-4 top-8 w-40 h-40 rounded-full pointer-events-none z-0 opacity-[0.04]"
+         :class="localDark ? 'border-8 border-white' : 'border-8 border-black'"></div>
+    <div class="absolute -left-8 bottom-24 w-64 h-64 rounded-full pointer-events-none z-0 opacity-[0.025]"
+         :class="localDark ? 'border-4 border-white' : 'border-4 border-black'"></div>
 
     <!-- 탭 바 -->
     <div
       class="flex border-b px-5 pt-3.5 gap-0.5 z-10 flex-shrink-0 transition-colors duration-300"
-      :class="darkMode ? 'border-white/10' : 'border-gray-200'"
+      :class="localDark ? 'border-white/10' : 'border-gray-200'"
     >
       <button
         v-for="tab in TABS" :key="tab.id"
         @click="activeTab = tab.id"
         class="px-3.5 py-2 rounded-t-lg text-[13px] font-bold tracking-wide transition-all flex items-center gap-1.5"
         :class="activeTab === tab.id
-          ? (darkMode ? 'bg-white/10 text-white' : 'bg-white text-gray-800 shadow')
-          : (darkMode ? 'text-white/35 hover:text-white/60' : 'text-gray-400 hover:text-gray-600')"
+          ? (localDark ? 'bg-white/10 text-white' : 'bg-white text-gray-800 shadow')
+          : (localDark ? 'text-white/35 hover:text-white/60' : 'text-gray-400 hover:text-gray-600')"
       >
         <component :is="tab.icon" class="w-3 h-3"/>
         {{ tab.label }}
@@ -42,20 +44,20 @@
           <!-- 사용자 인사 카드 -->
           <div
             class="flex-1 rounded-2xl border p-4 flex flex-col justify-between transition-colors duration-300"
-            :class="darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'"
+            :class="localDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'"
           >
             <div>
               <p class="text-[11px] font-bold uppercase tracking-[0.3em] transition-colors duration-300"
-                 :class="darkMode ? 'text-[#9a7418]' : 'text-[#c9a227]'">Welcome back</p>
+                 :class="localDark ? 'text-[#9a7418]' : 'text-[#c9a227]'">Welcome back</p>
               <p class="text-xl font-black text-white mt-0.5 leading-tight"
-                 :class="darkMode ? 'text-white' : 'text-[#1a0f0a]'">
+                 :class="localDark ? 'text-white' : 'text-[#1a0f0a]'">
                 {{ auth.nickname || 'User' }}
               </p>
             </div>
             <div>
               <p class="text-[11px] transition-colors duration-300"
-                 :class="darkMode ? 'text-white/35' : 'text-gray-400'">기준일</p>
-              <p class="text-[13px] font-bold" :class="darkMode ? 'text-white/70' : 'text-gray-600'">
+                 :class="localDark ? 'text-white/35' : 'text-gray-400'">기준일</p>
+              <p class="text-[13px] font-bold" :class="localDark ? 'text-white/70' : 'text-gray-600'">
                 {{ recDate || '—' }}
               </p>
             </div>
@@ -64,13 +66,13 @@
           <!-- AI 마켓 스코어 카드 -->
           <div
             class="flex-1 rounded-2xl border p-4 flex flex-col justify-between cursor-pointer hover:brightness-110 transition-all duration-200"
-            :class="darkMode ? 'bg-[#c9a227]/8 border-[#c9a227]/25' : 'bg-amber-50 border-amber-200'"
+            :class="localDark ? 'bg-[#c9a227]/8 border-[#c9a227]/25' : 'bg-amber-50 border-amber-200'"
             @click="emit('navigate', 'company')"
           >
             <div>
               <p class="text-[11px] font-bold uppercase tracking-[0.3em] text-[#c9a227]">AI Market Score</p>
               <div class="flex items-baseline gap-1 mt-0.5">
-                <span class="text-3xl font-black" :class="darkMode ? 'text-white' : 'text-[#1a0f0a]'">
+                <span class="text-3xl font-black" :class="localDark ? 'text-white' : 'text-[#1a0f0a]'">
                   {{ recLoading ? '—' : marketScore }}
                 </span>
                 <span class="text-sm font-bold text-[#c9a227]/80">/ 100</span>
@@ -83,10 +85,10 @@
                      :style="{ height: (8 + i * 3.5) + 'px' }"
                      :class="i <= Math.round(marketScore / 12.5)
                        ? 'bg-[#c9a227]'
-                       : (darkMode ? 'bg-white/10' : 'bg-gray-200')">
+                       : (localDark ? 'bg-white/10' : 'bg-gray-200')">
                 </div>
               </div>
-              <p class="text-[12px] font-bold" :class="darkMode ? 'text-white/60' : 'text-gray-500'">
+              <p class="text-[12px] font-bold" :class="localDark ? 'text-white/60' : 'text-gray-500'">
                 {{ marketLabel }}
               </p>
             </div>
@@ -96,16 +98,16 @@
         <!-- ② 지수 스크롤 -->
         <div>
           <p class="text-[11px] font-black uppercase tracking-[0.35em] mb-2 transition-colors duration-300"
-             :class="darkMode ? 'text-white/30' : 'text-gray-400'">Market Indices</p>
+             :class="localDark ? 'text-white/30' : 'text-gray-400'">Market Indices</p>
           <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             <div
               v-for="idx in indices" :key="idx.name"
               class="flex-shrink-0 rounded-xl border px-3 py-2.5 min-w-[80px] transition-colors duration-300"
-              :class="darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'"
+              :class="localDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'"
             >
               <p class="text-[11px] font-bold uppercase tracking-wider mb-1 transition-colors duration-300"
-                 :class="darkMode ? 'text-white/35' : 'text-gray-400'">{{ idx.name }}</p>
-              <p class="text-[14px] font-black" :class="darkMode ? 'text-white' : 'text-gray-800'">{{ idx.value }}</p>
+                 :class="localDark ? 'text-white/35' : 'text-gray-400'">{{ idx.name }}</p>
+              <p class="text-[14px] font-black" :class="localDark ? 'text-white' : 'text-gray-800'">{{ idx.value }}</p>
               <p class="text-[11px] font-bold flex items-center gap-0.5" :class="idx.up ? 'text-emerald-400' : 'text-red-400'">
                 {{ idx.up ? '▲' : '▼' }} {{ idx.change }}
               </p>
@@ -117,7 +119,7 @@
         <div>
           <div class="flex items-center justify-between mb-2.5">
             <p class="text-[11px] font-black uppercase tracking-[0.35em] transition-colors duration-300"
-               :class="darkMode ? 'text-white/30' : 'text-gray-400'">AI 추천 종목</p>
+               :class="localDark ? 'text-white/30' : 'text-gray-400'">AI 추천 종목</p>
             <button
               class="text-[11px] font-bold text-[#c9a227]/70 hover:text-[#c9a227] transition-colors uppercase tracking-widest"
               @click="emit('navigate', 'company')"
@@ -132,7 +134,7 @@
               class="px-3 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all"
               :class="activeRecTab === t.id
                 ? 'bg-[#c9a227]/20 border border-[#c9a227]/40 text-[#c9a227]'
-                : (darkMode ? 'bg-white/5 border border-white/10 text-white/40 hover:text-white/60' : 'bg-white border border-gray-200 text-gray-400 hover:text-gray-600')"
+                : (localDark ? 'bg-white/5 border border-white/10 text-white/40 hover:text-white/60' : 'bg-white border border-gray-200 text-gray-400 hover:text-gray-600')"
             >{{ t.label }}</button>
           </div>
 
@@ -148,12 +150,12 @@
             <div
               v-for="(stock, i) in filteredRecs" :key="stock.ticker"
               class="flex items-center gap-2.5 rounded-xl border px-3 py-2.5 cursor-pointer hover:brightness-110 transition-all duration-150 group"
-              :class="darkMode ? 'bg-white/5 border-white/8 hover:border-white/15' : 'bg-white border-gray-100 hover:border-gray-300'"
+              :class="localDark ? 'bg-white/5 border-white/8 hover:border-white/15' : 'bg-white border-gray-100 hover:border-gray-300'"
               @click="emit('navigate', 'company')"
             >
               <!-- 순위 -->
               <span class="text-[13px] font-black w-4 text-center flex-shrink-0 transition-colors duration-300"
-                    :class="darkMode ? 'text-white/25' : 'text-gray-300'">{{ i + 1 }}</span>
+                    :class="localDark ? 'text-white/25' : 'text-gray-300'">{{ i + 1 }}</span>
 
               <!-- 이니셜 아바타 -->
               <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-[13px] font-black"
@@ -163,11 +165,11 @@
 
               <!-- 종목명 + 섹터 -->
               <div class="flex-1 min-w-0">
-                <p class="text-[13px] font-black truncate" :class="darkMode ? 'text-white' : 'text-gray-800'">
+                <p class="text-[13px] font-black truncate" :class="localDark ? 'text-white' : 'text-gray-800'">
                   {{ stock.name ?? stock.ticker }}
                 </p>
                 <p class="text-[11px] truncate transition-colors duration-300"
-                   :class="darkMode ? 'text-white/35' : 'text-gray-400'">
+                   :class="localDark ? 'text-white/35' : 'text-gray-400'">
                   {{ stock.ticker }}{{ stock.sector ? ' · ' + stock.sector : '' }}
                 </p>
               </div>
@@ -176,7 +178,7 @@
               <div class="flex flex-col items-end gap-1 flex-shrink-0 w-16">
                 <span class="text-[13px] font-black text-[#c9a227]">{{ Math.round(stock.score) }}</span>
                 <div class="w-full h-1 rounded-full transition-colors duration-300"
-                     :class="darkMode ? 'bg-white/10' : 'bg-gray-100'">
+                     :class="localDark ? 'bg-white/10' : 'bg-gray-100'">
                   <div class="h-full rounded-full bg-gradient-to-r from-[#c9a227] to-[#9a7218]"
                        :style="{ width: Math.round(stock.score) + '%' }"></div>
                 </div>
@@ -191,7 +193,7 @@
 
             <div v-if="!filteredRecs.length"
                  class="text-center py-6 text-[13px] transition-colors duration-300"
-                 :class="darkMode ? 'text-white/25' : 'text-gray-300'">
+                 :class="localDark ? 'text-white/25' : 'text-gray-300'">
               해당 티어 종목이 없습니다
             </div>
           </div>
@@ -201,7 +203,7 @@
         <div>
           <div class="flex items-center justify-between mb-2.5">
             <p class="text-[11px] font-black uppercase tracking-[0.35em] transition-colors duration-300"
-               :class="darkMode ? 'text-white/30' : 'text-gray-400'">섹터별 현황</p>
+               :class="localDark ? 'text-white/30' : 'text-gray-400'">섹터별 현황</p>
           </div>
           <div v-if="sectorsLoading" class="flex justify-center py-4">
             <svg class="animate-spin w-5 h-5 text-[#c9a227]/60" viewBox="0 0 24 24" fill="none">
@@ -212,25 +214,25 @@
             <div
               v-for="sector in sectors" :key="sector.sector"
               class="rounded-xl border p-3 cursor-pointer hover:brightness-110 transition-all duration-150"
-              :class="darkMode ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-white border-gray-200 hover:border-gray-300'"
+              :class="localDark ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-white border-gray-200 hover:border-gray-300'"
               @click="emit('navigate', 'company')"
             >
               <p class="text-[12px] font-black truncate mb-2 transition-colors duration-300"
-                 :class="darkMode ? 'text-white/80' : 'text-gray-700'">{{ sector.sector }}</p>
+                 :class="localDark ? 'text-white/80' : 'text-gray-700'">{{ sector.sector }}</p>
               <div class="flex items-baseline gap-1 mb-1">
                 <span class="text-lg font-black text-[#c9a227]">{{ Math.round(sector.avg_score) }}</span>
                 <span class="text-[11px] transition-colors duration-300"
-                      :class="darkMode ? 'text-white/30' : 'text-gray-400'">점</span>
+                      :class="localDark ? 'text-white/30' : 'text-gray-400'">점</span>
               </div>
               <div class="w-full h-1 rounded-full mb-2 transition-colors duration-300"
-                   :class="darkMode ? 'bg-white/10' : 'bg-gray-100'">
+                   :class="localDark ? 'bg-white/10' : 'bg-gray-100'">
                 <div class="h-full rounded-full bg-gradient-to-r from-[#c9a227] to-[#9a7218]"
                      :style="{ width: Math.round(sector.avg_score) + '%' }"></div>
               </div>
               <div class="flex justify-between">
                 <span class="text-[11px] font-bold text-emerald-400">A {{ sector.a_tier_count ?? 0 }}종목</span>
                 <span class="text-[11px] transition-colors duration-300"
-                      :class="darkMode ? 'text-white/30' : 'text-gray-400'">전체 {{ sector.total_count ?? 0 }}</span>
+                      :class="localDark ? 'text-white/30' : 'text-gray-400'">전체 {{ sector.total_count ?? 0 }}</span>
               </div>
             </div>
           </div>
@@ -239,23 +241,23 @@
         <!-- ⑤ 주요 기능 -->
         <div>
           <p class="text-[11px] font-black uppercase tracking-[0.35em] mb-2.5 transition-colors duration-300"
-             :class="darkMode ? 'text-white/30' : 'text-gray-400'">주요 기능</p>
+             :class="localDark ? 'text-white/30' : 'text-gray-400'">주요 기능</p>
           <div class="flex flex-col gap-2">
             <button
               v-for="cta in ctas" :key="cta.id"
               class="flex items-center gap-3 rounded-xl border p-3.5 hover:brightness-110 transition-all duration-150 text-left w-full"
-              :class="darkMode ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-white border-gray-200 hover:border-gray-300'"
+              :class="localDark ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-white border-gray-200 hover:border-gray-300'"
               @click="emit('navigate', cta.target)"
             >
               <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
-                   :class="darkMode ? 'bg-white/8' : 'bg-gray-50'">{{ cta.icon }}</div>
+                   :class="localDark ? 'bg-white/8' : 'bg-gray-50'">{{ cta.icon }}</div>
               <div class="flex-1">
                 <p class="text-[11px] transition-colors duration-300"
-                   :class="darkMode ? 'text-white/35' : 'text-gray-400'">{{ cta.sub }}</p>
-                <p class="text-[14px] font-black" :class="darkMode ? 'text-white' : 'text-gray-800'">{{ cta.label }}</p>
+                   :class="localDark ? 'text-white/35' : 'text-gray-400'">{{ cta.sub }}</p>
+                <p class="text-[14px] font-black" :class="localDark ? 'text-white' : 'text-gray-800'">{{ cta.label }}</p>
               </div>
               <svg class="w-4 h-4 flex-shrink-0 transition-colors duration-300"
-                   :class="darkMode ? 'text-white/20' : 'text-gray-300'"
+                   :class="localDark ? 'text-white/20' : 'text-gray-300'"
                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
               </svg>
@@ -266,7 +268,7 @@
         <!-- ⑥ FAQ -->
         <div>
           <p class="text-[11px] font-black uppercase tracking-[0.35em] mb-2.5 transition-colors duration-300"
-             :class="darkMode ? 'text-white/30' : 'text-gray-400'">자주 묻는 질문</p>
+             :class="localDark ? 'text-white/30' : 'text-gray-400'">자주 묻는 질문</p>
 
           <!-- FAQ 카테고리 탭 -->
           <div class="flex gap-1.5 mb-2.5">
@@ -276,7 +278,7 @@
               class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all"
               :class="activeFaqCat === cat.id
                 ? 'bg-[#c9a227]/20 border border-[#c9a227]/40 text-[#c9a227]'
-                : (darkMode ? 'bg-white/5 border border-white/10 text-white/35 hover:text-white/55' : 'bg-white border border-gray-200 text-gray-400')"
+                : (localDark ? 'bg-white/5 border border-white/10 text-white/35 hover:text-white/55' : 'bg-white border border-gray-200 text-gray-400')"
             >{{ cat.label }}</button>
           </div>
 
@@ -285,14 +287,14 @@
             <div
               v-for="faq in currentFaqs" :key="faq.id"
               class="rounded-xl border overflow-hidden transition-colors duration-300"
-              :class="darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'"
+              :class="localDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'"
             >
               <button
                 class="w-full flex items-center justify-between px-4 py-3 text-left hover:brightness-105 transition-all"
                 @click="toggleFaq(faq.id)"
               >
                 <span class="text-[13px] font-bold pr-4 leading-snug"
-                      :class="darkMode ? 'text-white/80' : 'text-gray-700'">{{ faq.q }}</span>
+                      :class="localDark ? 'text-white/80' : 'text-gray-700'">{{ faq.q }}</span>
                 <span class="flex-shrink-0 text-[14px] font-bold text-[#c9a227]/70 transition-transform duration-200"
                       :style="activeFaq === faq.id ? 'transform: rotate(45deg)' : ''">＋</span>
               </button>
@@ -301,7 +303,7 @@
                 :style="activeFaq === faq.id ? 'max-height: 200px; opacity: 1' : 'max-height: 0; opacity: 0'"
               >
                 <p class="px-4 pb-3 text-[12px] leading-relaxed border-t transition-colors duration-300"
-                   :class="darkMode ? 'text-white/45 border-white/8' : 'text-gray-500 border-gray-100'">
+                   :class="localDark ? 'text-white/45 border-white/8' : 'text-gray-500 border-gray-100'">
                   {{ faq.a }}
                 </p>
               </div>
@@ -311,7 +313,7 @@
 
         <!-- 하단 면책 -->
         <p class="text-[10px] leading-relaxed text-center pb-2 transition-colors duration-300"
-           :class="darkMode ? 'text-white/20' : 'text-gray-300'">
+           :class="localDark ? 'text-white/20' : 'text-gray-300'">
           이 서비스가 제공하는 모든 정보는 투자 참고용으로만 제공되며 특정 주식 매매를 추천하거나<br>
           투자 결정의 유일한 근거로 사용되어서는 안 됩니다. 모든 투자에는 원금 손실 위험이 따릅니다.
         </p>
@@ -325,16 +327,16 @@
         <section v-for="section in infoSections" :key="section.title">
           <h3
             class="text-[11px] font-black uppercase tracking-[0.4em] mb-2.5 transition-colors duration-300"
-            :class="darkMode ? 'text-white/35' : 'text-gray-400'"
+            :class="localDark ? 'text-white/35' : 'text-gray-400'"
           >{{ section.title }}</h3>
           <div class="grid grid-cols-2 gap-2">
             <div
               v-for="row in section.rows" :key="row.label"
               class="rounded-xl p-3 border transition-colors duration-300"
-              :class="darkMode ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-white'"
+              :class="localDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-white'"
             >
               <p class="text-[10px] font-bold uppercase tracking-wider mb-1 transition-colors duration-300"
-                 :class="darkMode ? 'text-white/35' : 'text-gray-400'">{{ row.label }}</p>
+                 :class="localDark ? 'text-white/35' : 'text-gray-400'">{{ row.label }}</p>
               <p class="text-[14px] font-bold truncate">{{ row.value }}</p>
               <span
                 v-if="row.badge"
@@ -352,48 +354,48 @@
         <!-- 화면 설정 -->
         <section>
           <h3 class="text-[11px] font-black uppercase tracking-[0.4em] mb-2.5 transition-colors duration-300"
-              :class="darkMode ? 'text-white/35' : 'text-gray-400'">화면 설정</h3>
+              :class="localDark ? 'text-white/35' : 'text-gray-400'">화면 설정</h3>
           <div class="rounded-xl border overflow-hidden transition-colors duration-300"
-               :class="darkMode ? 'border-white/10' : 'border-gray-200'">
+               :class="localDark ? 'border-white/10' : 'border-gray-200'">
             <!-- 다크 모드 -->
             <div class="flex items-center justify-between p-4 transition-colors duration-300 border-b"
-                 :class="darkMode ? 'bg-white/5 border-white/8' : 'bg-white border-gray-100'">
+                 :class="localDark ? 'bg-white/5 border-white/8' : 'bg-white border-gray-100'">
               <div class="flex items-center gap-3">
-                <component :is="darkMode ? LucideMoon : LucideSun"
+                <component :is="localDark ? LucideMoon : LucideSun"
                            class="w-4 h-4"
-                           :class="darkMode ? 'text-blue-400' : 'text-amber-500'"/>
+                           :class="localDark ? 'text-blue-400' : 'text-amber-500'"/>
                 <div>
                   <p class="text-sm font-bold">다크 모드</p>
                   <p class="text-[12px] mt-0.5 transition-colors duration-300"
-                     :class="darkMode ? 'text-white/40' : 'text-gray-400'">어두운 배경으로 전환합니다</p>
+                     :class="localDark ? 'text-white/40' : 'text-gray-400'">어두운 배경으로 전환합니다</p>
                 </div>
               </div>
               <button
-                @click="$emit('toggle-dark-mode')"
+                @click="localDark = !localDark"
                 class="w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0 focus:outline-none"
-                :class="darkMode ? 'bg-blue-500' : 'bg-gray-300'"
+                :class="localDark ? 'bg-blue-500' : 'bg-gray-300'"
               >
                 <span
                   class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300"
-                  :class="darkMode ? 'left-[22px]' : 'left-0.5'"
+                  :class="localDark ? 'left-[22px]' : 'left-0.5'"
                 ></span>
               </button>
             </div>
             <!-- 메뉴바 고정 -->
             <div class="flex items-center justify-between p-4 transition-colors duration-300"
-                 :class="darkMode ? 'bg-white/5' : 'bg-white'">
+                 :class="localDark ? 'bg-white/5' : 'bg-white'">
               <div class="flex items-center gap-3">
                 <span class="text-[16px]">📌</span>
                 <div>
                   <p class="text-sm font-bold">메뉴바 고정</p>
                   <p class="text-[12px] mt-0.5 transition-colors duration-300"
-                     :class="darkMode ? 'text-white/40' : 'text-gray-400'">지갑 바·포트폴리오 카드를 항상 표시합니다</p>
+                     :class="localDark ? 'text-white/40' : 'text-gray-400'">지갑 바·포트폴리오 카드를 항상 표시합니다</p>
                 </div>
               </div>
               <button
                 @click="$emit('toggle-menu-lock')"
                 class="w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0 focus:outline-none"
-                :class="menuBarLocked ? 'bg-amber-500' : (darkMode ? 'bg-white/15' : 'bg-gray-300')"
+                :class="menuBarLocked ? 'bg-amber-500' : (localDark ? 'bg-white/15' : 'bg-gray-300')"
               >
                 <span
                   class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300"
@@ -407,26 +409,26 @@
         <!-- 알림 설정 -->
         <section>
           <h3 class="text-[11px] font-black uppercase tracking-[0.4em] mb-2.5 transition-colors duration-300"
-              :class="darkMode ? 'text-white/35' : 'text-gray-400'">알림 설정</h3>
+              :class="localDark ? 'text-white/35' : 'text-gray-400'">알림 설정</h3>
           <div class="rounded-xl border overflow-hidden transition-colors duration-300"
-               :class="darkMode ? 'border-white/10' : 'border-gray-200'">
+               :class="localDark ? 'border-white/10' : 'border-gray-200'">
             <div
               v-for="(notif, idx) in notifications" :key="notif.key"
               class="flex items-center justify-between p-4 transition-colors duration-300"
               :class="[
-                darkMode ? 'bg-white/5' : 'bg-white',
-                idx < notifications.length - 1 ? (darkMode ? 'border-b border-white/10' : 'border-b border-gray-100') : ''
+                localDark ? 'bg-white/5' : 'bg-white',
+                idx < notifications.length - 1 ? (localDark ? 'border-b border-white/10' : 'border-b border-gray-100') : ''
               ]"
             >
               <div>
                 <p class="text-sm font-bold">{{ notif.label }}</p>
                 <p class="text-[12px] mt-0.5 transition-colors duration-300"
-                   :class="darkMode ? 'text-white/40' : 'text-gray-400'">{{ notif.desc }}</p>
+                   :class="localDark ? 'text-white/40' : 'text-gray-400'">{{ notif.desc }}</p>
               </div>
               <button
                 @click="notif.enabled = !notif.enabled"
                 class="w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0 focus:outline-none"
-                :class="notif.enabled ? 'bg-blue-500' : (darkMode ? 'bg-white/15' : 'bg-gray-300')"
+                :class="notif.enabled ? 'bg-blue-500' : (localDark ? 'bg-white/15' : 'bg-gray-300')"
               >
                 <span
                   class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300"
@@ -440,19 +442,19 @@
         <!-- 앱 정보 -->
         <section>
           <h3 class="text-[11px] font-black uppercase tracking-[0.4em] mb-2.5 transition-colors duration-300"
-              :class="darkMode ? 'text-white/35' : 'text-gray-400'">앱 정보</h3>
+              :class="localDark ? 'text-white/35' : 'text-gray-400'">앱 정보</h3>
           <div class="rounded-xl border overflow-hidden transition-colors duration-300"
-               :class="darkMode ? 'border-white/10' : 'border-gray-200'">
+               :class="localDark ? 'border-white/10' : 'border-gray-200'">
             <div
               v-for="(item, idx) in appInfo" :key="item.label"
               class="flex justify-between items-center p-4 transition-colors duration-300"
               :class="[
-                darkMode ? 'bg-white/5' : 'bg-white',
-                idx < appInfo.length - 1 ? (darkMode ? 'border-b border-white/10' : 'border-b border-gray-100') : ''
+                localDark ? 'bg-white/5' : 'bg-white',
+                idx < appInfo.length - 1 ? (localDark ? 'border-b border-white/10' : 'border-b border-gray-100') : ''
               ]"
             >
               <span class="text-sm font-medium transition-colors duration-300"
-                    :class="darkMode ? 'text-white/55' : 'text-gray-500'">{{ item.label }}</span>
+                    :class="localDark ? 'text-white/55' : 'text-gray-500'">{{ item.label }}</span>
               <span class="text-sm font-bold">{{ item.value }}</span>
             </div>
           </div>
@@ -461,15 +463,15 @@
         <!-- 연결된 소셜 계정 -->
         <section>
           <h3 class="text-[11px] font-black uppercase tracking-[0.4em] mb-2.5 transition-colors duration-300"
-              :class="darkMode ? 'text-white/35' : 'text-gray-400'">연결된 소셜 계정</h3>
+              :class="localDark ? 'text-white/35' : 'text-gray-400'">연결된 소셜 계정</h3>
           <div class="rounded-xl border overflow-hidden transition-colors duration-300"
-               :class="darkMode ? 'border-white/10' : 'border-gray-200'">
+               :class="localDark ? 'border-white/10' : 'border-gray-200'">
             <div
               v-for="(provider, idx) in socialProviders" :key="provider.id"
               class="flex items-center justify-between p-4 transition-colors duration-300"
               :class="[
-                darkMode ? 'bg-white/5' : 'bg-white',
-                idx < socialProviders.length - 1 ? (darkMode ? 'border-b border-white/10' : 'border-b border-gray-100') : ''
+                localDark ? 'bg-white/5' : 'bg-white',
+                idx < socialProviders.length - 1 ? (localDark ? 'border-b border-white/10' : 'border-b border-gray-100') : ''
               ]"
             >
               <div class="flex items-center gap-3">
@@ -480,7 +482,7 @@
                 <div>
                   <p class="text-sm font-bold">{{ provider.label }}</p>
                   <p class="text-[12px] transition-colors duration-300"
-                     :class="provider.linked ? 'text-green-500' : (darkMode ? 'text-white/30' : 'text-gray-400')"
+                     :class="provider.linked ? 'text-green-500' : (localDark ? 'text-white/30' : 'text-gray-400')"
                   >{{ provider.linked ? '연결됨' : '연결되지 않음' }}</p>
                 </div>
               </div>
@@ -489,8 +491,8 @@
                 :disabled="provider.loading"
                 class="px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 :class="provider.linked
-                  ? (darkMode ? 'bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20' : 'bg-red-50 border border-red-200 text-red-500 hover:bg-red-100')
-                  : (darkMode ? 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50')"
+                  ? (localDark ? 'bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20' : 'bg-red-50 border border-red-200 text-red-500 hover:bg-red-100')
+                  : (localDark ? 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50')"
               >
                 {{ provider.loading ? '처리 중...' : (provider.linked ? '연결 해제' : '연결하기') }}
               </button>
@@ -502,19 +504,19 @@
         <!-- 계정 -->
         <section>
           <h3 class="text-[11px] font-black uppercase tracking-[0.4em] mb-2.5 transition-colors duration-300"
-              :class="darkMode ? 'text-white/35' : 'text-gray-400'">계정</h3>
+              :class="localDark ? 'text-white/35' : 'text-gray-400'">계정</h3>
           <div class="rounded-xl border overflow-hidden transition-colors duration-300"
-               :class="darkMode ? 'border-white/10' : 'border-gray-200'">
+               :class="localDark ? 'border-white/10' : 'border-gray-200'">
 
             <!-- 로그인 정보 -->
             <div class="flex items-center justify-between p-4 transition-colors duration-300"
-                 :class="[darkMode ? 'bg-white/5 border-b border-white/10' : 'bg-white border-b border-gray-100']">
+                 :class="[localDark ? 'bg-white/5 border-b border-white/10' : 'bg-white border-b border-gray-100']">
               <div class="flex items-center gap-3">
-                <LucideLogOut class="w-4 h-4 flex-shrink-0" :class="darkMode ? 'text-white/40' : 'text-gray-400'"/>
+                <LucideLogOut class="w-4 h-4 flex-shrink-0" :class="localDark ? 'text-white/40' : 'text-gray-400'"/>
                 <div>
                   <p class="text-sm font-bold">{{ auth.nickname || '사용자' }}</p>
                   <p class="text-[12px] mt-0.5 transition-colors duration-300"
-                     :class="darkMode ? 'text-white/38' : 'text-gray-400'">현재 로그인 중</p>
+                     :class="localDark ? 'text-white/38' : 'text-gray-400'">현재 로그인 중</p>
                 </div>
               </div>
               <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-500/15 text-green-500 border border-green-500/25">
@@ -524,14 +526,14 @@
 
             <!-- 로그아웃 버튼 -->
             <div class="p-4 transition-colors duration-300"
-                 :class="darkMode ? 'bg-white/5' : 'bg-white'">
+                 :class="localDark ? 'bg-white/5' : 'bg-white'">
               <button
                 @click="handleLogout"
                 :disabled="logoutLoading"
                 class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 border"
                 :class="logoutLoading
                   ? 'opacity-50 cursor-not-allowed border-red-500/20 text-red-400/50'
-                  : (darkMode
+                  : (localDark
                       ? 'bg-red-500/10 border-red-500/25 text-red-400 hover:bg-red-500/20 hover:border-red-500/40'
                       : 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100')"
               >
@@ -559,10 +561,12 @@ import { useAuthStore } from '@/stores/auth.js';
 
 defineProps({
   user:          { type: Object,  default: () => ({}) },
-  darkMode:      { type: Boolean, default: true },
   menuBarLocked: { type: Boolean, default: false },
 });
-const emit = defineEmits(['toggle-dark-mode', 'navigate', 'toggle-menu-lock']);
+const emit = defineEmits(['navigate', 'toggle-menu-lock']);
+
+// 신분증 테마: 로컬 다크모드 (기본 OFF = 라이트)
+const localDark = ref(false);
 
 const auth = useAuthStore();
 

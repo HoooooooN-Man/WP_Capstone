@@ -17,7 +17,7 @@
           <LucideChevronLeft class="w-5 h-5" />
         </button>
         <h2 class="text-3xl font-black tracking-tighter uppercase">
-          {{ detailCompany ? detailCompany.name : 'Company List' }}
+          {{ detailCompany ? detailCompany.name : '종목 리스트' }}
         </h2>
         <div v-if="replaceMode && !detailCompany" class="px-2.5 py-1 bg-emerald-500/25 rounded-full border border-emerald-500/40">
           <span class="text-[12px] text-emerald-300 font-bold uppercase tracking-wider">교체 선택 중</span>
@@ -192,14 +192,12 @@
               </div>
               <p class="text-[11px] text-white/40">{{ company.sector }}</p>
             </div>
-            <div class="flex flex-col items-center flex-shrink-0 min-w-[36px]">
-              <p class="text-[7px] text-white/30 uppercase tracking-wide">Quant</p>
-              <p class="text-sm font-black" :class="quantTextColor(company.quantScore)">{{ company.quantScore }}</p>
-              <div class="w-6 h-0.5 bg-black/30 rounded-full overflow-hidden mt-0.5">
-                <div class="h-full rounded-full" :class="quantBarColor(company.quantScore)"
-                     :style="{ width: company.quantScore + '%' }"></div>
-              </div>
-            </div>
+            <svg viewBox="0 0 56 28" class="w-12 h-6 flex-shrink-0">
+              <polyline :points="miniSparkline(company.ticker, company.change)"
+                        fill="none"
+                        :stroke="company.change >= 0 ? '#34d399' : '#f87171'"
+                        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
             <div class="text-right flex-shrink-0">
               <p class="text-sm font-bold">₩{{ company.price.toLocaleString() }}</p>
               <p class="text-[12px] font-semibold"
@@ -2038,6 +2036,16 @@ const cashflowRows = computed(() => {
 const maxOperating = computed(() =>
   finData.value ? Math.max(...finData.value.cashflow.map(d => d.operating)) : 1
 );
+
+function miniSparkline(ticker, change) {
+  const seed = ticker.split('').reduce((s, c) => s + c.charCodeAt(0), 0)
+  const trend = (change ?? 0) > 0 ? 1 : -1
+  return Array.from({ length: 9 }, (_, i) => {
+    const noise = Math.sin(i * 1.1 + seed * 0.07) * 8
+    const y = 14 - trend * i * 0.8 + noise
+    return `${i * 7},${Math.max(2, Math.min(26, y)).toFixed(1)}`
+  }).join(' ')
+}
 </script>
 
 <style scoped>

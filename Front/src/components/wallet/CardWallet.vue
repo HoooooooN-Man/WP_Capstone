@@ -31,8 +31,7 @@
       <transition name="fade-scale">
         <ProfileView   v-if="activeCard === 'profile'"   key="profile"
           class="absolute inset-0"
-          :user="user" :dark-mode="darkMode" :menu-bar-locked="menuBarLocked"
-          @toggle-dark-mode="darkMode = !darkMode"
+          :user="user" :menu-bar-locked="menuBarLocked"
           @toggle-menu-lock="toggleMenuLock"
           @navigate="activeCard = $event" />
         <FlashCardView v-else-if="activeCard === 'feed'" key="feed"
@@ -120,15 +119,18 @@
             <div class="w-[74%] flex-1 relative">
               <div
                 @click="activeCard = 'profile'"
-                class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] bg-gradient-to-br from-[#fcfbf7] to-[#e6e2d3] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-3"
+                class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2.5 overflow-hidden"
+                style="background: linear-gradient(135deg, #f7f4ee 0%, #e8e2d4 100%);"
                 :class="activeCard === 'profile' ? '-translate-y-1' : 'hover:-translate-y-1'"
               >
-                <div class="w-6 h-6 rounded bg-black/5 flex items-center justify-center flex-shrink-0">
-                  <LucideUser class="w-3.5 h-3.5 text-black/60" />
+                <!-- 신분증 컬러 스트라이프 -->
+                <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[#1a3a6b] via-[#c9a227] to-[#1a3a6b] flex-shrink-0"></div>
+                <div class="w-6 h-6 rounded bg-black/6 flex items-center justify-center flex-shrink-0 ml-1">
+                  <LucideUser class="w-3.5 h-3.5 text-black/55" />
                 </div>
                 <div class="flex flex-col justify-center min-w-0">
                   <span class="text-[13px] font-bold text-gray-800 leading-tight truncate">{{ user.name || 'User' }}</span>
-                  <span class="text-[11px] text-gray-500 font-medium leading-tight">Personal ID</span>
+                  <span class="text-[10px] font-bold text-gray-400 leading-tight tracking-widest uppercase" style="font-family:sans-serif;">Personal ID</span>
                 </div>
               </div>
               <div class="absolute bottom-0 w-full h-[4px] bg-[#090705] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] pointer-events-none rounded-b-sm"></div>
@@ -138,11 +140,15 @@
             <div class="w-[74%] flex-1 relative">
               <div
                 @click="activeCard = 'feed'"
-                class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] bg-gradient-to-br from-[#2edc68] to-[#1cb550] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2"
+                class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2 overflow-hidden"
+                style="background: linear-gradient(135deg, #f0e8d0 0%, #e4dcc4 100%); border-top: 2px solid #1a1209;"
                 :class="activeCard === 'feed' ? '-translate-y-2' : 'hover:-translate-y-2'"
               >
-                <LucideSparkles class="w-4 h-4 text-white/90 flex-shrink-0" />
-                <span class="text-[13px] font-bold text-white tracking-wide">Latest Feed</span>
+                <LucideNewspaper class="w-4 h-4 flex-shrink-0" style="color:#1a1209; opacity:0.6;" />
+                <div class="flex flex-col justify-center min-w-0">
+                  <span class="text-[9px] font-bold tracking-widest uppercase leading-none" style="color:#999; font-family:sans-serif;">Latest</span>
+                  <span class="text-[13px] font-black text-gray-800 leading-tight tracking-tight" style="font-family:Georgia,serif;">Feed</span>
+                </div>
               </div>
               <div class="absolute bottom-0 left-0 right-0 h-[8px] pointer-events-none z-[24]"
                    style="background: linear-gradient(to bottom, #181208, #0f0c06)"></div>
@@ -162,7 +168,7 @@
                 :class="activeCard === 'company' ? '-translate-y-1' : 'hover:-translate-y-1'"
               >
                 <LucideBuilding2 class="w-4 h-4 text-blue-200 flex-shrink-0" />
-                <span class="text-[13px] font-bold text-gray-100 tracking-wide">Company List</span>
+                <span class="text-[13px] font-bold text-gray-100 tracking-wide">종목 리스트</span>
               </div>
               <div class="absolute bottom-0 w-full h-[4px] bg-[#090705] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] pointer-events-none rounded-b-sm"></div>
             </div>
@@ -238,7 +244,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { LucideUser, LucideSparkles, LucideBuilding2, LucideFolder, LucideLayoutList } from 'lucide-vue-next'
+import { LucideUser, LucideSparkles, LucideBuilding2, LucideFolder, LucideLayoutList, LucideNewspaper } from 'lucide-vue-next'
 import ProfileView   from '@/components/views/ProfileView.vue'
 import FlashCardView from '@/components/views/FlashCardView.vue'
 import CompanyView   from '@/components/views/CompanyView.vue'

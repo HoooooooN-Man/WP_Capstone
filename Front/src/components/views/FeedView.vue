@@ -1,51 +1,90 @@
 <template>
-  <div class="w-full h-full bg-gradient-to-br from-[#1a1f1a] to-[#0e120e] rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden border border-white/10 text-white">
+  <div class="w-full h-full rounded-[2rem] flex flex-col overflow-hidden border border-black/20"
+       style="background: #f0e8d0; color: #1a1209; font-family: Georgia, 'Times New Roman', serif;">
 
-    <!-- 헤더 -->
-    <div class="px-5 pt-4 pb-3 border-b border-white/10 flex-shrink-0 flex items-center justify-between">
-      <div>
-        <p class="text-[13px] text-white/40 uppercase tracking-widest mb-0.5">AI Market Intelligence</p>
-        <h2 class="text-2xl font-black tracking-tighter uppercase">Latest Feed</h2>
+    <!-- 마스트헤드 -->
+    <div class="flex-shrink-0 px-5 pt-3 pb-0" style="border-bottom: 3px double #1a1209;">
+      <div class="flex items-center justify-between mb-1" style="font-family: sans-serif;">
+        <span class="text-[10px] tracking-widest uppercase" style="color: #888;">AI Market Intelligence</span>
+        <span class="text-[10px] tracking-widest" style="color: #888;">{{ recDate || '' }}</span>
       </div>
-      <div class="flex items-center gap-2">
-        <span v-if="!loading" class="text-[13px] text-white/30">{{ recDate }}</span>
-        <div class="px-2.5 py-1 bg-green-500/20 rounded-full border border-green-500/40">
-          <span class="text-[14px] text-green-300 font-bold uppercase tracking-wider">LIVE</span>
+      <h1 class="text-center font-black py-1.5 tracking-tight"
+          style="font-size: 26px; letter-spacing: -0.02em; border-top: 2px solid #1a1209; border-bottom: 1px solid #1a1209;">
+        MARKET GAZETTE
+      </h1>
+      <div class="flex items-center justify-between py-1.5" style="font-family: sans-serif; border-bottom: 2px solid #1a1209;">
+        <span class="text-[10px]" style="color: #666;">AI 추천 종목 뉴스레터 · Wallet Protector</span>
+        <div v-if="!loading" class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse inline-block"></span>
+          <span class="text-[10px] font-bold uppercase tracking-widest" style="color: #2d6a2d; font-family: sans-serif;">LIVE</span>
         </div>
+        <span v-else class="text-[10px] italic" style="color: #888; font-family: sans-serif;">취재 중...</span>
       </div>
     </div>
 
     <!-- 로딩 -->
     <div v-if="loading" class="flex-1 flex items-center justify-center">
-      <svg class="animate-spin w-6 h-6 text-[#c9a227]/50" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"
-                stroke-dasharray="60" stroke-dashoffset="20" stroke-linecap="round"/>
-      </svg>
+      <p class="text-[14px] italic" style="color: #888;">시황을 분석 중입니다...</p>
     </div>
 
-    <!-- 피드 리스트 -->
-    <div v-else class="flex-1 overflow-y-auto px-3 py-3 space-y-2">
-      <div
-        v-for="item in feeds" :key="item.id"
-        class="p-3 rounded-xl bg-white/5 border border-white/8 hover:bg-white/8 transition-colors"
-      >
-        <div class="flex items-start justify-between gap-3 mb-1.5">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="badge" :class="tierBadgeColor(item.tier)">{{ item.tier }}-TIER</span>
-            <span class="badge" :class="categoryColor(item.category)">{{ item.category }}</span>
-            <span v-if="item.ticker" class="text-[13px] text-white/30 font-mono">{{ item.ticker }}</span>
-          </div>
-          <div class="flex items-center gap-2 flex-shrink-0">
-            <span class="text-[13px] font-bold text-[#c9a227]">{{ item.score }}점</span>
-            <span class="text-[13px] text-white/25">{{ item.time }}</span>
-          </div>
+    <!-- 기사 리스트 -->
+    <div v-else class="flex-1 overflow-y-auto">
+
+      <!-- 헤드라인 (첫 번째 A티어) -->
+      <div v-if="topArticle" class="px-5 py-3" style="border-bottom: 2px solid #c8b89a; background: #ece3c5;">
+        <div class="flex items-center gap-2 mb-1.5" style="font-family: sans-serif;">
+          <span class="text-[9px] font-black px-1.5 py-0.5 uppercase tracking-widest text-white"
+                :style="{ background: tierColor(topArticle.tier) }">
+            {{ topArticle.tier }}-TIER
+          </span>
+          <span class="text-[10px] font-black uppercase tracking-wider" style="color: #9a6e10; font-family: sans-serif;">
+            {{ topArticle.category }}
+          </span>
+          <span class="ml-auto text-[12px] font-black" style="color: #9a6e10; font-family: sans-serif;">
+            {{ topArticle.score }}점
+          </span>
         </div>
-        <p class="text-[14px] font-bold leading-snug">{{ item.title }}</p>
-        <p class="text-[14px] text-white/45 mt-0.5 leading-snug">{{ item.body }}</p>
+        <h2 class="font-black leading-tight mb-2" style="font-size: 18px;">{{ topArticle.title }}</h2>
+        <p class="leading-relaxed" style="font-size: 12px; color: #5a4020;">{{ topArticle.body }}</p>
+        <p class="mt-1.5 text-[10px] font-mono" style="color: #aaa; font-family: sans-serif;">{{ topArticle.ticker }}</p>
       </div>
 
-      <div v-if="!feeds.length" class="flex items-center justify-center py-12 text-white/25 text-sm">
-        데이터를 불러오는 중입니다
+      <!-- 나머지 기사 -->
+      <div
+        v-for="(item, idx) in restArticles" :key="item.id"
+        class="px-5 py-2.5"
+        :style="idx < restArticles.length - 1 ? 'border-bottom: 1px solid #d4c8a8;' : ''"
+      >
+        <div class="flex items-start gap-3">
+          <!-- 티어 컬럼 -->
+          <div class="flex-shrink-0 pt-0.5">
+            <span class="text-[9px] font-black px-1 py-0.5 uppercase tracking-widest text-white"
+                  :style="{ background: tierColor(item.tier) }">
+              {{ item.tier }}
+            </span>
+          </div>
+          <!-- 기사 본문 -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 mb-0.5" style="font-family: sans-serif;">
+              <span class="text-[10px] font-bold uppercase tracking-wider" style="color: #888;">{{ item.category }}</span>
+              <span class="text-[10px] font-mono" style="color: #bbb;">{{ item.ticker }}</span>
+              <span class="ml-auto text-[11px] font-black flex-shrink-0" style="color: #9a6e10; font-family: sans-serif;">{{ item.score }}점</span>
+            </div>
+            <h3 class="font-black leading-snug mb-0.5" style="font-size: 13px;">{{ item.title }}</h3>
+            <p class="leading-relaxed line-clamp-2" style="font-size: 11px; color: #6a5030;">{{ item.body }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="!feeds.length" class="flex items-center justify-center py-12">
+        <p class="text-[13px] italic" style="color: #aaa">기사를 불러오는 중입니다...</p>
+      </div>
+
+      <!-- 푸터 -->
+      <div class="px-5 py-3 text-center" style="border-top: 2px double #1a1209; font-family: sans-serif;">
+        <p class="text-[9px] uppercase tracking-widest" style="color: #aaa;">
+          본 뉴스레터는 AI 분석 기반으로 투자 권유가 아닙니다
+        </p>
       </div>
     </div>
   </div>
@@ -59,7 +98,6 @@ const loading = ref(true)
 const recDate = ref('')
 const rawItems = ref([])
 
-// 추천 데이터를 피드 형태로 변환
 const feeds = computed(() => {
   return rawItems.value.map((item, idx) => {
     const tier    = item.tier ?? 'C'
@@ -96,6 +134,9 @@ const feeds = computed(() => {
   })
 })
 
+const topArticle  = computed(() => feeds.value.find(f => f.tier === 'A') ?? feeds.value[0] ?? null)
+const restArticles = computed(() => feeds.value.filter(f => f !== topArticle.value))
+
 async function load() {
   loading.value = true
   try {
@@ -111,17 +152,10 @@ async function load() {
 
 onMounted(load)
 
-const tierBadgeColor = (tier) => ({
-  A: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/35',
-  B: 'bg-blue-500/20 text-blue-300 border border-blue-500/35',
-  C: 'bg-amber-500/20 text-amber-300 border border-amber-500/35',
-  D: 'bg-red-500/20 text-red-300 border border-red-500/35',
-}[tier] ?? 'bg-white/10 text-white/50 border border-white/20')
-
-const categoryColor = (cat) => {
-  if (['TOP PICK', 'STRONG BUY', 'HOT'].includes(cat)) return 'badge-gold'
-  if (['BUY', 'WATCH', 'TRENDING'].includes(cat))       return 'badge-green'
-  if (['NEUTRAL', 'HOLD', 'MARKET'].includes(cat))      return 'bg-blue-500/20 text-blue-300 border border-blue-500/35'
-  return 'bg-red-500/15 text-red-300 border border-red-500/30'
-}
+const tierColor = (tier) => ({
+  A: '#065f46',
+  B: '#1e3a8a',
+  C: '#92400e',
+  D: '#991b1b',
+}[tier] ?? '#374151')
 </script>
