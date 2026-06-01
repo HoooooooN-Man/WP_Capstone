@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-full h-full rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden border transition-colors duration-300"
+    class="w-full h-full flex flex-col relative overflow-hidden transition-colors duration-300"
     :class="localDark ? 'bg-[#0f1520] border-white/10 text-gray-100' : 'bg-[#f7f4ee] border-black/12 text-gray-800'"
   >
     <!-- 신분증 상단 컬러 스트라이프 -->
@@ -35,8 +35,8 @@
     <!-- ───────────────────────────────────── -->
     <div class="flex-1 overflow-y-auto z-10">
 
-      <!-- ══════════ 홈 탭 ══════════ -->
-      <div v-if="activeTab === 'home'" class="p-4 lg:p-5 flex flex-col gap-4">
+      <!-- ══════════ 홈 탭 (제거됨) ══════════ -->
+      <div v-if="false" class="hidden">
 
         <!-- ① AI 마켓 스코어 + 사용자 인사 -->
         <div class="flex gap-3">
@@ -323,7 +323,7 @@
 
 
       <!-- ══════════ 회원정보 탭 ══════════ -->
-      <div v-else-if="activeTab === 'info'" class="p-5 lg:p-6 flex flex-col gap-5">
+      <div v-if="activeTab === 'info'" class="p-5 lg:p-6 flex flex-col gap-5">
         <section v-for="section in infoSections" :key="section.title">
           <h3
             class="text-[11px] font-black uppercase tracking-[0.4em] mb-2.5 transition-colors duration-300"
@@ -553,7 +553,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
-import { LucideHome, LucideInfo, LucideSettings, LucideMoon, LucideSun, LucideLogOut } from 'lucide-vue-next';
+import { LucideInfo, LucideSettings, LucideMoon, LucideSun, LucideLogOut } from 'lucide-vue-next';
 import authApi  from '@/api/auth.js';
 import dbapi    from '@/api/dbapi.js';
 import { stocksApi } from '@/api/stocks.js';
@@ -571,9 +571,8 @@ const localDark = ref(false);
 const auth = useAuthStore();
 
 // ── 탭 ──────────────────────────────────────────────────────
-const activeTab = ref('home');
+const activeTab = ref('info');
 const TABS = [
-  { id: 'home',     label: '홈',    icon: LucideHome     },
   { id: 'info',     label: '회원정보', icon: LucideInfo  },
   { id: 'settings', label: '설정',  icon: LucideSettings },
 ];

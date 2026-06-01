@@ -31,7 +31,7 @@
     </transition>
 
     <!-- 카드 + 버튼 영역 (높이 고정) -->
-    <div class="relative" style="height:210px">
+    <div class="relative" style="height:230px">
 
       <!-- 부채꼴 카드들 -->
       <div v-for="(item, i) in displayItems" :key="item.id"
@@ -45,6 +45,10 @@
            @touchstart.prevent="(e) => onCardDown(i, e)"
            @touchmove.prevent="(e) => onCardMove(i, e)"
            @touchend.prevent="() => onCardUp(i)">
+
+        <!-- 퀀트 스코어 경고 테두리 (< 45점) -->
+        <div v-if="!item.isOverview && (item.quantScore ?? 50) < 45"
+             class="warn-border absolute inset-0 rounded-2xl pointer-events-none z-[60]"></div>
 
         <!-- 오버뷰 카드 -->
         <div v-if="item.isOverview" class="relative h-full flex flex-col justify-between p-2.5">
@@ -174,13 +178,13 @@ const effectiveFanVisible = computed(() => props.walletLocked || fanVisible.valu
 watch(effectiveFanVisible, (v) => emit('fan-open', v), { immediate: true })
 
 // ── 카드 포지셔닝 상수 ─────────────────────────────
-const BTN_BOTTOM   = 22
+const BTN_BOTTOM   = 26
 const BTN_SIZE     = 50
 const BTN_CENTER_Y = BTN_BOTTOM + BTN_SIZE / 2
 
-const CARD_W     = 74
-const CARD_H     = 114
-const FAN_RADIUS = 108
+const CARD_W     = 84
+const CARD_H     = 128
+const FAN_RADIUS = 118
 const ANGLE_STEP = 27
 
 // ── 색상 헬퍼 (불투명 카드용) ──────────────────────
@@ -333,4 +337,18 @@ onUnmounted(() => clearLP())
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from,  .fade-leave-to      { opacity: 0; }
+
+@keyframes warn-pulse {
+  0%, 100% {
+    box-shadow: inset 0 0 0 1.5px rgba(248,113,113,0.55),
+                0 0 10px rgba(248,113,113,0.2);
+  }
+  50% {
+    box-shadow: inset 0 0 0 2.5px rgba(248,113,113,1),
+                0 0 22px rgba(248,113,113,0.55);
+  }
+}
+.warn-border {
+  animation: warn-pulse 1.6s ease-in-out infinite;
+}
 </style>

@@ -1,6 +1,6 @@
 <template>
-  <div class="w-full h-full overflow-hidden relative select-none text-white"
-       style="background: linear-gradient(160deg, #1a2e4a 0%, #0e1d30 100%)">
+  <div class="w-full h-full overflow-hidden relative select-none"
+       style="background: #ede4d0; color: #2c1f0e;">
 
     <!-- 스크롤 메인 컨텐츠 -->
     <div class="absolute inset-0 overflow-y-auto" style="scrollbar-width:thin;padding-bottom:12px">
@@ -14,14 +14,14 @@
             <div v-if="!editingName"
                  class="flex items-center gap-2 cursor-pointer group"
                  @dblclick="startNameEdit">
-              <h1 class="text-[18px] font-black text-white leading-none">{{ portfolioName }}</h1>
-              <LucidePencil class="w-3 h-3 text-white/15 group-hover:text-white/40 transition-colors" />
+              <h1 class="text-[18px] font-black leading-none" style="color:#2c1f0e">{{ portfolioName }}</h1>
+              <LucidePencil class="w-3 h-3 transition-colors" style="color:rgba(44,31,14,0.3)" />
             </div>
             <input v-else
                    ref="nameInput"
                    v-model="portfolioNameInput"
-                   class="text-[18px] font-black bg-transparent border-b-2 border-[#c9a227] focus:outline-none text-white leading-none"
-                   style="min-width:160px; max-width:280px"
+                   class="text-[18px] font-black bg-transparent border-b-2 border-[#c9a227] focus:outline-none leading-none"
+                   style="color:#2c1f0e;min-width:160px;max-width:280px"
                    @keyup.enter="confirmNameEdit"
                    @keyup.escape="editingName = false"
                    @blur="confirmNameEdit"
@@ -33,9 +33,9 @@
 
             <!-- 총자산 -->
             <div class="rounded-2xl p-3.5 flex flex-col gap-1"
-                 style="background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.25)">
-              <p class="text-[9px] font-black uppercase tracking-widest text-white/40">총 자산</p>
-              <p class="text-[17px] font-black text-white leading-tight">
+                 style="background:rgba(201,162,39,0.10);border:1px solid rgba(201,162,39,0.35)">
+              <p class="text-[9px] font-black uppercase tracking-widest" style="color:rgba(44,31,14,0.55)">총 자산</p>
+              <p class="text-[17px] font-black leading-tight" style="color:#2c1f0e">
                 {{ formatKRW(totalAssets) }}
               </p>
               <div class="flex items-center gap-1 mt-0.5">
@@ -52,12 +52,12 @@
 
             <!-- 투자 금액 -->
             <div class="rounded-2xl p-3.5 flex flex-col gap-1"
-                 style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
-              <p class="text-[9px] font-black uppercase tracking-widest text-white/40">투자 금액</p>
+                 style="background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.12)">
+              <p class="text-[9px] font-black uppercase tracking-widest" style="color:rgba(44,31,14,0.55)">투자 금액</p>
               <div v-if="!editingAmount"
                    class="flex items-center gap-1.5 cursor-pointer group"
                    @click="startEdit">
-                <p class="text-[17px] font-black text-white leading-tight">{{ formatKRW(investmentAmount) }}</p>
+                <p class="text-[17px] font-black leading-tight" style="color:#2c1f0e">{{ formatKRW(investmentAmount) }}</p>
                 <LucidePencil class="w-3 h-3 text-white/20 group-hover:text-white/50 transition-colors" />
               </div>
               <div v-else class="flex flex-col gap-1.5">
@@ -71,39 +71,39 @@
                   @blur="confirmAmount"
                 />
               </div>
-              <p class="text-[9px] text-white/25">탭하여 수정</p>
+              <p class="text-[9px]" style="color:rgba(44,31,14,0.4)">탭하여 수정</p>
             </div>
 
             <!-- 종목 구성 파이 차트 -->
             <div class="rounded-2xl p-3.5 flex flex-col items-center gap-1.5"
-                 style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
-              <p class="text-[9px] font-black uppercase tracking-widest text-white/40 self-start">종목 구성</p>
+                 style="background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.12)">
+              <p class="text-[9px] font-black uppercase tracking-widest self-start" style="color:rgba(44,31,14,0.55)">종목 구성</p>
               <svg v-if="pieSegments.length" viewBox="0 0 80 80" class="w-14 h-14 -mt-0.5">
                 <path v-for="(seg, i) in pieSegments" :key="i" :d="seg.d" :fill="seg.color" />
-                <circle cx="40" cy="40" r="16" fill="rgba(14,29,48,0.9)" />
-                <text x="40" y="44" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="9" font-weight="bold">
+                <circle cx="40" cy="40" r="16" fill="rgba(237,228,208,0.95)" />
+                <text x="40" y="44" text-anchor="middle" fill="rgba(44,31,14,0.7)" font-size="9" font-weight="bold">
                   {{ activeStocks.length }}종
                 </text>
               </svg>
               <div v-else class="w-14 h-14 rounded-full flex items-center justify-center"
                    style="background:rgba(255,255,255,0.06)">
-                <span class="text-[10px] text-white/25">없음</span>
+                <span class="text-[10px]" style="color:rgba(44,31,14,0.4)">없음</span>
               </div>
             </div>
           </div>
 
           <!-- ② 포트폴리오 추이 라인 차트 -->
           <div class="rounded-2xl px-4 py-3.5"
-               style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+               style="background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.10)">
             <div class="flex items-center justify-between mb-2.5">
-              <p class="text-[10px] font-black uppercase tracking-widest text-white/35">포트폴리오 추이</p>
-              <span class="text-[10px] text-white/25">수익률 변화</span>
+              <p class="text-[10px] font-black uppercase tracking-widest" style="color:rgba(44,31,14,0.5)">포트폴리오 추이</p>
+              <span class="text-[10px]" style="color:rgba(44,31,14,0.4)">수익률 변화</span>
             </div>
             <svg viewBox="0 0 380 90" class="w-full" style="height:72px">
               <!-- 그리드 -->
-              <line x1="0" y1="45" x2="380" y2="45" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-              <line x1="0" y1="20" x2="380" y2="20" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-              <line x1="0" y1="70" x2="380" y2="70" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+              <line x1="0" y1="45" x2="380" y2="45" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+              <line x1="0" y1="20" x2="380" y2="20" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+              <line x1="0" y1="70" x2="380" y2="70" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
               <!-- 면적 채우기 -->
               <polygon :points="trendAreaPoints" fill="url(#trendGrad)" />
               <!-- 라인 -->
@@ -119,16 +119,16 @@
             <!-- x축 라벨 -->
             <div class="flex justify-between mt-1">
               <span v-for="label in trendLabels" :key="label"
-                    class="text-[8px] text-white/20">{{ label }}</span>
+                    class="text-[8px]" style="color:rgba(44,31,14,0.35)">{{ label }}</span>
             </div>
           </div>
 
           <!-- ③ 보유 종목 리스트 -->
           <div>
-            <p class="text-[10px] font-black uppercase tracking-widest text-white/35 mb-2.5">보유 종목</p>
+            <p class="text-[10px] font-black uppercase tracking-widest mb-2.5" style="color:rgba(44,31,14,0.5)">보유 종목</p>
             <div v-if="!activeStocks.length"
-                 class="rounded-xl py-8 text-center text-[13px] text-white/25"
-                 style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">
+                 class="rounded-xl py-8 text-center text-[13px]"
+                 style="color:rgba(44,31,14,0.4);background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.08)">
               팬 메뉴에서 종목을 추가해주세요
             </div>
             <div v-else class="flex flex-col gap-2">
@@ -153,13 +153,6 @@
                     비중 {{ activeStocks.length ? (100 / activeStocks.length).toFixed(1) : 0 }}%
                   </p>
                 </div>
-                <!-- 미니 스파크라인 -->
-                <svg viewBox="0 0 56 28" class="w-12 h-6 flex-shrink-0">
-                  <polyline :points="miniChart(stock.ticker, stock.change)"
-                            fill="none"
-                            :stroke="stock.change >= 0 ? '#34d399' : '#f87171'"
-                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
                 <LucideChevronRight class="w-4 h-4 text-white/20 flex-shrink-0" />
               </div>
             </div>
@@ -167,7 +160,7 @@
 
           <!-- AI 추천 포트폴리오 (접기 가능) -->
           <div>
-            <button class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white/50 transition-colors mb-2"
+            <button class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest mb-2 transition-colors" style="color:rgba(44,31,14,0.45)"
                     @click="aiOpen = !aiOpen">
               <span>AI 추천 포트폴리오</span>
               <span>{{ aiOpen ? '▲' : '▼' }}</span>
@@ -556,17 +549,6 @@ const trendLabels = computed(() => {
     return `M${idx + 1}`
   })
 })
-
-// ── 미니 스파크라인 ──
-function miniChart(ticker, change) {
-  const seed = ticker.split('').reduce((s, c) => s + c.charCodeAt(0), 0)
-  const trend = (change ?? 0) > 0 ? 1 : -1
-  return Array.from({ length: 9 }, (_, i) => {
-    const noise = Math.sin(i * 1.1 + seed * 0.07) * 8
-    const y = 14 - trend * i * 0.8 + noise
-    return `${i * 7},${Math.max(2, Math.min(26, y)).toFixed(1)}`
-  }).join(' ')
-}
 
 // ── 보유 종목 클릭 → 팬카드로 이동 ──
 function goToStock(i) {

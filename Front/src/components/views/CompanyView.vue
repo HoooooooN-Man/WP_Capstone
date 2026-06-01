@@ -1,65 +1,65 @@
 <template>
   <!-- 카드 루트 -->
-  <div class="w-full h-full bg-gradient-to-br from-[#1f3756] to-[#14253a] rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] overflow-hidden border border-white/10 text-white relative">
+  <div class="w-full h-full overflow-hidden relative" style="background:#f4f2ec; color:#1a1a2e; font-family:'Inter',sans-serif;">
 
       <!-- ── 앞면 ── -->
       <div class="absolute inset-0 flex flex-col fin-face"
            :class="showFinancial ? 'fin-face--hide' : 'fin-face--show'">
 
-    <!-- 헤더 -->
-    <div class="px-6 pt-5 pb-3 border-b border-white/15 flex-shrink-0">
+    <!-- 헤더 (보고서 테마) -->
+    <div class="px-6 pt-4 pb-3 flex-shrink-0" style="border-bottom:2px solid #1a1a2e;">
+      <!-- 보고서 상단 레이블 -->
+      <div class="flex items-center justify-between mb-1" v-if="!detailCompany">
+        <span class="text-[9px] font-bold uppercase tracking-[0.3em]" style="color:#888;font-family:sans-serif;">Market Intelligence Report</span>
+      </div>
       <div class="flex items-center gap-3">
-        <button
-          v-if="detailCompany"
-          @click="closeDetail"
-          class="flex items-center gap-1 text-white/50 hover:text-white/80 transition-colors mr-1"
-        >
+        <button v-if="detailCompany" @click="closeDetail"
+                class="flex items-center gap-1 transition-colors mr-1" style="color:rgba(26,26,46,0.5)">
           <LucideChevronLeft class="w-5 h-5" />
         </button>
-        <h2 class="text-3xl font-black tracking-tighter uppercase">
-          {{ detailCompany ? detailCompany.name : '종목 리스트' }}
+        <h2 class="text-2xl font-black tracking-tighter uppercase" style="color:#1a1a2e;font-family:Georgia,serif;">
+          {{ detailCompany ? detailCompany.name : 'STOCK ANALYSIS' }}
         </h2>
-        <div v-if="replaceMode && !detailCompany" class="px-2.5 py-1 bg-emerald-500/25 rounded-full border border-emerald-500/40">
-          <span class="text-[12px] text-emerald-300 font-bold uppercase tracking-wider">교체 선택 중</span>
+        <div v-if="replaceMode && !detailCompany" class="px-2.5 py-1 rounded border" style="background:rgba(5,150,105,0.12);border-color:rgba(5,150,105,0.3);color:#065f46">
+          <span class="text-[12px] font-bold uppercase tracking-wider">교체 선택 중</span>
         </div>
-        <!-- 재무제표 버튼: 상세 뷰 + 일반 모드 -->
         <button v-if="detailCompany && !replaceMode"
                 @click="showFinancial = true"
-                class="ml-auto px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/15 text-[12px] text-white/55 hover:bg-white/14 hover:text-white/80 transition-all font-bold tracking-wide flex-shrink-0 flex items-center gap-1">
+                class="ml-auto px-2.5 py-1.5 rounded-lg text-[12px] font-bold tracking-wide flex-shrink-0 flex items-center gap-1 transition-all"
+                style="background:rgba(26,26,46,0.07);border:1px solid rgba(26,26,46,0.18);color:rgba(26,26,46,0.6)">
           <LucideBarChart2 class="w-3 h-3" />
           재무제표
         </button>
-        <!-- 종목비교 + 검색 버튼: 리스트 뷰에서만 -->
         <div v-if="!detailCompany" class="ml-auto flex items-center gap-1.5">
-          <!-- 종목비교 버튼 -->
           <button @click="openCompareOverlay"
-                  class="w-8 h-8 flex items-center justify-center rounded-xl border transition-all flex-shrink-0"
-                  :class="showCompare
-                    ? 'bg-blue-500/20 border-blue-500/35 text-blue-300'
-                    : 'bg-white/8 border-white/12 text-white/50 hover:bg-white/14 hover:text-white/80'">
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border transition-all flex-shrink-0"
+                  :class="showCompare ? '' : ''"
+                  :style="showCompare
+                    ? 'background:rgba(26,26,46,0.12);border-color:rgba(26,26,46,0.4);color:#1a1a2e'
+                    : 'background:rgba(26,26,46,0.06);border-color:rgba(26,26,46,0.18);color:rgba(26,26,46,0.5)'">
             <LucideArrowLeftRight class="w-3.5 h-3.5" />
           </button>
-          <!-- 검색 버튼 -->
           <button @click="showSearch = true"
-                  class="w-8 h-8 flex items-center justify-center rounded-xl bg-white/8 border border-white/12 text-white/50 hover:bg-white/14 hover:text-white/80 transition-all flex-shrink-0">
+                  class="w-8 h-8 flex items-center justify-center rounded-lg transition-all flex-shrink-0"
+                  style="background:rgba(26,26,46,0.06);border:1px solid rgba(26,26,46,0.18);color:rgba(26,26,46,0.5)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
           </button>
         </div>
       </div>
-      <p v-if="replaceMode && !detailCompany" class="text-[12px] text-white/35 mt-1">교체할 종목을 선택하세요</p>
+      <p v-if="replaceMode && !detailCompany" class="text-[12px] mt-1" style="color:rgba(26,26,46,0.45)">교체할 종목을 선택하세요</p>
     </div>
 
-    <!-- 탭 바: 리스트 뷰에서만 -->
+    <!-- 탭 바 (보고서 섹션 탭) -->
     <div v-if="!detailCompany" class="px-4 pt-2.5 pb-2 flex-shrink-0">
-      <div class="flex gap-1 p-1 rounded-xl" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.07)">
+      <div class="flex gap-0" style="border-bottom:1px solid rgba(26,26,46,0.2)">
         <button v-for="tab in STOCK_TABS" :key="tab.key"
                 @click="switchTab(tab.key)"
-                class="flex-1 py-1.5 rounded-lg text-[12px] font-bold transition-all duration-150"
-                :class="activeTab === tab.key
-                  ? 'bg-white/15 text-white shadow-sm'
-                  : 'text-white/38 hover:text-white/65'">
+                class="px-4 py-2 text-[12px] font-bold transition-all duration-150"
+                :style="activeTab === tab.key
+                  ? 'color:#1a1a2e;border-bottom:2px solid #1a1a2e;margin-bottom:-1px'
+                  : 'color:rgba(26,26,46,0.4)'">
           {{ tab.label }}
         </button>
       </div>
@@ -120,12 +120,12 @@
 
           <!-- 가격 + 등락 -->
           <div>
-            <p class="text-[10px] uppercase tracking-widest mb-0.5" style="color:rgba(255,255,255,0.35)">
+            <p class="text-[10px] uppercase tracking-widest mb-0.5" style="color:rgba(26,26,46,0.45)">
               {{ detailCompany.sector }}
             </p>
-            <p class="text-xl font-black leading-tight">₩{{ detailCompany.price.toLocaleString() }}</p>
+            <p class="text-xl font-black leading-tight" style="color:#1a1a2e">₩{{ detailCompany.price.toLocaleString() }}</p>
             <span class="inline-block mt-0.5 px-2 py-0.5 rounded-lg text-[12px] font-bold"
-                  :class="detailCompany.change >= 0 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'">
+                  :class="detailCompany.change >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'">
               {{ detailCompany.change >= 0 ? '+' : '' }}{{ detailCompany.change }}%
             </span>
           </div>
@@ -136,8 +136,8 @@
           <!-- 재무 지표 -->
           <div class="space-y-1.5">
             <div v-for="m in detailMetrics" :key="m.label" class="flex justify-between items-center">
-              <span class="text-[10px]" style="color:rgba(255,255,255,0.38)">{{ m.label }}</span>
-              <span class="text-[12px] font-bold">{{ m.value }}</span>
+              <span class="text-[10px]" style="color:rgba(26,26,46,0.45)">{{ m.label }}</span>
+              <span class="text-[12px] font-bold" style="color:#1a1a2e">{{ m.value }}</span>
             </div>
           </div>
 
@@ -178,35 +178,28 @@
           </div>
           <div v-else
             v-for="company in recommendList" :key="company.id"
-            class="flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer"
-            :class="replaceMode
-              ? 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-emerald-500/30'
-              : 'bg-white/5 border-white/5 hover:bg-white/8 hover:border-white/15'"
+            class="flex items-center gap-3 p-3 transition-all duration-200 cursor-pointer"
+            style="border-bottom:1px solid rgba(26,26,46,0.1);"
+            :style="replaceMode ? 'background:rgba(5,150,105,0.03)' : ''"
             @click="replaceMode ? openCompare(company) : openDetail(company)"
           >
             <div class="w-1 h-10 rounded-full flex-shrink-0" :style="{ background: company.color }"></div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <p class="font-bold text-sm truncate">{{ company.name }}</p>
-                <span class="text-[11px] text-white/35 font-mono flex-shrink-0">{{ company.ticker }}</span>
+                <p class="font-bold text-sm truncate" style="color:#1a1a2e">{{ company.name }}</p>
+                <span class="text-[11px] font-mono flex-shrink-0" style="color:rgba(26,26,46,0.4)">{{ company.ticker }}</span>
               </div>
-              <p class="text-[11px] text-white/40">{{ company.sector }}</p>
+              <p class="text-[11px]" style="color:rgba(26,26,46,0.5)">{{ company.sector }}</p>
             </div>
-            <svg viewBox="0 0 56 28" class="w-12 h-6 flex-shrink-0">
-              <polyline :points="miniSparkline(company.ticker, company.change)"
-                        fill="none"
-                        :stroke="company.change >= 0 ? '#34d399' : '#f87171'"
-                        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
             <div class="text-right flex-shrink-0">
-              <p class="text-sm font-bold">₩{{ company.price.toLocaleString() }}</p>
+              <p class="text-sm font-bold" style="color:#1a1a2e">₩{{ company.price.toLocaleString() }}</p>
               <p class="text-[12px] font-semibold"
-                 :class="company.change >= 0 ? 'text-green-400' : 'text-red-400'">
+                 :class="company.change >= 0 ? 'text-green-600' : 'text-red-500'">
                 {{ company.change >= 0 ? '+' : '' }}{{ company.change }}%
               </p>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
-              <LucideChevronRight class="w-4 h-4 text-white/25 ml-0.5" />
+              <LucideChevronRight class="w-4 h-4 ml-0.5" style="color:rgba(26,26,46,0.25)" />
             </div>
           </div>
         </div>
@@ -2037,15 +2030,6 @@ const maxOperating = computed(() =>
   finData.value ? Math.max(...finData.value.cashflow.map(d => d.operating)) : 1
 );
 
-function miniSparkline(ticker, change) {
-  const seed = ticker.split('').reduce((s, c) => s + c.charCodeAt(0), 0)
-  const trend = (change ?? 0) > 0 ? 1 : -1
-  return Array.from({ length: 9 }, (_, i) => {
-    const noise = Math.sin(i * 1.1 + seed * 0.07) * 8
-    const y = 14 - trend * i * 0.8 + noise
-    return `${i * 7},${Math.max(2, Math.min(26, y)).toFixed(1)}`
-  }).join(' ')
-}
 </script>
 
 <style scoped>

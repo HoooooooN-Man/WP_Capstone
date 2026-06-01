@@ -21,13 +21,7 @@
     <!-- 메인 컨텐츠 -->
     <!-- absolute 래퍼 안에 각 뷰가 absolute inset-0으로 겹침 → mode 없이 동시 fade 가능 -->
     <!-- 고정 모드(비포트폴리오)일 때 지갑 바(100px)와 겹치지 않도록 bottom 확보 -->
-    <div class="absolute top-[1.5%] left-[1%] right-[1%] z-0 overflow-hidden rounded-[2rem]"
-         :style="{
-           bottom: activeCard === 'portfolio'
-             ? (menuBarLocked ? '224px' : '10px')
-             : (menuBarLocked ? '104px' : '10px'),
-           transition: 'bottom 0.38s cubic-bezier(0.32,0,0.2,1)',
-         }">
+    <div class="absolute inset-0 z-0 overflow-hidden">
       <transition name="fade-scale">
         <ProfileView   v-if="activeCard === 'profile'"   key="profile"
           class="absolute inset-0"
@@ -94,7 +88,7 @@
 
       <!-- 지갑 바 -->
       <div class="flex justify-center">
-      <div class="wallet-bar relative z-10 w-full max-w-[860px] rounded-t-[2rem] overflow-visible flex border-t"
+      <div class="wallet-bar relative z-10 w-full rounded-t-[2rem] overflow-visible flex border-t"
            style="border-color: rgba(201,162,39,0.38)">
 
 
@@ -116,7 +110,7 @@
           <div class="flex-1 flex flex-col items-center pt-0 pb-2 gap-0">
 
             <!-- 슬롯 1: Profile -->
-            <div class="w-[74%] flex-1 relative">
+            <div class="w-[80%] flex-1 relative">
               <div
                 @click="activeCard = 'profile'"
                 class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2.5 overflow-hidden"
@@ -129,7 +123,7 @@
                   <LucideUser class="w-3.5 h-3.5 text-black/55" />
                 </div>
                 <div class="flex flex-col justify-center min-w-0">
-                  <span class="text-[13px] font-bold text-gray-800 leading-tight truncate">{{ user.name || 'User' }}</span>
+                  <span class="text-[15px] font-bold text-gray-800 leading-tight truncate">{{ user.name || 'User' }}</span>
                   <span class="text-[10px] font-bold text-gray-400 leading-tight tracking-widest uppercase" style="font-family:sans-serif;">Personal ID</span>
                 </div>
               </div>
@@ -137,18 +131,15 @@
             </div>
 
             <!-- 슬롯 2: Feed -->
-            <div class="w-[74%] flex-1 relative">
+            <div class="w-[80%] flex-1 relative">
               <div
                 @click="activeCard = 'feed'"
-                class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2 overflow-hidden"
-                style="background: linear-gradient(135deg, #f0e8d0 0%, #e4dcc4 100%); border-top: 2px solid #1a1209;"
+                class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] transition-transform duration-300 cursor-pointer overflow-hidden flex flex-col justify-center px-3"
+                style="background:#ccc8c0; background-image:repeating-linear-gradient(0deg,transparent,transparent 10px,rgba(0,0,0,0.03) 10px,rgba(0,0,0,0.03) 11px); border-top:2px solid #1a1209;"
                 :class="activeCard === 'feed' ? '-translate-y-2' : 'hover:-translate-y-2'"
               >
-                <LucideNewspaper class="w-4 h-4 flex-shrink-0" style="color:#1a1209; opacity:0.6;" />
-                <div class="flex flex-col justify-center min-w-0">
-                  <span class="text-[9px] font-bold tracking-widest uppercase leading-none" style="color:#999; font-family:sans-serif;">Latest</span>
-                  <span class="text-[13px] font-black text-gray-800 leading-tight tracking-tight" style="font-family:Georgia,serif;">Feed</span>
-                </div>
+                <span class="text-[8px] uppercase tracking-widest leading-none mb-0.5" style="color:#777; font-family:sans-serif; border-bottom:1px solid rgba(0,0,0,0.2); padding-bottom:2px;">AI Intelligence</span>
+                <span class="font-black leading-tight tracking-tight" style="font-size:15px; color:#1a1209; font-family:Georgia,'Times New Roman',serif;">GAZETTE</span>
               </div>
               <div class="absolute bottom-0 left-0 right-0 h-[8px] pointer-events-none z-[24]"
                    style="background: linear-gradient(to bottom, #181208, #0f0c06)"></div>
@@ -161,27 +152,39 @@
           <div class="flex-1 flex flex-col items-center pt-0 pb-2 gap-0">
 
             <!-- 슬롯 3: Company -->
-            <div class="w-[74%] flex-1 relative">
+            <div class="w-[80%] flex-1 relative">
               <div
                 @click="activeCard = 'company'"
-                class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] bg-gradient-to-br from-[#1f3756] to-[#14253a] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2"
+                class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2 overflow-hidden"
+                style="background:#f4f2ec; border-top:2.5px solid #1a1a2e;"
                 :class="activeCard === 'company' ? '-translate-y-1' : 'hover:-translate-y-1'"
               >
-                <LucideBuilding2 class="w-4 h-4 text-blue-200 flex-shrink-0" />
-                <span class="text-[13px] font-bold text-gray-100 tracking-wide">종목 리스트</span>
+                <!-- 보고서 좌측 컬러 탭 -->
+                <div class="absolute left-0 top-0 bottom-0 w-[3px]" style="background:#1a1a2e"></div>
+                <LucideBuilding2 class="w-4 h-4 flex-shrink-0 ml-1" style="color:#1a1a2e;opacity:0.55;" />
+                <div class="flex flex-col justify-center min-w-0">
+                  <span class="text-[9px] font-bold tracking-widest uppercase leading-none" style="color:#888;font-family:sans-serif;">Market</span>
+                  <span class="text-[15px] font-black leading-tight tracking-tight" style="color:#1a1a2e;font-family:Georgia,serif;">ANALYSIS</span>
+                </div>
               </div>
               <div class="absolute bottom-0 w-full h-[4px] bg-[#090705] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] pointer-events-none rounded-b-sm"></div>
             </div>
 
             <!-- 슬롯 4: Portfolio -->
-            <div class="w-[74%] flex-1 relative">
+            <div class="w-[80%] flex-1 relative">
               <div
                 @click="activeCard = 'portfolio'; $emit('toggle-portfolio')"
-                class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] bg-gradient-to-br from-[#007ad9] to-[#0052a3] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2"
+                class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2 overflow-hidden"
+                style="background:linear-gradient(135deg,#e8c87c 0%,#d4a853 100%);"
                 :class="activeCard === 'portfolio' ? '-translate-y-2' : 'hover:-translate-y-2'"
               >
-                <LucideFolder class="w-4 h-4 text-blue-100 flex-shrink-0" />
-                <span class="text-[13px] font-bold text-white tracking-wide">Portfolio</span>
+                <!-- 파일철 왼쪽 바인딩 -->
+                <div class="absolute left-0 top-0 bottom-0 w-[4px]" style="background:#8B5E1A;"></div>
+                <LucideFolder class="w-4 h-4 flex-shrink-0 ml-1" style="color:#5c3d0e;opacity:0.8;" />
+                <div class="flex flex-col justify-center min-w-0">
+                  <span class="text-[9px] font-bold tracking-widest uppercase leading-none" style="color:rgba(92,61,14,0.6);font-family:sans-serif;">My</span>
+                  <span class="text-[15px] font-black leading-tight" style="color:#3d2208;">PORTFOLIO</span>
+                </div>
               </div>
               <div class="absolute bottom-0 left-0 right-0 h-[8px] pointer-events-none z-[24]"
                    style="background: linear-gradient(to bottom, #181208, #0f0c06)"></div>
@@ -198,7 +201,7 @@
     <!-- ── 포트폴리오 팬 스트립 — 지갑 바와 동일한 레벨 (fixed bottom) ── -->
     <div v-if="activeCard === 'portfolio'"
          class="fixed bottom-0 left-0 right-0 z-10"
-         style="height:220px">
+         style="height:240px">
       <PortfolioFanStrip
         :display-items="portfolioDisplayItems"
         :current-index="portfolioCurrentIndex"
@@ -458,7 +461,7 @@ const handleToggleAutoTrade = () => {
 .wallet-bar {
   background: linear-gradient(180deg, #1e1509 0%, #161008 55%, #191209 100%);
   box-shadow: 0 -16px 48px rgba(0,0,0,0.7);
-  height: 100px;
+  height: 120px;
 }
 
 .animate-slide-up-wallet {
