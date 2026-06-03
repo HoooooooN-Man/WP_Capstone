@@ -1,0 +1,62 @@
+{
+  "display_date": "2026-05-14",
+  "category_id": "science_tech",
+  "category_label": "과학기술",
+  "window_start": "2026-05-13T09:00:00+09:00",
+  "window_end": "2026-05-14T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:32:35+09:00",
+  "item_count": 3,
+  "items": [
+    {
+      "rank": 1,
+      "id": "ccba51f261486d3508e854d51c9fccbaff2bff5a",
+      "title": "[종합] AI 인프라가 키운 한국 클라우드…GPU 데이터센터에 '올인'",
+      "publisher": "지디넷코리아",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFAtak5RdC1kUlFpUExkY2FoUUhyTWp4VGVIckF3RHlEZW5ubTdrN3puT0R0b0dWczNUSDB6SkRHSDZHb0hfTXAyNi1fSFZUTlI2U1VZcGhn?oc=5",
+      "published_at": "2026-05-13T05:53:53Z",
+      "collected_at": "2026-05-16T13:32:15+09:00",
+      "first_seen_at": "2026-05-16T13:32:25+09:00",
+      "last_seen_at": "2026-05-16T13:32:25+09:00",
+      "seen_count": 2,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR HBM OR 배터리 OR 자동차 OR 데이터센터"
+    },
+    {
+      "rank": 2,
+      "id": "4e2eb6336fffcd013ebd58734a2011baa5d0096e",
+      "title": "미 중 정상회담 D-1…\"반도체 규제 완화시 韓메모리 부정적\"",
+      "publisher": "연합뉴스",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE5jeS1IZHNyUEJfd0dBRF9pSjBheUZDXzJjX0ppa0o2SjlZckhxUlJOVTQ5anFPcDc1RXJnX19BSGNDTVVwZ2ROSEdfYTBTcjhQWjJuaEo4Rm1sN3fSAWBBVV95cUxNT3Q4MDUzWUxBVTFWdWp4TEd0dFBpeVBBZDk0QklNVmVZZlZfYnlMbXVHMFRJYm9uTy1IVnJMQ3ZJNzIycDFqalZBU0pxY19HU2VIOExKOV9WalB6LThkY1Y?oc=5",
+      "published_at": "2026-05-13T05:26:30Z",
+      "collected_at": "2026-05-16T13:32:15+09:00",
+      "first_seen_at": "2026-05-16T13:32:25+09:00",
+      "last_seen_at": "2026-05-16T13:32:25+09:00",
+      "seen_count": 2,
+      "best_rank": 2,
+      "latest_rank": 3,
+      "score": 8,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR HBM OR 배터리 OR 자동차 OR 데이터센터"
+    },
+    {
+      "rank": 3,
+      "id": "5cb9c06d72ac1607733b7d63244c963275d4c4ae",
+      "title": "이 대통령, ‘초호황 반도체’ 초과세수 바탕 ‘미래 재투자’ 의지",
+      "publisher": "한겨레",
+      "google_news_url": "https://news.google.com/rss/articles/CBMickFVX3lxTE55MzRjOHFZZ1dKTVhZLVhsN09NOVJUWmM4THlnU1htSkdrUjhYVGJkNWF4Uy1fc2p2Yjd0ckxzN1JSRGVyN0puaWJkY1lwRU5YZkZzTzd3OU9Uemo5Uy0zTFgxaWNlSTJZWUZFUGpueWxhUQ?oc=5",
+      "published_at": "2026-05-13T05:29:00Z",
+      "collected_at": "2026-05-16T13:32:15+09:00",
+      "first_seen_at": "2026-05-16T13:32:25+09:00",
+      "last_seen_at": "2026-05-16T13:32:25+09:00",
+      "seen_count": 1,
+      "best_rank": 3,
+      "latest_rank": 3,
+      "score": 8,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR 기술 OR 데이터센터"
+    }
+  ]
+}

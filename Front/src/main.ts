@@ -18,6 +18,16 @@ import router from './router/index'
 import '@/styles/design-tokens.css'   // UX 사이클 W1 — 디자인 토큰 (값은 사용자 결정 후 채움)
 import '@/style.css'
 
+// Kakao SDK 초기화 - SDK 로드 완료 후 실행
+const kakaoKey = import.meta.env.VITE_KAKAO_JS_KEY
+if (kakaoKey) {
+  if ((window as any).Kakao && !(window as any).Kakao.isInitialized()) {
+    (window as any).Kakao.init(kakaoKey)
+  }
+} else {
+  console.warn('VITE_KAKAO_JS_KEY가 설정되지 않았습니다.')
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -67,3 +77,4 @@ marketStore.initVersionsAndDates()
 
 app.use(router)
 app.mount('#app')
+

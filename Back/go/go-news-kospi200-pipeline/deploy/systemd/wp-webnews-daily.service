@@ -1,0 +1,32 @@
+[Unit]
+Description=WP Capstone Webnews Daily Batch
+Documentation=README.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+
+# Oracle Ubuntu 기본 계정이 ubuntu라면 그대로 사용.
+# 실제 배포 계정이 hoon, opc 등이라면 Oracle 서버에서 User 값을 바꿀 것.
+User=ubuntu
+Group=ubuntu
+
+WorkingDirectory=/opt/wp-capstone/webnews
+
+Environment=APP_ENV_FILE=configs/webnews.env
+Environment=WEBNEWS_BATCH_IDLE_TIMEOUT=10s
+Environment=WEBNEWS_BATCH_SIZE=10
+Environment=WEBNEWS_PUBLISH_EVENTS_KEEP=30
+
+ExecStart=/usr/bin/bash /opt/wp-capstone/webnews/scripts/run_webnews_daily_batch.sh
+
+# 배치가 네트워크/RSS 응답 지연으로 오래 걸려도 강제 종료되지 않도록 여유 부여
+TimeoutStartSec=15min
+
+# 실패 시 systemd journal에 남김
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

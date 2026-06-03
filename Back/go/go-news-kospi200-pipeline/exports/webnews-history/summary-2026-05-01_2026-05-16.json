@@ -1,0 +1,232 @@
+{
+  "start_date": "2026-05-01",
+  "end_date": "2026-05-16",
+  "date_count": 16,
+  "total_item_count": 146,
+  "dates": {
+    "2026-05-01": {
+      "display_date": "2026-05-01",
+      "window_start": "2026-04-30T09:00:00+09:00",
+      "window_end": "2026-05-01T08:59:59+09:00",
+      "categories": {
+        "korea": 0,
+        "world": 1,
+        "business": 0,
+        "science_tech": 0,
+        "policy_finance": 0,
+        "industry_ai": 0
+      },
+      "item_count": 1
+    },
+    "2026-05-02": {
+      "display_date": "2026-05-02",
+      "window_start": "2026-05-01T09:00:00+09:00",
+      "window_end": "2026-05-02T08:59:59+09:00",
+      "categories": {
+        "korea": 0,
+        "world": 2,
+        "business": 0,
+        "science_tech": 0,
+        "policy_finance": 0,
+        "industry_ai": 0
+      },
+      "item_count": 2
+    },
+    "2026-05-03": {
+      "display_date": "2026-05-03",
+      "window_start": "2026-05-02T09:00:00+09:00",
+      "window_end": "2026-05-03T08:59:59+09:00",
+      "categories": {
+        "korea": 0,
+        "world": 0,
+        "business": 0,
+        "science_tech": 0,
+        "policy_finance": 0,
+        "industry_ai": 0
+      },
+      "item_count": 0
+    },
+    "2026-05-04": {
+      "display_date": "2026-05-04",
+      "window_start": "2026-05-03T09:00:00+09:00",
+      "window_end": "2026-05-04T08:59:59+09:00",
+      "categories": {
+        "korea": 0,
+        "world": 0,
+        "business": 0,
+        "science_tech": 0,
+        "policy_finance": 0,
+        "industry_ai": 0
+      },
+      "item_count": 0
+    },
+    "2026-05-05": {
+      "display_date": "2026-05-05",
+      "window_start": "2026-05-04T09:00:00+09:00",
+      "window_end": "2026-05-05T08:59:59+09:00",
+      "categories": {
+        "korea": 0,
+        "world": 0,
+        "business": 0,
+        "science_tech": 0,
+        "policy_finance": 0,
+        "industry_ai": 0
+      },
+      "item_count": 0
+    },
+    "2026-05-06": {
+      "display_date": "2026-05-06",
+      "window_start": "2026-05-05T09:00:00+09:00",
+      "window_end": "2026-05-06T08:59:59+09:00",
+      "categories": {
+        "korea": 0,
+        "world": 1,
+        "business": 0,
+        "science_tech": 0,
+        "policy_finance": 0,
+        "industry_ai": 0
+      },
+      "item_count": 1
+    },
+    "2026-05-07": {
+      "display_date": "2026-05-07",
+      "window_start": "2026-05-06T09:00:00+09:00",
+      "window_end": "2026-05-07T08:59:59+09:00",
+      "categories": {
+        "korea": 0,
+        "world": 2,
+        "business": 0,
+        "science_tech": 0,
+        "policy_finance": 1,
+        "industry_ai": 0
+      },
+      "item_count": 3
+    },
+    "2026-05-08": {
+      "display_date": "2026-05-08",
+      "window_start": "2026-05-07T09:00:00+09:00",
+      "window_end": "2026-05-08T08:59:59+09:00",
+      "categories": {
+        "korea": 0,
+        "world": 0,
+        "business": 1,
+        "science_tech": 1,
+        "policy_finance": 0,
+        "industry_ai": 0
+      },
+      "item_count": 2
+    },
+    "2026-05-09": {
+      "display_date": "2026-05-09",
+      "window_start": "2026-05-08T09:00:00+09:00",
+      "window_end": "2026-05-09T08:59:59+09:00",
+      "categories": {
+        "korea": 1,
+        "world": 0,
+        "business": 0,
+        "science_tech": 0,
+        "policy_finance": 0,
+        "industry_ai": 0
+      },
+      "item_count": 1
+    },
+    "2026-05-10": {
+      "display_date": "2026-05-10",
+      "window_start": "2026-05-09T09:00:00+09:00",
+      "window_end": "2026-05-10T08:59:59+09:00",
+      "categories": {
+        "korea": 0,
+        "world": 0,
+        "business": 0,
+        "science_tech": 0,
+        "policy_finance": 0,
+        "industry_ai": 0
+      },
+      "item_count": 0
+    },
+    "2026-05-11": {
+      "display_date": "2026-05-11",
+      "window_start": "2026-05-10T09:00:00+09:00",
+      "window_end": "2026-05-11T08:59:59+09:00",
+      "categories": {
+        "korea": 0,
+        "world": 0,
+        "business": 0,
+        "science_tech": 0,
+        "policy_finance": 0,
+        "industry_ai": 0
+      },
+      "item_count": 0
+    },
+    "2026-05-12": {
+      "display_date": "2026-05-12",
+      "window_start": "2026-05-11T09:00:00+09:00",
+      "window_end": "2026-05-12T08:59:59+09:00",
+      "categories": {
+        "korea": 1,
+        "world": 4,
+        "business": 0,
+        "science_tech": 2,
+        "policy_finance": 0,
+        "industry_ai": 1
+      },
+      "item_count": 8
+    },
+    "2026-05-13": {
+      "display_date": "2026-05-13",
+      "window_start": "2026-05-12T09:00:00+09:00",
+      "window_end": "2026-05-13T08:59:59+09:00",
+      "categories": {
+        "korea": 4,
+        "world": 10,
+        "business": 1,
+        "science_tech": 2,
+        "policy_finance": 1,
+        "industry_ai": 0
+      },
+      "item_count": 18
+    },
+    "2026-05-14": {
+      "display_date": "2026-05-14",
+      "window_start": "2026-05-13T09:00:00+09:00",
+      "window_end": "2026-05-14T08:59:59+09:00",
+      "categories": {
+        "korea": 5,
+        "world": 10,
+        "business": 3,
+        "science_tech": 3,
+        "policy_finance": 1,
+        "industry_ai": 3
+      },
+      "item_count": 25
+    },
+    "2026-05-15": {
+      "display_date": "2026-05-15",
+      "window_start": "2026-05-14T09:00:00+09:00",
+      "window_end": "2026-05-15T08:59:59+09:00",
+      "categories": {
+        "korea": 2,
+        "world": 10,
+        "business": 1,
+        "science_tech": 4,
+        "policy_finance": 6,
+        "industry_ai": 2
+      },
+      "item_count": 25
+    },
+    "2026-05-16": {
+      "display_date": "2026-05-16",
+      "window_start": "2026-05-15T09:00:00+09:00",
+      "window_end": "2026-05-16T08:59:59+09:00",
+      "categories": {
+        "korea": 10,
+        "world": 10,
+        "business": 10,
+        "science_tech": 10,
+        "policy_finance": 10,
+        "industry_ai": 10
+      },
+      "item_count": 60
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-09",
+  "category_id": "korea",
+  "category_label": "대한민국",
+  "window_start": "2026-05-08T09:00:00+09:00",
+  "window_end": "2026-05-09T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:30:46+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "0c6302bd90152aa35c52747cd47408faa4a24a70",
+      "title": "냠냠남대문을 열어라 영상으로 만나는 대통령 미디어",
+      "publisher": "대한민국 청와대",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE8yRlVyYUNGYk9jdE9yUG5LQ19vc054N3E0STlfVTdRZGs4cnc1NE1XME9ZN0lhZWt3WklpYVRNV29ocWhKUnI0R0YtZkdNYkgxYjZWQUNR?oc=5",
+      "published_at": "2026-05-08T14:51:47Z",
+      "collected_at": "2026-05-16T13:30:26+09:00",
+      "first_seen_at": "2026-05-16T13:30:36+09:00",
+      "last_seen_at": "2026-05-16T13:30:36+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "대한민국 OR 한국경제 OR 한국정책"
+    }
+  ]
+}

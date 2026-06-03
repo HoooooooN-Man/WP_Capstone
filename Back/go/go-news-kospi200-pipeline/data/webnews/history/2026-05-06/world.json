@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-06",
+  "category_id": "world",
+  "category_label": "세계",
+  "window_start": "2026-05-05T09:00:00+09:00",
+  "window_end": "2026-05-06T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:29:40+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "280ca57f0ee116d205ce227133e724cb3d990527",
+      "title": "개인 미국주식 투자, 10개월 만에 순매도 전환",
+      "publisher": "한겨레",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFA3VWtQZmU5eGM4MENmX0lpWTVCYUFKay1FcG43cl9NajZzTmt1TG1sUzJ5a1VmaGRRWGRGUGJtZVZpNDhTUENyR1NCRG16TnA3NUlXTm9VcVFyYm1iME9TdHlXOE1JNU0?oc=5",
+      "published_at": "2026-05-05T07:00:00Z",
+      "collected_at": "2026-05-16T13:29:19+09:00",
+      "first_seen_at": "2026-05-16T13:29:29+09:00",
+      "last_seen_at": "2026-05-16T13:29:29+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "세계경제 OR 국제정세 OR 미국증시"
+    }
+  ]
+}

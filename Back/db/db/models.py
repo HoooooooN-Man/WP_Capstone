@@ -48,9 +48,19 @@ class User(Base):
     posts         = relationship("BoardPost",     back_populates="author",    cascade="all, delete-orphan")
     comments      = relationship("BoardComment",  back_populates="author",    cascade="all, delete-orphan")
     likes         = relationship("BoardLike",     back_populates="author",    cascade="all, delete-orphan")
+    social_accounts = relationship("SocialAccount", back_populates="user", cascade="all, delete-orphan")
     # impressions: ON DELETE SET NULL — 분석 자산 보존이므로 cascade 없음, back-pop 만.
     # User 삭제 시 impression.user_id 가 NULL 되고 행은 유지.
 
+
+class SocialAccount(Base):
+    __tablename__ = "social_accounts"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String, nullable=False)  # 'google', 'kakao', 'naver'
+    social_id = Column(String, nullable=False, unique=True) # 플랫폼 제공 고유 ID
+
+    user = relationship("User", back_populates="social_accounts")
 
 # ── 2. user_watchlist (포트폴리오) ────────────────────────────────────────────
 class UserWatchlist(Base):

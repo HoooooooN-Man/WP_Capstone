@@ -1,4 +1,34 @@
+# env / secrets
 .env
+configs/.env
+configs/*.local
+configs/webnews.env
+
+# build outputs
+bin/
+
+# local runtime artifacts
+.venv/
+logs/
+reports/
 spool/
-*.duckdb
+run/
+
+# webnews runtime outputs
+data/webnews/staging/
+data/webnews/archive/
+data/webnews/current/
+
+# misc runtime files
+*.pid
+*.lock
 *.log
+*.duckdb
+
+# root-level Go build outputs
+/webnews_*
+# LLM local secrets and temporary inputs
+configs/llm.env
+data/webnews/current/llm_resolved/
+data/webnews/current/llm_input/
+data/webnews/current/summaries/

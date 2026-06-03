@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-01",
+  "category_id": "world",
+  "category_label": "세계",
+  "window_start": "2026-04-30T09:00:00+09:00",
+  "window_end": "2026-05-01T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:27:50+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "9179664fc06a88314cf5fa11eca0d215c0af9a93",
+      "title": "IMF의 중동전쟁發 충격 하 세계경제 전망",
+      "publisher": "KDI 경제교육 정보센터",
+      "google_news_url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1UbHZhOHl0M3BIcXVPR2pNN3RQVXJfMzFQRUdVZThMajBKcmJOUGllMUVqRklhZmpaQnlvNEtDNVotTlB2c3RrMnBLQWNqbVBDTDhkS3NnOWRWMGYtNkVxeU52Z09lMXlBdjNv?oc=5",
+      "published_at": "2026-04-30T07:14:04Z",
+      "collected_at": "2026-05-16T13:27:29+09:00",
+      "first_seen_at": "2026-05-16T13:27:40+09:00",
+      "last_seen_at": "2026-05-16T13:27:40+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "세계경제 OR 국제정세 OR 미국증시"
+    }
+  ]
+}

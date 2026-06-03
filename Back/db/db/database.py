@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine import URL
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_PATH = BASE_DIR / ".env"
@@ -24,8 +25,13 @@ if not all([DB_USER, DB_PW, DB_HOST, DB_PORT, DB_NAME]):
         f"env_path={ENV_PATH}"
     )
 
-SQLALCHEMY_DATABASE_URL = (
-    f"postgresql://{DB_USER}:{DB_PW}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+SQLALCHEMY_DATABASE_URL = URL.create(
+    drivername="postgresql+psycopg2",
+    username=DB_USER,
+    password=DB_PW,      # @ 같은 특수문자 자동 처리
+    host=DB_HOST,
+    port=int(DB_PORT),
+    database=DB_NAME,
 )
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

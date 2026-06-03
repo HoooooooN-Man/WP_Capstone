@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-13",
+  "category_id": "policy_finance",
+  "category_label": "정책금융",
+  "window_start": "2026-05-12T09:00:00+09:00",
+  "window_end": "2026-05-13T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:32:14+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "60efdc8ca9afb7a6e9ef1d8a0f84c3348baafed5",
+      "title": "환율, 달러 강세 엔화 약세에 다시 1,460원 위로",
+      "publisher": "한국무역협회-KITA.NET",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxQNGg0dlBJSmlhMDdYV0NyUU4wSllaOGxLUHBmRnpoYW00Qk8wT1ZsRWZIRkRfNUR3ZjgxSEQ1STdUT054cDlaOF90WDJCeWtIVXVhRExPV1l0bXp1bTBOOXVqNGtXbVloMXZxY2hlSzU1OXM1cmwzYXFMWGRpNnFmQlU5MHA0STVRQ3hV?oc=5",
+      "published_at": "2026-05-12T19:04:42Z",
+      "collected_at": "2026-05-16T13:31:55+09:00",
+      "first_seen_at": "2026-05-16T13:32:04+09:00",
+      "last_seen_at": "2026-05-16T13:32:04+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "금리 OR 환율 OR 한국은행 OR 금융위원회 OR 증시"
+    }
+  ]
+}

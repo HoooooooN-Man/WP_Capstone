@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-12",
+  "category_id": "industry_ai",
+  "category_label": "산업AI",
+  "window_start": "2026-05-11T09:00:00+09:00",
+  "window_end": "2026-05-12T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:31:52+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "90b2ff7086aaa32ca005ee66438e6e339141c91c",
+      "title": "디스플레이 업계, 돈 되는 반도체 신사업 추진",
+      "publisher": "디일렉",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE50ZmZreXNHNnhtR3JwQ0R1Q0g5OXdlRHY5UVJYa0NPT1J0Vmd0RmMyOWlrSHBzYTU5ZVNBWmx1MGs2RVJmTmt3WVhpQVZsOEVBQXhZMkxjNVZseUZrVk9XSktXWl9yQQ?oc=5",
+      "published_at": "2026-05-11T08:34:15Z",
+      "collected_at": "2026-05-16T13:31:31+09:00",
+      "first_seen_at": "2026-05-16T13:31:41+09:00",
+      "last_seen_at": "2026-05-16T13:31:41+09:00",
+      "seen_count": 2,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "AI OR 반도체 OR HBM OR 배터리 OR 자동차 OR 데이터센터"
+    }
+  ]
+}

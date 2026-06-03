@@ -1,0 +1,28 @@
+{
+  "display_date": "2026-05-15",
+  "category_id": "business",
+  "category_label": "비즈니스",
+  "window_start": "2026-05-14T09:00:00+09:00",
+  "window_end": "2026-05-15T08:59:59+09:00",
+  "generated_at": "2026-05-16T13:32:56+09:00",
+  "item_count": 1,
+  "items": [
+    {
+      "rank": 1,
+      "id": "2b962f6e374ef83302b8ac73b9bdb81993b0d48f",
+      "title": "미래산업 투자가 추진되는 새만금 - 카드/한컷 멀티미디어",
+      "publisher": "대한민국 정책브리핑",
+      "google_news_url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxNZWJoYklJa25CM3JrVmc0THpoOUZLbW5uZXdNa1EwSHlWQjBKNmFQZVNwOFRaODk3REVyUC1ySWx3WW1IbndjTW1BbnNyTlNTQmppc043ZGx3aktVSUtRWmFuYWE1VXFFQ19aQ2FrNzlJMkRfMlNaaDY4LU0yS1N6T3M2azhibDFTQUFJ?oc=5",
+      "published_at": "2026-05-14T04:06:21Z",
+      "collected_at": "2026-05-16T13:32:38+09:00",
+      "first_seen_at": "2026-05-16T13:32:46+09:00",
+      "last_seen_at": "2026-05-16T13:32:46+09:00",
+      "seen_count": 1,
+      "best_rank": 1,
+      "latest_rank": 1,
+      "score": 10,
+      "source": "google_news",
+      "query": "기업 OR 실적 OR 증시 OR 투자"
+    }
+  ]
+}

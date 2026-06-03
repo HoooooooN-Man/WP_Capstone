@@ -26,6 +26,9 @@ class EmailVerification(BaseModel):
     email: EmailStr
     code: str
 
+class SetPasswordRequest(BaseModel):
+    new_password: str
+
 # 4. 현재 비밀번호로 재설정 (로그인 상태)
 class PasswordResetRequest(BaseModel):
     current_password: str
