@@ -206,11 +206,11 @@ const marketScore = computed(() => {
 
 const marketLabel = computed(() => {
   const s = marketScore.value
-  if (s >= 80) return '강세 🔥'
-  if (s >= 65) return '양호 📈'
-  if (s >= 50) return '보통 ➡️'
-  if (s >= 35) return '약세 📉'
-  return '침체 ❄️'
+  if (s >= 80) return '강세'
+  if (s >= 65) return '양호'
+  if (s >= 50) return '보통'
+  if (s >= 35) return '약세'
+  return '침체'
 })
 
 const topStocks = computed(() => recommendations.value.slice(0, 5))

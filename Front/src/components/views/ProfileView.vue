@@ -1,41 +1,92 @@
 <template>
-  <div
-    class="w-full h-full flex flex-col relative overflow-hidden transition-colors duration-300"
-    :class="localDark ? 'bg-[#0f1520] border-white/10 text-gray-100' : 'bg-[#f7f4ee] border-black/12 text-gray-800'"
-  >
+  <div class="w-full h-full flex flex-col relative overflow-hidden transition-colors duration-300"
+       :class="localDark ? 'bg-[#0f1520] text-gray-100' : 'bg-[#f0ecdf]'">
+
     <!-- 신분증 상단 컬러 스트라이프 -->
-    <div class="flex-shrink-0 h-1.5 bg-gradient-to-r from-[#1a3a6b] via-[#c9a227] to-[#1a3a6b] z-10"></div>
+    <div class="flex-shrink-0 h-2 bg-gradient-to-r from-[#1a3a6b] via-[#c9a227] to-[#1a3a6b] z-10"></div>
 
-    <!-- 배경 장식 (홀로그램 원) -->
-    <div class="absolute right-4 top-8 w-40 h-40 rounded-full pointer-events-none z-0 opacity-[0.04]"
-         :class="localDark ? 'border-8 border-white' : 'border-8 border-black'"></div>
-    <div class="absolute -left-8 bottom-24 w-64 h-64 rounded-full pointer-events-none z-0 opacity-[0.025]"
-         :class="localDark ? 'border-4 border-white' : 'border-4 border-black'"></div>
-
-    <!-- 탭 바 -->
-    <div
-      class="flex border-b px-5 pt-3.5 gap-0.5 z-10 flex-shrink-0 transition-colors duration-300"
-      :class="localDark ? 'border-white/10' : 'border-gray-200'"
-    >
-      <button
-        v-for="tab in TABS" :key="tab.id"
-        @click="activeTab = tab.id"
-        class="px-3.5 py-2 rounded-t-lg text-[13px] font-bold tracking-wide transition-all flex items-center gap-1.5"
-        :class="activeTab === tab.id
-          ? (localDark ? 'bg-white/10 text-white' : 'bg-white text-gray-800 shadow')
-          : (localDark ? 'text-white/35 hover:text-white/60' : 'text-gray-400 hover:text-gray-600')"
-      >
-        <component :is="tab.icon" class="w-3 h-3"/>
-        {{ tab.label }}
-      </button>
+    <!-- 홀로그램 배경 장식 -->
+    <div class="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none z-0 overflow-hidden opacity-[0.035]">
+      <div class="absolute top-12 right-8 w-56 h-56 rounded-full border-[6px]"
+           :class="localDark ? 'border-white' : 'border-[#1a3a6b]'"></div>
+      <div class="absolute top-32 right-32 w-32 h-32 rounded-full border-[3px]"
+           :class="localDark ? 'border-white' : 'border-[#c9a227]'"></div>
+      <div class="absolute bottom-20 right-12 w-40 h-40 rounded-full border-[4px]"
+           :class="localDark ? 'border-white' : 'border-[#1a3a6b]'"></div>
     </div>
 
-    <!-- ───────────────────────────────────── -->
-    <!-- 콘텐츠 영역 -->
-    <!-- ───────────────────────────────────── -->
-    <div class="flex-1 overflow-y-auto z-10">
+    <!-- 신분증 본문 -->
+    <div class="flex-1 flex flex-col z-10 overflow-y-auto">
 
-      <!-- ══════════ 홈 탭 (제거됨) ══════════ -->
+      <!-- ══════════ 신분증 본문 ══════════ -->
+      <!-- 기관명 -->
+      <div class="px-8 pt-6 pb-2">
+        <p class="text-[10px] font-black uppercase tracking-[0.4em]"
+           :style="localDark ? 'color:rgba(201,162,39,0.7)' : 'color:rgba(26,58,107,0.6)'">
+          Wallet Protector · Personal ID
+        </p>
+      </div>
+
+      <!-- 사진 + 이름 영역 -->
+      <div class="flex items-start gap-5 px-8 pb-5"
+           :style="localDark ? 'border-bottom:1px solid rgba(255,255,255,0.1)' : 'border-bottom:1px solid rgba(26,26,46,0.12)'"
+           style="border-bottom:1px solid rgba(26,26,46,0.12)">
+        <!-- 사진 플레이스홀더 -->
+        <div class="flex-shrink-0 w-20 h-24 rounded-sm flex items-center justify-center overflow-hidden"
+             :style="localDark
+               ? 'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15)'
+               : 'background:rgba(26,58,107,0.08);border:1px solid rgba(26,58,107,0.2)'">
+          <LucideUser class="w-10 h-12" :style="localDark ? 'color:rgba(255,255,255,0.2)' : 'color:rgba(26,58,107,0.2)'" />
+        </div>
+        <!-- 이름 + ID -->
+        <div class="flex-1 min-w-0 pt-1">
+          <p class="text-[11px] font-bold uppercase tracking-[0.3em] mb-1"
+             :style="localDark ? 'color:rgba(201,162,39,0.6)' : 'color:rgba(26,58,107,0.5)'">성명</p>
+          <p class="text-[26px] font-black leading-tight tracking-tight"
+             :style="localDark ? 'color:#f5f0e8' : 'color:#1a1a2e'">
+            {{ auth.nickname || 'User' }}
+          </p>
+          <p class="text-[11px] font-mono mt-1.5"
+             :style="localDark ? 'color:rgba(255,255,255,0.25)' : 'color:rgba(26,26,46,0.35)'">
+            ID · {{ auth.userId ? String(auth.userId).padStart(8, '0') : 'WP-000000' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- 신분증 필드 테이블 -->
+      <div class="px-8 py-5 flex flex-col gap-0 flex-1">
+        <div v-for="(field, idx) in idFields" :key="field.label"
+             class="flex items-center py-3.5"
+             :style="idx < idFields.length - 1
+               ? (localDark ? 'border-bottom:1px solid rgba(255,255,255,0.07)' : 'border-bottom:1px solid rgba(26,26,46,0.09)')
+               : ''">
+          <p class="text-[10px] font-black uppercase tracking-[0.3em] w-24 flex-shrink-0"
+             :style="localDark ? 'color:rgba(201,162,39,0.55)' : 'color:rgba(26,58,107,0.45)'">
+            {{ field.label }}
+          </p>
+          <p class="text-[15px] font-bold flex-1"
+             :style="localDark ? 'color:#f5f0e8' : 'color:#1a1a2e'">
+            {{ field.value }}
+          </p>
+        </div>
+      </div>
+
+      <!-- 하단 바코드 장식 -->
+      <div class="px-8 pb-6 flex-shrink-0">
+        <div class="flex gap-px h-8 opacity-20" :style="localDark ? '' : ''">
+          <div v-for="i in 48" :key="i"
+               class="flex-1 rounded-sm"
+               :style="`height:${[100,60,80,40,90,55,75,45,95,65,50,85,70,35,100,60,40,80,55,95,45,70,85,30,100,60,75,45,90,55,80,40,95,65,50,85,70,35,100,60,40,80,55,95,45,70,85,30][i%48] ?? 80}%;` +
+                       (localDark ? 'background:#c9a227' : 'background:#1a3a6b')"
+          ></div>
+        </div>
+        <p class="text-[8px] font-mono mt-1 text-center"
+           :style="localDark ? 'color:rgba(201,162,39,0.35)' : 'color:rgba(26,58,107,0.3)'">
+          WP {{ new Date().getFullYear() }} · SMART INVESTMENT
+        </p>
+      </div>
+
+      <!-- 이하 기존 코드 비활성화 -->
       <div v-if="false" class="hidden">
 
         <!-- ① AI 마켓 스코어 + 사용자 인사 -->
@@ -322,8 +373,8 @@
       <!-- /홈 탭 -->
 
 
-      <!-- ══════════ 회원정보 탭 ══════════ -->
-      <div v-if="activeTab === 'info'" class="p-5 lg:p-6 flex flex-col gap-5">
+      <!-- ══════════ 회원정보 탭 (비활성화) ══════════ -->
+      <div v-if="false" class="p-5 lg:p-6 flex flex-col gap-5">
         <section v-for="section in infoSections" :key="section.title">
           <h3
             class="text-[11px] font-black uppercase tracking-[0.4em] mb-2.5 transition-colors duration-300"
@@ -385,7 +436,7 @@
             <div class="flex items-center justify-between p-4 transition-colors duration-300"
                  :class="localDark ? 'bg-white/5' : 'bg-white'">
               <div class="flex items-center gap-3">
-                <span class="text-[16px]">📌</span>
+                <span class="text-[14px] font-bold" style="color:rgba(44,31,14,0.5)">고정</span>
                 <div>
                   <p class="text-sm font-bold">메뉴바 고정</p>
                   <p class="text-[12px] mt-0.5 transition-colors duration-300"
@@ -553,7 +604,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
-import { LucideInfo, LucideSettings, LucideMoon, LucideSun, LucideLogOut } from 'lucide-vue-next';
+import { LucideInfo, LucideSettings, LucideMoon, LucideSun, LucideLogOut, LucideUser } from 'lucide-vue-next';
 import authApi  from '@/api/auth.js';
 import dbapi    from '@/api/dbapi.js';
 import { stocksApi } from '@/api/stocks.js';
@@ -570,11 +621,19 @@ const localDark = ref(false);
 
 const auth = useAuthStore();
 
+// ── 신분증 필드 ────────────────────────────────────────────────
+const idFields = computed(() => [
+  { label: '이름',    value: auth.nickname || 'User'       },
+  { label: '이메일',  value: 'user@example.com'            },
+  { label: '연락처',  value: '010-****-5678'               },
+  { label: '생년월일', value: '1995. 03. 22'               },
+  { label: '가입일',  value: '2026. 01. 15'                },
+])
+
 // ── 탭 ──────────────────────────────────────────────────────
 const activeTab = ref('info');
 const TABS = [
-  { id: 'info',     label: '회원정보', icon: LucideInfo  },
-  { id: 'settings', label: '설정',  icon: LucideSettings },
+  { id: 'info', label: '회원정보', icon: LucideInfo },
 ];
 
 // ── 추천 종목 데이터 ─────────────────────────────────────────
@@ -602,11 +661,11 @@ const marketScore = computed(() => {
 
 const marketLabel = computed(() => {
   const s = marketScore.value;
-  if (s >= 80) return '강세 🔥';
-  if (s >= 65) return '양호 📈';
-  if (s >= 50) return '보통 ➡️';
-  if (s >= 35) return '약세 📉';
-  return '침체 ❄️';
+  if (s >= 80) return '강세';
+  if (s >= 65) return '양호';
+  if (s >= 50) return '보통';
+  if (s >= 35) return '약세';
+  return '침체';
 });
 
 // ── 섹터 데이터 ──────────────────────────────────────────────
@@ -624,9 +683,9 @@ const indices = [
 
 // ── 주요 기능 CTA ─────────────────────────────────────────────
 const ctas = [
-  { id: 'stocks',    icon: '⭐', label: 'AI 추천 종목',  sub: 'ML 모델이 선별한 오늘의 추천',   target: 'company'   },
-  { id: 'portfolio', icon: '💼', label: '포트폴리오',     sub: '보유 종목 관리 및 수익률 분석',  target: 'portfolio' },
-  { id: 'feed',      icon: '📰', label: '뉴스 피드',      sub: 'AI 요약 주요 경제 뉴스',        target: 'feed'      },
+  { id: 'stocks',    icon: '★', label: 'AI 추천 종목',  sub: 'ML 모델이 선별한 오늘의 추천',   target: 'company'   },
+  { id: 'portfolio', icon: '◆', label: '포트폴리오',     sub: '보유 종목 관리 및 수익률 분석',  target: 'portfolio' },
+  { id: 'feed',      icon: '■', label: '뉴스 피드',      sub: 'AI 요약 주요 경제 뉴스',        target: 'feed'      },
 ];
 
 // ── FAQ ───────────────────────────────────────────────────────

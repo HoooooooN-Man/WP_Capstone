@@ -55,8 +55,8 @@
             </div>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0 text-[10px] text-white/25 font-mono">
-            <span>👁 {{ post.views }}</span>
-            <span>💬 {{ post.comments }}</span>
+            <span>{{ post.views }}</span>
+            <span>{{ post.comments }}</span>
           </div>
         </div>
 
@@ -88,9 +88,9 @@
             </div>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0 text-[10px] text-white/25 font-mono">
-            <span>👁 {{ post.views }}</span>
-            <span>💬 {{ post.comments }}</span>
-            <span v-if="post.likes > 0" class="text-amber-400/60">♥ {{ post.likes }}</span>
+            <span>{{ post.views }}</span>
+            <span>{{ post.comments }}</span>
+            <span v-if="post.likes > 0" class="text-amber-400/60">{{ post.likes }}</span>
           </div>
         </div>
 
@@ -147,7 +147,7 @@
           <div class="flex items-center gap-3 mt-2">
             <span class="text-[11px] text-white/40 font-bold">{{ activePost.author }}</span>
             <span class="text-[11px] text-white/25 font-mono">{{ activePost.date }}</span>
-            <span class="text-[10px] text-white/22 ml-auto font-mono">👁 {{ activePost.views }}</span>
+            <span class="text-[10px] text-white/22 ml-auto font-mono">{{ activePost.views }}</span>
           </div>
         </div>
 
@@ -160,7 +160,7 @@
             <button @click="activePost.likes++"
                     class="flex items-center gap-2 px-5 py-2 rounded-full border transition-all"
                     style="background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.22);color:rgba(251,191,36,0.75)">
-              <span class="text-sm">♥</span>
+              <span class="text-sm font-bold">+</span>
               <span class="text-[12px] font-bold">{{ activePost.likes }}</span>
             </button>
           </div>

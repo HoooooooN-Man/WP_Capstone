@@ -28,6 +28,19 @@
             />
           </div>
 
+          <!-- 시장 레이더 배너 -->
+          <div v-if="marketRegime" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl"
+               :style="`background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1)`">
+            <div class="flex-1 min-w-0">
+              <span class="text-[11px] font-black" style="color:#2c1f0e">{{ marketRegime.status_ko ?? '—' }}</span>
+              <span class="text-[10px] ml-2" style="color:rgba(44,31,14,0.5)">{{ marketRegime.message ?? '' }}</span>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-[15px] font-black" style="color:#c9a227">{{ marketRegime.market_score ?? 0 }}</p>
+              <p class="text-[9px] uppercase tracking-wide" style="color:rgba(44,31,14,0.4);font-family:sans-serif;">MARKET</p>
+            </div>
+          </div>
+
           <!-- ② 상단 3단 카드 -->
           <div class="grid grid-cols-3 gap-2.5">
 
@@ -125,7 +138,15 @@
 
           <!-- ③ 보유 종목 리스트 -->
           <div>
-            <p class="text-[10px] font-black uppercase tracking-widest mb-2.5" style="color:rgba(44,31,14,0.5)">보유 종목</p>
+            <div class="flex items-center justify-between mb-2.5">
+              <p class="text-[10px] font-black uppercase tracking-widest" style="color:rgba(44,31,14,0.5)">보유 종목</p>
+              <button @click="showAddHolding = true"
+                      class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors"
+                      style="background:rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.12);color:#2c1f0e">
+                <LucidePlus class="w-3 h-3" />
+                종목 추가
+              </button>
+            </div>
             <div v-if="!activeStocks.length"
                  class="rounded-xl py-8 text-center text-[13px]"
                  style="color:rgba(44,31,14,0.4);background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.08)">
@@ -153,6 +174,11 @@
                     비중 {{ activeStocks.length ? (100 / activeStocks.length).toFixed(1) : 0 }}%
                   </p>
                 </div>
+                <button @click.stop="removeHolding(i)"
+                        class="w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0 opacity-40 hover:opacity-80 transition-opacity"
+                        style="color:#991b1b">
+                  <LucideX class="w-3 h-3" />
+                </button>
                 <LucideChevronRight class="w-4 h-4 text-white/20 flex-shrink-0" />
               </div>
             </div>
@@ -316,6 +342,52 @@
     </div>
 
 
+    <!-- ── 종목 추가 모달 ── -->
+    <transition name="chart-modal">
+      <div v-if="showAddHolding"
+           class="absolute inset-0 z-[60] flex items-end rounded-[2rem] overflow-hidden"
+           style="background:rgba(0,0,0,0.5)"
+           @click.self="showAddHolding = false">
+        <div class="w-full rounded-t-2xl p-5 flex flex-col gap-4"
+             style="background:#ede4d0;border-top:2px solid rgba(0,0,0,0.12)">
+          <div class="flex items-center justify-between">
+            <p class="text-[15px] font-black" style="color:#2c1f0e">보유 종목 추가</p>
+            <button @click="showAddHolding = false" style="color:rgba(44,31,14,0.4)">
+              <LucideX class="w-5 h-5" />
+            </button>
+          </div>
+          <div class="flex flex-col gap-3">
+            <div>
+              <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:rgba(44,31,14,0.5);font-family:sans-serif;">종목 티커</label>
+              <input v-model="newHolding.ticker" placeholder="예: 005930"
+                     class="w-full px-3 py-2 rounded-lg text-[14px] font-bold focus:outline-none"
+                     style="background:rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.12);color:#2c1f0e" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:rgba(44,31,14,0.5);font-family:sans-serif;">수량</label>
+                <input v-model.number="newHolding.quantity" type="number" placeholder="10"
+                       class="w-full px-3 py-2 rounded-lg text-[14px] font-bold focus:outline-none"
+                       style="background:rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.12);color:#2c1f0e" />
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:rgba(44,31,14,0.5);font-family:sans-serif;">평균 매입가</label>
+                <input v-model.number="newHolding.avg_price" type="number" placeholder="78000"
+                       class="w-full px-3 py-2 rounded-lg text-[14px] font-bold focus:outline-none"
+                       style="background:rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.12);color:#2c1f0e" />
+              </div>
+            </div>
+          </div>
+          <button @click="submitAddHolding"
+                  :disabled="!newHolding.ticker || !newHolding.quantity"
+                  class="w-full py-3 rounded-xl text-[14px] font-black transition-all disabled:opacity-40"
+                  style="background:linear-gradient(135deg,#e8c87c 0%,#d4a853 100%);color:#3d2208">
+            추가하기
+          </button>
+        </div>
+      </div>
+    </transition>
+
     <!-- ── 주가 상세 차트 모달 ── -->
     <transition name="chart-modal">
       <div v-if="chartModalOpen && activeStock"
@@ -403,9 +475,11 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { LucideChevronLeft, LucideChevronRight, LucidePencil, LucideMaximize2, LucideX } from 'lucide-vue-next'
+import { LucideChevronLeft, LucideChevronRight, LucidePencil, LucideMaximize2, LucideX, LucidePlus } from 'lucide-vue-next'
 import { usePortfolioStore } from '@/stores/portfolio.js'
 import BacktestMonthlyChart from '@/components/portfolio/BacktestMonthlyChart.vue'
+import { portfolioApi } from '@/api/portfolio.js'
+import { stocksApi } from '@/api/stocks.js'
 
 const props = defineProps({
   portfolioGroups: { type: Array,  required: true },
@@ -417,6 +491,16 @@ const emit = defineEmits(['update:currentIndex', 'view-company'])
 const store = usePortfolioStore()
 const aiOpen = ref(false)
 
+// ── 시장 레이더 ──
+const marketRegime = ref(null)
+
+// ── 보유종목 추가 모달 ──
+const showAddHolding = ref(false)
+const newHolding = ref({ ticker: '', quantity: null, avg_price: null })
+
+// ── 보유종목 서버 동기화 ──
+const holdingsLoaded = ref(false)
+
 async function onTypeChange(type) {
   store.setType(type)
   try { await store.fetchPortfolio(type) } catch {}
@@ -427,6 +511,8 @@ onMounted(() => {
     store.initVersions().catch(() => {})
     store.fetchPortfolio('growth').catch(() => {})
     store.fetchBacktest().catch(() => {})
+    loadMarketRegime()
+    loadHoldingsFromServer()
   }, 320))
 })
 
@@ -553,6 +639,69 @@ const trendLabels = computed(() => {
 // ── 보유 종목 클릭 → 팬카드로 이동 ──
 function goToStock(i) {
   emit('update:currentIndex', i + 1)
+}
+
+// ── 시장 레이더 로드 ──
+async function loadMarketRegime() {
+  try {
+    const { data } = await stocksApi.getMarketRegime()
+    marketRegime.value = data
+  } catch {}
+}
+
+// ── 보유종목 서버에서 로드 ──
+async function loadHoldingsFromServer() {
+  try {
+    const { data } = await portfolioApi.getHoldings()
+    const serverItems = data.items ?? []
+    if (serverItems.length > 0 && activeGroup.value) {
+      activeGroup.value.stocks = serverItems.map(h => ({
+        ticker: h.ticker,
+        company: h.name ?? h.ticker,
+        sector: h.sector ?? '',
+        color: '#888',
+        change: h.return_pct ?? 0,
+        currentPrice: h.current_price ?? h.avg_price ?? 0,
+        quantScore: 50,
+      }))
+    }
+    holdingsLoaded.value = true
+  } catch {}
+}
+
+// ── 보유종목 추가 ──
+async function submitAddHolding() {
+  if (!newHolding.value.ticker || !newHolding.value.quantity) return
+  try {
+    await portfolioApi.addHolding({
+      ticker: newHolding.value.ticker.toUpperCase(),
+      quantity: newHolding.value.quantity,
+      avg_price: newHolding.value.avg_price ?? 0,
+    })
+    newHolding.value = { ticker: '', quantity: null, avg_price: null }
+    showAddHolding.value = false
+    holdingsLoaded.value = false
+    await loadHoldingsFromServer()
+  } catch {
+    // 서버 오류 시 로컬에만 추가
+    activeGroup.value?.stocks.push({
+      ticker: newHolding.value.ticker.toUpperCase(),
+      company: newHolding.value.ticker.toUpperCase(),
+      sector: '',
+      color: '#888',
+      change: 0,
+      currentPrice: newHolding.value.avg_price ?? 0,
+      quantScore: 50,
+    })
+    newHolding.value = { ticker: '', quantity: null, avg_price: null }
+    showAddHolding.value = false
+  }
+}
+
+// ── 보유종목 삭제 ──
+async function removeHolding(i) {
+  activeGroup.value?.stocks.splice(i, 1)
+  // 서버 연동은 향후 id 추적 추가 시 구현
 }
 
 // ── 차트 모달 ──

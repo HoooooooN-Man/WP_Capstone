@@ -11,4 +11,12 @@ export const stocksApi = {
   getCompare:         (tickers, ver, period) => api.get('/compare', { params: { tickers, model_version: ver, period } }),
   getRisingStocks:    (params)               => api.get('/stocks/rising', { params }),
   getPopularPosts:    (limit = 20)           => dbapi.get('/api/v1/board/popular', { params: { limit } }),
+
+  // ── 종목 상세 ─────────────────────────────────────────────────
+  getScreener:    (params)            => api.get('/screener', { params }),
+  getStockRadar:  (ticker)            => api.get(`/stocks/${ticker}/radar`),
+  getFairValue:   (ticker)            => api.get(`/stocks/${ticker}/fairvalue`),
+  getPeers:       (ticker, limit = 5) => api.get(`/stocks/${ticker}/peers`, { params: { limit } }),
+  getDividend:    (ticker)            => api.get(`/stocks/${ticker}/dividend`),
+  getMarketRegime:(params)            => api.get('/market/regime', { params }),
 }
