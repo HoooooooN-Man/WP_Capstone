@@ -1,89 +1,84 @@
 <template>
   <div class="w-full h-full flex flex-col relative overflow-hidden transition-colors duration-300"
-       :class="localDark ? 'bg-[#131318] text-gray-100' : 'bg-[#f0ecdf]'">
+       :class="localDark ? 'bg-[#131318]' : 'bg-[#f8f7f4]'">
 
-    <!-- 신분증 상단 컬러 스트라이프 -->
-    <div class="flex-shrink-0 h-2 bg-gradient-to-r from-[#1a3a6b] via-[#c9a227] to-[#1a3a6b] z-10"></div>
+    <!-- 스크롤 영역 -->
+    <div class="flex-1 overflow-y-auto px-7 py-6 flex flex-col gap-6 z-10">
 
-    <!-- 홀로그램 배경 장식 -->
-    <div class="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none z-0 overflow-hidden opacity-[0.035]">
-      <div class="absolute top-12 right-8 w-56 h-56 rounded-full border-[6px]"
-           :class="localDark ? 'border-white' : 'border-[#1a3a6b]'"></div>
-      <div class="absolute top-32 right-32 w-32 h-32 rounded-full border-[3px]"
-           :class="localDark ? 'border-white' : 'border-[#c9a227]'"></div>
-      <div class="absolute bottom-20 right-12 w-40 h-40 rounded-full border-[4px]"
-           :class="localDark ? 'border-white' : 'border-[#1a3a6b]'"></div>
-    </div>
-
-    <!-- 신분증 본문 -->
-    <div class="flex-1 flex flex-col z-10 overflow-y-auto">
-
-      <!-- ══════════ 신분증 본문 ══════════ -->
-      <!-- 기관명 -->
-      <div class="px-8 pt-6 pb-2">
-        <p class="text-[10px] font-black uppercase tracking-[0.4em]"
-           :style="localDark ? 'color:rgba(201,162,39,0.7)' : 'color:rgba(26,58,107,0.6)'">
-          Wallet Protector · Personal ID
-        </p>
-      </div>
-
-      <!-- 사진 + 이름 영역 -->
-      <div class="flex items-start gap-5 px-8 pb-5"
-           :style="localDark ? 'border-bottom:1px solid rgba(255,255,255,0.1)' : 'border-bottom:1px solid rgba(26,26,46,0.12)'"
-           style="border-bottom:1px solid rgba(26,26,46,0.12)">
-        <!-- 사진 플레이스홀더 -->
-        <div class="flex-shrink-0 w-20 h-24 rounded-sm flex items-center justify-center overflow-hidden"
-             :style="localDark
-               ? 'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15)'
-               : 'background:rgba(26,58,107,0.08);border:1px solid rgba(26,58,107,0.2)'">
-          <LucideUser class="w-10 h-12" :style="localDark ? 'color:rgba(255,255,255,0.2)' : 'color:rgba(26,58,107,0.2)'" />
+      <!-- 헤더: 아바타 + 이름 -->
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0"
+             :class="localDark ? 'bg-white/8' : 'bg-black/6'">
+          <LucideUser class="w-7 h-7" :class="localDark ? 'text-white/30' : 'text-black/25'" />
         </div>
-        <!-- 이름 + ID -->
-        <div class="flex-1 min-w-0 pt-1">
-          <p class="text-[11px] font-bold uppercase tracking-[0.3em] mb-1"
-             :style="localDark ? 'color:rgba(201,162,39,0.6)' : 'color:rgba(26,58,107,0.5)'">성명</p>
-          <p class="text-[26px] font-black leading-tight tracking-tight"
-             :style="localDark ? 'color:#f5f0e8' : 'color:#1a1a2e'">
+        <div>
+          <p class="text-[22px] font-black leading-tight"
+             :class="localDark ? 'text-white' : 'text-gray-900'">
             {{ auth.nickname || 'User' }}
           </p>
-          <p class="text-[11px] font-mono mt-1.5"
-             :style="localDark ? 'color:rgba(255,255,255,0.25)' : 'color:rgba(26,26,46,0.35)'">
-            ID · {{ auth.userId ? String(auth.userId).padStart(8, '0') : 'WP-000000' }}
+          <p class="text-[12px] font-medium mt-0.5"
+             :class="localDark ? 'text-white/35' : 'text-gray-400'">
+            Wallet Protector Member
           </p>
         </div>
       </div>
 
-      <!-- 신분증 필드 테이블 -->
-      <div class="px-8 py-5 flex flex-col gap-0 flex-1">
-        <div v-for="(field, idx) in idFields" :key="field.label"
-             class="flex items-center py-3.5"
-             :style="idx < idFields.length - 1
-               ? (localDark ? 'border-bottom:1px solid rgba(255,255,255,0.07)' : 'border-bottom:1px solid rgba(26,26,46,0.09)')
-               : ''">
-          <p class="text-[10px] font-black uppercase tracking-[0.3em] w-24 flex-shrink-0"
-             :style="localDark ? 'color:rgba(201,162,39,0.55)' : 'color:rgba(26,58,107,0.45)'">
-            {{ field.label }}
-          </p>
-          <p class="text-[15px] font-bold flex-1"
-             :style="localDark ? 'color:#f5f0e8' : 'color:#1a1a2e'">
-            {{ field.value }}
-          </p>
+      <!-- CONTACT 섹션 -->
+      <div>
+        <p class="text-[10px] font-black uppercase tracking-[0.25em] mb-3"
+           :class="localDark ? 'text-white/25' : 'text-gray-400'">Contact</p>
+        <div class="flex flex-col rounded-xl overflow-hidden"
+             :class="localDark ? 'bg-white/5' : 'bg-white'" style="gap:0">
+          <div v-for="(row, i) in contactRows" :key="row.label"
+               class="flex items-center px-4 py-3"
+               :class="[i < contactRows.length-1 ? (localDark ? 'border-b border-white/6' : 'border-b border-black/5') : '']">
+            <span class="text-[11px] w-20 flex-shrink-0"
+                  :class="localDark ? 'text-white/35' : 'text-gray-400'">{{ row.label }}</span>
+            <span class="text-[14px] font-semibold"
+                  :class="localDark ? 'text-white/85' : 'text-gray-800'">{{ row.value }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- 하단 바코드 장식 -->
-      <div class="px-8 pb-6 flex-shrink-0">
-        <div class="flex gap-px h-8 opacity-20" :style="localDark ? '' : ''">
-          <div v-for="i in 48" :key="i"
-               class="flex-1 rounded-sm"
-               :style="`height:${[100,60,80,40,90,55,75,45,95,65,50,85,70,35,100,60,40,80,55,95,45,70,85,30,100,60,75,45,90,55,80,40,95,65,50,85,70,35,100,60,40,80,55,95,45,70,85,30][i%48] ?? 80}%;` +
-                       (localDark ? 'background:#c9a227' : 'background:#1a3a6b')"
-          ></div>
+      <!-- PROFILE 섹션 -->
+      <div>
+        <p class="text-[10px] font-black uppercase tracking-[0.25em] mb-3"
+           :class="localDark ? 'text-white/25' : 'text-gray-400'">Profile</p>
+        <div class="flex flex-col rounded-xl overflow-hidden"
+             :class="localDark ? 'bg-white/5' : 'bg-white'" style="gap:0">
+          <div v-for="(row, i) in profileRows" :key="row.label"
+               class="flex items-center px-4 py-3"
+               :class="[i < profileRows.length-1 ? (localDark ? 'border-b border-white/6' : 'border-b border-black/5') : '']">
+            <span class="text-[11px] w-20 flex-shrink-0"
+                  :class="localDark ? 'text-white/35' : 'text-gray-400'">{{ row.label }}</span>
+            <span class="text-[14px] font-semibold flex-1"
+                  :class="localDark ? 'text-white/85' : 'text-gray-800'">{{ row.value }}</span>
+            <span v-if="row.badge"
+                  class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  :class="localDark ? 'bg-green-500/15 text-green-400' : 'bg-green-100 text-green-700'">
+              {{ row.badge }}
+            </span>
+          </div>
         </div>
-        <p class="text-[8px] font-mono mt-1 text-center"
-           :style="localDark ? 'color:rgba(201,162,39,0.35)' : 'color:rgba(26,58,107,0.3)'">
-          WP {{ new Date().getFullYear() }} · SMART INVESTMENT
-        </p>
+      </div>
+
+      <!-- ACCOUNT 섹션 -->
+      <div>
+        <p class="text-[10px] font-black uppercase tracking-[0.25em] mb-3"
+           :class="localDark ? 'text-white/25' : 'text-gray-400'">Account</p>
+        <div class="flex flex-col rounded-xl overflow-hidden"
+             :class="localDark ? 'bg-white/5' : 'bg-white'" style="gap:0">
+          <div v-for="(row, i) in accountRows" :key="row.label"
+               class="flex items-center px-4 py-3"
+               :class="[i < accountRows.length-1 ? (localDark ? 'border-b border-white/6' : 'border-b border-black/5') : '']">
+            <span class="text-[11px] w-20 flex-shrink-0"
+                  :class="localDark ? 'text-white/35' : 'text-gray-400'">{{ row.label }}</span>
+            <span class="text-[14px] font-semibold flex-1"
+                  :class="[row.colored ? (row.colored > 0 ? 'text-green-500' : 'text-red-400') : (localDark ? 'text-white/85' : 'text-gray-800')]">
+              {{ row.value }}
+            </span>
+          </div>
+        </div>
       </div>
 
       <!-- 이하 기존 코드 비활성화 -->
@@ -623,13 +618,24 @@ watch(() => props.darkMode, v => { localDark.value = v }, { immediate: true })
 
 const auth = useAuthStore();
 
-// ── 신분증 필드 ────────────────────────────────────────────────
-const idFields = computed(() => [
-  { label: '이름',    value: auth.nickname || 'User'       },
-  { label: '이메일',  value: 'user@example.com'            },
-  { label: '연락처',  value: '010-****-5678'               },
-  { label: '생년월일', value: '1995. 03. 22'               },
-  { label: '가입일',  value: '2026. 01. 15'                },
+// ── 프로필 섹션 데이터 ────────────────────────────────────────
+const contactRows = computed(() => [
+  { label: '이메일',  value: 'user@example.com' },
+  { label: '연락처',  value: '010-****-5678'    },
+])
+
+const profileRows = computed(() => [
+  { label: '이름',    value: auth.nickname || 'User'  },
+  { label: '생년월일', value: '1995. 03. 22'           },
+  { label: '가입일',  value: '2026. 01. 15'           },
+  { label: 'KYC',    value: '인증 완료', badge: 'VERIFIED' },
+])
+
+const accountRows = computed(() => [
+  { label: '투자 성향', value: '보수형'           },
+  { label: '총 자산',   value: '₩12,500,000'     },
+  { label: '수익률',    value: '+8.42%', colored: 1 },
+  { label: 'ID',       value: auth.userId || 'WP-000000' },
 ])
 
 // ── 탭 ──────────────────────────────────────────────────────

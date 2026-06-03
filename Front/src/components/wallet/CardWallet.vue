@@ -69,24 +69,22 @@
            transform: (menuBarLocked || walletVisible) ? 'translateY(0)' : 'translateY(100%)',
            transition: 'transform 0.38s cubic-bezier(0.32, 0, 0.2, 1)'
          }"
-         @mouseleave="!menuBarLocked && (walletVisible = false)">
+         @mouseleave="!menuBarLocked && !portfolioDropOpen && (walletVisible = false)">
 
-      <!-- 게시판 버튼 — 지갑 바 위, 오른쪽 끝에 붙여서 함께 슬라이드 -->
-      <div class="flex justify-end px-5 pb-2 pt-1.5 pointer-events-none">
-        <button
-          class="pointer-events-auto flex flex-col items-center gap-1 px-3 py-2 rounded-2xl border transition-all duration-200 shadow-lg"
-          :class="activeCard === 'board'
-            ? 'border-[rgba(201,162,39,0.45)] text-[rgba(201,162,39,0.9)]'
-            : 'border-white/10 text-white/40 hover:text-white/65 hover:border-white/20'"
-          :style="activeCard === 'board'
-            ? 'background: rgba(201,162,39,0.14);'
-            : 'background: rgba(20,14,6,0.75);'"
-          @click="activeCard = activeCard === 'board' ? 'profile' : 'board'"
-        >
-          <LucideLayoutList class="w-4 h-4" />
-          <span class="text-[10px] font-bold tracking-wide leading-none">게시판</span>
-        </button>
-      </div>
+      <!-- 게시판 버튼 — 맨 아래 우측 고정 -->
+      <button
+        class="absolute bottom-2 right-4 z-30 flex flex-col items-center gap-1 px-3 py-2 rounded-2xl border transition-all duration-200 shadow-lg"
+        :class="activeCard === 'board'
+          ? 'border-[rgba(201,162,39,0.45)] text-[rgba(201,162,39,0.9)]'
+          : 'border-white/10 text-white/40 hover:text-white/65 hover:border-white/20'"
+        :style="activeCard === 'board'
+          ? 'background: rgba(201,162,39,0.14);'
+          : 'background: rgba(20,14,6,0.75);'"
+        @click="activeCard = activeCard === 'board' ? 'feed' : 'board'"
+      >
+        <LucideLayoutList class="w-4 h-4" />
+        <span class="text-[10px] font-bold tracking-wide leading-none">게시판</span>
+      </button>
 
       <!-- 지갑 바 -->
       <div class="flex justify-center">
@@ -177,47 +175,53 @@
             <!-- 슬롯 4: Portfolio (드롭다운 포함) -->
             <div class="w-[80%] flex-1 relative">
               <div
-                @click="activeCard = 'portfolio'"
                 class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2 overflow-visible"
                 style="background:linear-gradient(135deg,#e8c87c 0%,#d4a853 100%);"
-                :class="activeCard === 'portfolio' ? '-translate-y-2' : 'hover:-translate-y-2'"
+                :class="activeCard === 'portfolio' || portfolioDropOpen ? '-translate-y-2' : 'hover:-translate-y-2'"
+                @click="activeCard = 'portfolio'"
               >
+                <!-- 왼쪽: PORTFOLIO 레이블 (페이지 이동) -->
                 <LucideFolder class="w-4 h-4 flex-shrink-0" style="color:#5c3d0e;opacity:0.8;" />
-                <div class="flex flex-col justify-center min-w-0 flex-1 overflow-hidden">
-                  <span class="text-[9px] font-bold tracking-widest uppercase leading-none truncate" style="color:rgba(92,61,14,0.6);font-family:sans-serif;">
-                    {{ activeGroup?.name ?? 'My' }}
-                  </span>
+                <div class="flex flex-col justify-center min-w-0">
+                  <span class="text-[9px] font-bold tracking-widest uppercase leading-none" style="color:rgba(92,61,14,0.6);font-family:sans-serif;">My</span>
                   <span class="text-[15px] font-black leading-tight" style="color:#3d2208;">PORTFOLIO</span>
                 </div>
-                <!-- 드롭다운 버튼 -->
-                <button @click.stop="portfolioDropOpen = !portfolioDropOpen"
-                        class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded transition-all hover:bg-black/10"
-                        style="color:rgba(61,34,8,0.5)">
-                  <LucideChevronDown class="w-3.5 h-3.5 transition-transform" :class="portfolioDropOpen ? 'rotate-180' : ''" />
-                </button>
 
-                <!-- 드롭다운 메뉴 (위로 열림) -->
-                <div v-if="portfolioDropOpen"
-                     class="absolute bottom-full right-0 mb-1 rounded-xl shadow-2xl z-[200] overflow-hidden"
-                     style="min-width:180px; background:#1e1a12; border:1px solid rgba(201,162,39,0.3);"
-                     @click.stop>
-                  <div class="px-3 py-2" style="border-bottom:1px solid rgba(255,255,255,0.08);">
-                    <p class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(201,162,39,0.7);">포트폴리오 선택</p>
+                <!-- 오른쪽: 셀렉트박스형 드롭다운 -->
+                <div class="flex items-center gap-1.5 ml-auto relative flex-shrink-0 px-2 py-1 rounded-lg cursor-pointer transition-all"
+                     style="background:rgba(0,0,0,0.12); border:1px solid rgba(0,0,0,0.15); max-width:120px;"
+                     @click.stop="openPortfolioDrop">
+                  <span class="text-[11px] font-bold truncate" style="color:#3d2208; max-width:80px;">
+                    {{ activeGroup?.name ?? '포트폴리오 1' }}
+                  </span>
+                  <LucideChevronDown class="w-3 h-3 flex-shrink-0 transition-transform"
+                                     :class="portfolioDropOpen ? 'rotate-180' : ''"
+                                     style="color:rgba(61,34,8,0.55)" />
+
+                  <!-- 드롭다운 메뉴 (위로 열림) -->
+                  <div v-if="portfolioDropOpen"
+                       class="absolute bottom-full right-0 mb-2 rounded-xl shadow-2xl z-[200] overflow-hidden"
+                       style="min-width:200px; background:#1e1a12; border:1px solid rgba(201,162,39,0.3);"
+                       @click.stop
+                       @mouseenter="walletVisible = true">
+                    <div class="px-3 py-2" style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <p class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(201,162,39,0.7);">포트폴리오 선택</p>
+                    </div>
+                    <div v-for="group in portfolioGroups" :key="group.id"
+                         class="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-white/8 transition-colors"
+                         @click="switchPortfolio(group.id)">
+                      <LucideCheck v-if="group.id === activeGroupId" class="w-3.5 h-3.5 flex-shrink-0" style="color:#c9a227;" />
+                      <span v-else class="w-3.5 h-3.5 flex-shrink-0"></span>
+                      <span class="text-[13px] font-bold text-white flex-1 truncate">{{ group.name }}</span>
+                      <span class="text-[10px]" style="color:rgba(255,255,255,0.3);">{{ group.stocks.length }}종목</span>
+                    </div>
+                    <button class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-white/8 transition-colors"
+                            style="border-top:1px solid rgba(255,255,255,0.08);"
+                            @click="addPortfolio">
+                      <LucidePlus class="w-3.5 h-3.5" style="color:#c9a227;" />
+                      <span class="text-[13px] font-bold" style="color:#c9a227;">포트폴리오 추가</span>
+                    </button>
                   </div>
-                  <div v-for="group in portfolioGroups" :key="group.id"
-                       class="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-white/8 transition-colors"
-                       @click="switchPortfolio(group.id)">
-                    <LucideCheck v-if="group.id === activeGroupId" class="w-3.5 h-3.5 flex-shrink-0" style="color:#c9a227;" />
-                    <span v-else class="w-3.5 h-3.5 flex-shrink-0"></span>
-                    <span class="text-[13px] font-bold text-white flex-1 truncate">{{ group.name }}</span>
-                    <span class="text-[10px]" style="color:rgba(255,255,255,0.3);">{{ group.stocks.length }}종목</span>
-                  </div>
-                  <button class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-white/8 transition-colors"
-                          style="border-top:1px solid rgba(255,255,255,0.08);"
-                          @click="addPortfolio">
-                    <LucidePlus class="w-3.5 h-3.5" style="color:#c9a227;" />
-                    <span class="text-[13px] font-bold" style="color:#c9a227;">포트폴리오 추가</span>
-                  </button>
                 </div>
               </div>
               <div class="absolute bottom-0 left-0 right-0 h-[8px] pointer-events-none z-[24]"
@@ -232,10 +236,10 @@
       </div><!-- /flex justify-center -->
     </div><!-- /지갑 바 + 게시판 wrapper -->
 
-    <!-- ── 포트폴리오 팬 스트립 — 지갑 바와 동일한 레벨 (fixed bottom) ── -->
+    <!-- ── 포트폴리오 팬 스트립 ── -->
     <div v-if="activeCard === 'portfolio'"
-         class="fixed bottom-0 left-0 right-0 z-10"
-         style="height:240px">
+         class="fixed left-0 right-0 z-10"
+         style="height:240px; bottom:-18px">
       <PortfolioFanStrip
         :display-items="portfolioDisplayItems"
         :current-index="portfolioCurrentIndex"
@@ -442,7 +446,7 @@
     <!-- 드롭다운 외부 클릭 닫기 -->
     <div v-if="portfolioDropOpen"
          class="fixed inset-0 z-[100]"
-         @click="portfolioDropOpen = false"></div>
+         @click="portfolioDropOpen = false; walletVisible = false"></div>
 
   </div>
 </template>
@@ -551,10 +555,19 @@ async function handleLogout() {
   showSettings.value = false
 }
 
+function openPortfolioDrop() {
+  portfolioDropOpen.value = !portfolioDropOpen.value
+  if (portfolioDropOpen.value) {
+    // 메뉴바 고정이 아니어도 드롭다운 열리는 동안 유지
+    walletVisible.value = true
+  }
+}
+
 function switchPortfolio(id) {
   activeGroupId.value = id
   portfolioDropOpen.value = false
   activeCard.value = 'portfolio'
+  walletVisible.value = false
 }
 function addPortfolio() {
   const nextId = Math.max(...portfolioGroups.value.map(g => g.id)) + 1
