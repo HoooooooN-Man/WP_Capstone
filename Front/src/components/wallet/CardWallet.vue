@@ -25,13 +25,14 @@
       <transition name="fade-scale">
         <ProfileView   v-if="activeCard === 'profile'"   key="profile"
           class="absolute inset-0"
-          :user="user" :menu-bar-locked="menuBarLocked"
+          :user="user" :menu-bar-locked="menuBarLocked" :dark-mode="darkMode"
           @toggle-menu-lock="toggleMenuLock"
           @navigate="activeCard = $event" />
         <FlashCardView v-else-if="activeCard === 'feed'" key="feed"
-          class="absolute inset-0" />
+          class="absolute inset-0" :dark-mode="darkMode" />
         <CompanyView   v-else-if="activeCard === 'company'" key="company"
           class="absolute inset-0"
+          :dark-mode="darkMode"
           :replace-mode="replaceMode"
           :replace-stock="replaceStock"
           :view-ticker="viewTicker"
@@ -42,6 +43,7 @@
         />
         <PortfolioView v-else-if="activeCard === 'portfolio'" key="portfolio"
           class="absolute inset-0"
+          :dark-mode="darkMode"
           :portfolio-groups="portfolioGroups"
           :active-group-id="activeGroupId"
           v-model:current-index="portfolioCurrentIndex"
@@ -88,7 +90,7 @@
 
       <!-- 지갑 바 -->
       <div class="flex justify-center">
-      <div class="wallet-bar relative z-10 w-full rounded-t-[2rem] overflow-visible flex border-t"
+      <div class="wallet-bar relative z-10 w-full max-w-[860px] rounded-t-[2rem] overflow-visible flex border-t"
            style="border-color: rgba(201,162,39,0.38)">
 
 
@@ -114,7 +116,7 @@
               <div
                 @click="activeCard = 'feed'"
                 class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] transition-transform duration-300 cursor-pointer overflow-hidden flex flex-col justify-center px-3"
-                style="background:#ccc8c0; background-image:repeating-linear-gradient(0deg,transparent,transparent 10px,rgba(0,0,0,0.03) 10px,rgba(0,0,0,0.03) 11px); border-top:2px solid #1a1209;"
+                style="background:#ccc8c0; background-image:repeating-linear-gradient(0deg,transparent,transparent 10px,rgba(0,0,0,0.03) 10px,rgba(0,0,0,0.03) 11px);"
                 :class="activeCard === 'feed' ? '-translate-y-1' : 'hover:-translate-y-1'"
               >
                 <span class="text-[8px] uppercase tracking-widest leading-none mb-0.5" style="color:#777; font-family:sans-serif; border-bottom:1px solid rgba(0,0,0,0.2); padding-bottom:2px;">AI Intelligence</span>
@@ -131,9 +133,7 @@
                 style="background: linear-gradient(135deg, #f7f4ee 0%, #e8e2d4 100%);"
                 :class="activeCard === 'profile' ? '-translate-y-2' : 'hover:-translate-y-2'"
               >
-                <!-- 신분증 컬러 스트라이프 -->
-                <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[#1a3a6b] via-[#c9a227] to-[#1a3a6b] flex-shrink-0"></div>
-                <div class="w-6 h-6 rounded bg-black/6 flex items-center justify-center flex-shrink-0 ml-1">
+                <div class="w-6 h-6 rounded bg-black/6 flex items-center justify-center flex-shrink-0">
                   <LucideUser class="w-3.5 h-3.5 text-black/55" />
                 </div>
                 <div class="flex flex-col justify-center min-w-0 flex-1">
@@ -162,15 +162,13 @@
               <div
                 @click="activeCard = 'company'"
                 class="absolute top-0 left-[3px] right-[3px] bottom-0 rounded-t-[10px] transition-transform duration-300 cursor-pointer flex items-center px-3 gap-2 overflow-hidden"
-                style="background:#f4f2ec; border-top:2.5px solid #1a1a2e;"
+                :style="`background:${darkMode ? '#0f1e3d' : '#1a3a6b'};`"
                 :class="activeCard === 'company' ? '-translate-y-1' : 'hover:-translate-y-1'"
               >
-                <!-- 보고서 좌측 컬러 탭 -->
-                <div class="absolute left-0 top-0 bottom-0 w-[3px]" style="background:#1a1a2e"></div>
-                <LucideBuilding2 class="w-4 h-4 flex-shrink-0 ml-1" style="color:#1a1a2e;opacity:0.55;" />
+                <LucideBuilding2 class="w-4 h-4 flex-shrink-0" style="color:rgba(201,162,39,0.7);" />
                 <div class="flex flex-col justify-center min-w-0">
-                  <span class="text-[9px] font-bold tracking-widest uppercase leading-none" style="color:#888;font-family:sans-serif;">Market</span>
-                  <span class="text-[15px] font-black leading-tight tracking-tight" style="color:#1a1a2e;font-family:Georgia,serif;">ANALYSIS</span>
+                  <span class="text-[9px] font-bold tracking-widest uppercase leading-none" style="color:rgba(201,162,39,0.55);font-family:sans-serif;">Market</span>
+                  <span class="text-[15px] font-black leading-tight tracking-tight" style="color:#f0ebe0;font-family:Georgia,serif;">ANALYSIS</span>
                 </div>
               </div>
               <div class="absolute bottom-0 w-full h-[4px] bg-[#090705] shadow-[inset_0_3px_8px_rgba(0,0,0,1)] pointer-events-none rounded-b-sm"></div>
@@ -184,9 +182,7 @@
                 style="background:linear-gradient(135deg,#e8c87c 0%,#d4a853 100%);"
                 :class="activeCard === 'portfolio' ? '-translate-y-2' : 'hover:-translate-y-2'"
               >
-                <!-- 파일철 왼쪽 바인딩 -->
-                <div class="absolute left-0 top-0 bottom-0 w-[4px] rounded-tl-[10px]" style="background:#8B5E1A;"></div>
-                <LucideFolder class="w-4 h-4 flex-shrink-0 ml-1" style="color:#5c3d0e;opacity:0.8;" />
+                <LucideFolder class="w-4 h-4 flex-shrink-0" style="color:#5c3d0e;opacity:0.8;" />
                 <div class="flex flex-col justify-center min-w-0 flex-1 overflow-hidden">
                   <span class="text-[9px] font-bold tracking-widest uppercase leading-none truncate" style="color:rgba(92,61,14,0.6);font-family:sans-serif;">
                     {{ activeGroup?.name ?? 'My' }}
@@ -474,7 +470,7 @@ const props = defineProps({
 const emit = defineEmits(['toggle-wallet', 'toggle-portfolio']);
 const activeCard    = ref('feed');
 const viewTicker    = ref(null);
-const darkMode      = ref(true);
+const darkMode      = ref(false);
 const walletVisible = ref(false);
 
 // 메뉴바 고정 (localStorage 영속)
@@ -746,7 +742,7 @@ const handleToggleAutoTrade = () => {
 .wallet-bar {
   background: linear-gradient(180deg, #1e1509 0%, #161008 55%, #191209 100%);
   box-shadow: 0 -16px 48px rgba(0,0,0,0.7);
-  height: 120px;
+  height: 100px;
 }
 
 .animate-slide-up-wallet {

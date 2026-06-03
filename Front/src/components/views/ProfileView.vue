@@ -1,6 +1,6 @@
 <template>
   <div class="w-full h-full flex flex-col relative overflow-hidden transition-colors duration-300"
-       :class="localDark ? 'bg-[#0f1520] text-gray-100' : 'bg-[#f0ecdf]'">
+       :class="localDark ? 'bg-[#131318] text-gray-100' : 'bg-[#f0ecdf]'">
 
     <!-- 신분증 상단 컬러 스트라이프 -->
     <div class="flex-shrink-0 h-2 bg-gradient-to-r from-[#1a3a6b] via-[#c9a227] to-[#1a3a6b] z-10"></div>
@@ -603,21 +603,23 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { LucideInfo, LucideSettings, LucideMoon, LucideSun, LucideLogOut, LucideUser } from 'lucide-vue-next';
 import authApi  from '@/api/auth.js';
 import dbapi    from '@/api/dbapi.js';
 import { stocksApi } from '@/api/stocks.js';
 import { useAuthStore } from '@/stores/auth.js';
 
-defineProps({
+const props = defineProps({
   user:          { type: Object,  default: () => ({}) },
   menuBarLocked: { type: Boolean, default: false },
+  darkMode:      { type: Boolean, default: false },
 });
 const emit = defineEmits(['navigate', 'toggle-menu-lock']);
 
-// 신분증 테마: 로컬 다크모드 (기본 OFF = 라이트)
-const localDark = ref(false);
+// 신분증 테마: 전역 darkMode prop을 따름
+const localDark = ref(false)
+watch(() => props.darkMode, v => { localDark.value = v }, { immediate: true })
 
 const auth = useAuthStore();
 

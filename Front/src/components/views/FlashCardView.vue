@@ -1,29 +1,41 @@
 <template>
   <div class="w-full h-full overflow-hidden relative"
-       style="background:#ccc8c0; color:#1a1209;">
+       :style="props.darkMode ? {
+         background:'#1c1c20', color:'#e0ddd8',
+         '--c-fg':'#e0ddd8', '--c-fg2':'rgba(224,221,216,0.55)', '--c-fg3':'rgba(224,221,216,0.35)',
+         '--c-border':'rgba(255,255,255,0.15)', '--c-dbl-border':'rgba(255,255,255,0.25)',
+         '--c-masthead-bg':'rgba(255,255,255,0.04)',
+       } : {
+         background:'#ccc8c0', color:'#1a1209',
+         '--c-fg':'#1a1209', '--c-fg2':'rgba(26,18,9,0.55)', '--c-fg3':'rgba(26,18,9,0.35)',
+         '--c-border':'rgba(0,0,0,0.15)', '--c-dbl-border':'#1a1209',
+         '--c-masthead-bg':'transparent',
+       }">
     <!-- 신문 줄 질감 오버레이 -->
     <div class="absolute inset-0 pointer-events-none"
-         style="background-image:repeating-linear-gradient(0deg,transparent,transparent 22px,rgba(0,0,0,0.025) 22px,rgba(0,0,0,0.025) 23px);"></div>
+         :style="props.darkMode
+           ? 'background-image:repeating-linear-gradient(0deg,transparent,transparent 22px,rgba(255,255,255,0.03) 22px,rgba(255,255,255,0.03) 23px);'
+           : 'background-image:repeating-linear-gradient(0deg,transparent,transparent 22px,rgba(0,0,0,0.025) 22px,rgba(0,0,0,0.025) 23px);'"></div>
 
     <div class="absolute inset-0 overflow-y-auto" style="font-family:Georgia,'Times New Roman',serif;">
 
       <!-- ═══ 마스트헤드 ═══ -->
-      <div class="px-5 pt-3 flex-shrink-0" style="border-bottom:3px double #1a1209;">
+      <div class="px-5 pt-3 flex-shrink-0" style="border-bottom:3px double var(--c-dbl-border);">
         <!-- 상단 얇은 정보 바 -->
         <div class="flex items-center justify-between pb-1 mb-0.5" style="border-bottom:1px solid rgba(0,0,0,0.2); font-family:sans-serif;">
-          <span class="text-[8px] uppercase tracking-widest" style="color:#777;">AI Financial Intelligence</span>
+          <span class="text-[8px] uppercase tracking-widest" style="color:var(--c-fg3);">AI Financial Intelligence</span>
           <div v-if="!recLoading" class="flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-green-700 animate-pulse inline-block"></span>
             <span class="text-[8px] font-bold uppercase tracking-widest" style="color:#2d5a1b;">LIVE</span>
           </div>
         </div>
         <!-- 메인 마스트헤드: 날짜(좌) | 제목(중) | 스코어(우) -->
-        <div class="grid py-1.5" style="grid-template-columns:1fr auto 1fr; border-top:2px solid #1a1209; border-bottom:1px solid #1a1209; align-items:center; gap:8px;">
+        <div class="grid py-1.5" style="grid-template-columns:1fr auto 1fr; border-top:2px solid var(--c-dbl-border); border-bottom:1px solid var(--c-dbl-border); align-items:center; gap:8px;">
           <!-- 왼쪽: 날짜/에디션 -->
           <div style="font-family:sans-serif;">
-            <p class="text-[8px] uppercase tracking-wide" style="color:#888;">Daily Edition</p>
+            <p class="text-[8px] uppercase tracking-wide" style="color:var(--c-fg3);">Daily Edition</p>
             <p class="text-[11px] font-bold" style="color:#333;">{{ todayStr }}</p>
-            <p class="text-[8px]" style="color:#aaa;">Vol. {{ todayVol }}</p>
+            <p class="text-[8px]" style="color:var(--c-fg3);">Vol. {{ todayVol }}</p>
           </div>
           <!-- 중앙: 제목 -->
           <h1 class="text-center font-black tracking-tight" style="font-size:26px; letter-spacing:-0.02em; font-family:Georgia,serif; white-space:nowrap;">
@@ -31,8 +43,8 @@
           </h1>
           <!-- 오른쪽: AI 마켓 스코어 -->
           <div class="text-right" style="font-family:sans-serif;">
-            <p class="text-[8px] uppercase tracking-wide" style="color:#888;">AI Market Score</p>
-            <p v-if="recLoading" class="text-[11px] italic" style="color:#aaa;">—</p>
+            <p class="text-[8px] uppercase tracking-wide" style="color:var(--c-fg3);">AI Market Score</p>
+            <p v-if="recLoading" class="text-[11px] italic" style="color:var(--c-fg3);">—</p>
             <template v-else>
               <p class="text-[18px] font-black leading-none" style="color:#1a1209;">{{ marketScore }}</p>
               <p class="text-[9px] font-bold" style="color:#4a7a10;">{{ marketLabel }}</p>
@@ -40,9 +52,9 @@
           </div>
         </div>
         <!-- 하단 부제 -->
-        <div class="flex items-center justify-between pt-1 pb-1.5" style="border-bottom:2px solid #1a1209; font-family:sans-serif;">
-          <span class="text-[8px]" style="color:#777;">AI Score · 지수 · 추천 종목 · 뉴스 감성 랭킹</span>
-          <span class="text-[8px]" style="color:#999;">{{ recDate || '' }}</span>
+        <div class="flex items-center justify-between pt-1 pb-1.5" style="border-bottom:2px solid var(--c-dbl-border); font-family:sans-serif;">
+          <span class="text-[8px]" style="color:var(--c-fg3);">AI Score · 지수 · 추천 종목 · 뉴스 감성 랭킹</span>
+          <span class="text-[8px]" style="color:var(--c-fg3);">{{ recDate || '' }}</span>
         </div>
       </div>
 
@@ -50,10 +62,10 @@
       <div class="px-5 py-3" style="border-bottom:2px solid rgba(0,0,0,0.2);">
         <div class="flex items-baseline gap-2 mb-3">
           <span class="text-[10px] font-black uppercase tracking-widest" style="color:#666;font-family:sans-serif;">AI Market Score</span>
-          <span v-if="recLoading" class="text-[11px] italic" style="color:#aaa;">분석 중...</span>
+          <span v-if="recLoading" class="text-[11px] italic" style="color:var(--c-fg3);">분석 중...</span>
           <template v-else>
             <span class="text-[30px] font-black leading-none">{{ marketScore }}</span>
-            <span class="text-[13px]" style="color:#666;">/100</span>
+            <span class="text-[13px]" style="color:var(--c-fg2);">/100</span>
             <span class="text-[12px] font-bold" style="color:#4a7a10;">{{ marketLabel }}</span>
           </template>
         </div>
@@ -69,25 +81,25 @@
       </div>
 
       <!-- ═══ AI 추천 종목 ═══ -->
-      <div class="px-5 py-3" style="border-bottom:2px solid #1a1209;">
+      <div class="px-5 py-3" style="border-bottom:2px solid var(--c-dbl-border);">
         <h2 class="text-[10px] font-black uppercase tracking-widest mb-2 pb-1"
             style="font-family:sans-serif; border-bottom:1px solid rgba(0,0,0,0.15);">
           ■ AI 추천 종목 Top 5
         </h2>
         <div v-if="recLoading" class="flex justify-center py-3">
-          <span class="text-[12px] italic" style="color:#aaa;">집계 중...</span>
+          <span class="text-[12px] italic" style="color:var(--c-fg3);">집계 중...</span>
         </div>
         <div v-else>
           <div v-for="(stock, i) in topStocks" :key="stock.ticker"
                class="flex items-center gap-2 py-1.5"
-               :style="i < topStocks.length-1 ? 'border-bottom:1px solid rgba(0,0,0,0.1)' : ''">
+               :style="i < topStocks.length-1 ? 'border-bottom:1px solid var(--c-border)' : ''">
             <span class="font-black w-4 text-center leading-none" style="font-size:16px; color:#ccc;">{{ i+1 }}</span>
             <span class="font-bold text-[13px] flex-1 leading-tight">{{ stock.name ?? stock.ticker }}</span>
-            <span class="text-[10px] font-mono" style="color:#888;">{{ stock.ticker }}</span>
+            <span class="text-[10px] font-mono" style="color:var(--c-fg3);">{{ stock.ticker }}</span>
             <span class="text-[12px] font-black" style="color:#8B6914;">{{ Math.round(stock.score) }}</span>
             <span class="text-[9px] px-1 py-0.5 font-black" style="background:#1a1209;color:#ccc8c0;font-family:sans-serif;">{{ stock.tier }}</span>
           </div>
-          <div v-if="!topStocks.length" class="text-center py-2 text-[12px] italic" style="color:#aaa;">
+          <div v-if="!topStocks.length" class="text-center py-2 text-[12px] italic" style="color:var(--c-fg3);">
             추천 데이터를 불러오는 중입니다
           </div>
         </div>
@@ -112,18 +124,18 @@
 
         <!-- 로딩 -->
         <div v-if="rankingLoading" class="flex justify-center py-8">
-          <span class="text-[13px] italic" style="color:#888;">집계 중...</span>
+          <span class="text-[13px] italic" style="color:var(--c-fg3);">집계 중...</span>
         </div>
         <!-- 오류 -->
         <div v-else-if="rankingError" class="flex flex-col items-center justify-center py-8 gap-1 text-center px-4">
           <span class="text-[13px] font-bold">데이터 준비 중</span>
-          <span class="text-[11px] italic" style="color:#888;">뉴스 DB가 아직 생성되지 않았습니다</span>
+          <span class="text-[11px] italic" style="color:var(--c-fg3);">뉴스 DB가 아직 생성되지 않았습니다</span>
         </div>
         <!-- 랭킹 아이템 -->
         <template v-else>
           <div v-for="(item, idx) in displayRankings" :key="item.news_id"
                class="flex items-start gap-3 px-5 py-2.5 cursor-pointer hover:bg-black/5"
-               :style="idx < displayRankings.length-1 ? 'border-bottom:1px solid rgba(0,0,0,0.1)' : ''"
+               :style="idx < displayRankings.length-1 ? 'border-bottom:1px solid var(--c-border)' : ''"
                :class="!filteredRankingNews.length ? 'opacity-60' : ''"
                @click="openUrl(item.origin_url || item.google_url)">
             <span class="flex-shrink-0 font-black text-center leading-none pt-0.5"
@@ -137,7 +149,7 @@
                       :style="{ background: sentimentColor(item.sentiment_label) }">
                   {{ sentimentKo(item.sentiment_label) }}
                 </span>
-                <span class="text-[9px] font-mono truncate" style="color:#888;">{{ item.provider }}</span>
+                <span class="text-[9px] font-mono truncate" style="color:var(--c-fg3);">{{ item.provider }}</span>
                 <span class="ml-auto text-[9px] font-bold flex-shrink-0" style="color:#8B6914;font-family:sans-serif;">
                   {{ (item.ranking_score ?? 0).toFixed(1) }}pt
                 </span>
@@ -149,8 +161,8 @@
         </template>
 
         <!-- 푸터 -->
-        <div class="px-5 py-3 text-center" style="border-top:2px double #1a1209;font-family:sans-serif;">
-          <p class="text-[9px] uppercase tracking-widest" style="color:#aaa;">본 뉴스레터는 AI 분석 기반으로 투자 권유가 아닙니다</p>
+        <div class="px-5 py-3 text-center" style="border-top:2px double var(--c-dbl-border);font-family:sans-serif;">
+          <p class="text-[9px] uppercase tracking-widest" style="color:var(--c-fg3);">본 뉴스레터는 AI 분석 기반으로 투자 권유가 아닙니다</p>
         </div>
       </div>
 
@@ -160,6 +172,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+
+const props = defineProps({
+  darkMode: { type: Boolean, default: false }
+})
 import { useNewsRankings } from '@/composables/useStockQuery.js'
 import { stocksApi } from '@/api/stocks.js'
 
