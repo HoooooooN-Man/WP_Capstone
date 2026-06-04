@@ -10,8 +10,29 @@
          '--c-border':'rgba(0,0,0,0.1)', '--c-card':'rgba(0,0,0,0.04)',
        }">
 
+    <!-- 포트폴리오 탭 패널 -->
+    <div class="flex items-end gap-0 px-3 pt-2 flex-shrink-0 relative z-10"
+         style="border-bottom:1px solid rgba(0,0,0,0.15)">
+      <div v-for="group in props.portfolioGroups" :key="group.id"
+           class="flex items-center gap-1.5 px-3 py-1.5 cursor-pointer transition-all select-none rounded-t-lg text-[12px] font-bold"
+           :style="group.id === props.activeGroupId
+             ? `background:${props.darkMode ? '#100c07' : '#ede4d0'};border:1px solid rgba(0,0,0,0.15);border-bottom:1px solid ${props.darkMode ? '#100c07' : '#ede4d0'};margin-bottom:-1px;color:var(--c-fg);z-index:2;position:relative;`
+             : `background:rgba(0,0,0,0.06);color:var(--c-fg2);border:1px solid transparent;`"
+           @click="emit('switch-group', group.id)">
+        <LucideFolder class="w-3 h-3 flex-shrink-0" />
+        <span class="truncate" style="max-width:100px">{{ group.name }}</span>
+      </div>
+      <!-- + 추가 버튼 -->
+      <button @click="emit('add-portfolio')"
+              class="flex items-center gap-1 px-2.5 py-1.5 rounded-t-lg ml-1 transition-all text-[11px] font-bold"
+              style="color:var(--c-fg2);background:rgba(0,0,0,0.04);">
+        <LucidePlus class="w-3.5 h-3.5" />
+        추가
+      </button>
+    </div>
+
     <!-- 스크롤 메인 컨텐츠 -->
-    <div class="absolute inset-0 overflow-y-auto" style="scrollbar-width:thin;padding-bottom:12px">
+    <div class="absolute inset-0 overflow-y-auto" style="scrollbar-width:thin;padding-bottom:12px;top:38px">
       <transition name="page-switch" mode="out-in">
 
         <!-- ── [0] 오버뷰 ── -->
@@ -79,7 +100,7 @@
                    class="flex items-center gap-1.5 cursor-pointer group"
                    @click="startEdit">
                 <p class="text-[17px] font-black leading-tight" style="color:var(--c-fg)">{{ formatKRW(investmentAmount) }}</p>
-                <LucidePencil class="w-3 h-3 text-white/20 group-hover:text-white/50 transition-colors" />
+                <LucidePencil class="w-3 h-3 transition-colors" :style="'color:var(--c-fg3)'" />
               </div>
               <div v-else class="flex flex-col gap-1.5">
                 <input
@@ -170,7 +191,7 @@
                 <!-- 종목 정보 -->
                 <div class="flex-1 min-w-0">
                   <p class="text-[13px] font-black leading-tight truncate">{{ stock.company }}</p>
-                  <p class="text-[10px] font-mono text-white/30 leading-none mt-0.5">{{ stock.ticker }}</p>
+                  <p class="text-[10px] font-mono leading-none mt-0.5" style="color:var(--c-fg3)">{{ stock.ticker }}</p>
                 </div>
                 <!-- 비중 + 수익률 -->
                 <div class="text-right flex-shrink-0">
@@ -178,7 +199,7 @@
                      :class="stock.change >= 0 ? 'text-green-400' : 'text-red-400'">
                     {{ stock.change >= 0 ? '+' : '' }}{{ stock.change }}%
                   </p>
-                  <p class="text-[10px] text-white/30 leading-none mt-0.5">
+                  <p class="text-[10px] leading-none mt-0.5" style="color:var(--c-fg3)">
                     비중 {{ activeStocks.length ? (100 / activeStocks.length).toFixed(1) : 0 }}%
                   </p>
                 </div>
@@ -187,7 +208,7 @@
                         style="color:#991b1b">
                   <LucideX class="w-3 h-3" />
                 </button>
-                <LucideChevronRight class="w-4 h-4 text-white/20 flex-shrink-0" />
+                <LucideChevronRight class="w-4 h-4 flex-shrink-0" style="color:var(--c-fg3)" />
               </div>
             </div>
           </div>
@@ -203,30 +224,31 @@
               <div class="flex gap-2 mb-3">
                 <button v-for="t in [{ value:'growth', label:'성장형' },{ value:'stable', label:'안정형' }]" :key="t.value"
                         class="px-3 py-1.5 rounded-lg text-[12px] font-bold transition-colors"
-                        :class="store.activeType === t.value
-                          ? 'bg-white/15 text-white border border-white/25'
-                          : 'border border-white/12 text-white/40'"
+                        :class="store.activeType === t.value ? '' : ''"
+                        :style="store.activeType === t.value
+                          ? 'background:var(--c-card);border:1px solid var(--c-border);color:var(--c-fg)'
+                          : 'border:1px solid var(--c-border);color:var(--c-fg2)'"
                         @click="onTypeChange(t.value)">
                   {{ t.label }}
                 </button>
               </div>
               <div v-if="store.loading" class="grid grid-cols-2 gap-2">
                 <div v-for="i in 6" :key="i" class="h-20 rounded-xl animate-pulse"
-                     style="background:rgba(255,255,255,0.05)"></div>
+                     style="background:var(--c-card)"></div>
               </div>
               <div v-else class="grid grid-cols-2 gap-2">
                 <div v-for="item in store.currentItems" :key="item.ticker"
                      class="rounded-xl p-3 cursor-pointer border transition-colors"
-                     style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.08)"
+                     style="background:var(--c-card);border-color:var(--c-border)"
                      @click="emit('view-company', item.ticker)">
                   <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-[10px] text-white/40">{{ item.rank }}위</span>
+                    <span class="text-[10px]" style="color:var(--c-fg3)">{{ item.rank }}위</span>
                     <span class="px-1.5 py-0.5 rounded text-[10px] font-bold"
                           :style="tierStyle(item.tier)">{{ item.tier }}</span>
                   </div>
-                  <p class="text-[12px] font-black truncate mb-0.5">{{ item.name }}</p>
+                  <p class="text-[12px] font-black truncate mb-0.5" style="color:var(--c-fg)">{{ item.name }}</p>
                   <div class="flex items-center justify-between">
-                    <p class="text-[10px] font-mono text-white/30">{{ item.ticker }}</p>
+                    <p class="text-[10px] font-mono" style="color:var(--c-fg3)">{{ item.ticker }}</p>
                     <span class="text-[11px] font-bold text-[#c9a227]">{{ Math.round(item.score) }}</span>
                   </div>
                 </div>
@@ -241,19 +263,19 @@
 
           <!-- 헤더 -->
           <div class="flex items-center gap-3 px-5 py-4 flex-shrink-0"
-               style="border-bottom:1px solid rgba(255,255,255,0.1)">
+               style="border-bottom:1px solid var(--c-border)">
             <button @click="$emit('update:currentIndex', 0)"
-                    class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
-                    style="background:rgba(255,255,255,0.06)">
-              <LucideChevronLeft class="w-4 h-4 text-white/60" />
+                    class="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                    style="background:var(--c-card)">
+              <LucideChevronLeft class="w-4 h-4" style="color:var(--c-fg2)" />
             </button>
             <div v-if="activeStock" class="flex-1 min-w-0">
-              <p class="text-[10px] font-mono text-white/30">{{ activeStock.ticker }} · {{ activeStock.sector }}</p>
+              <p class="text-[10px] font-mono" style="color:var(--c-fg3)">{{ activeStock.ticker }} · {{ activeStock.sector }}</p>
               <p class="text-[15px] font-black truncate">{{ activeStock.company }}</p>
             </div>
             <button v-if="activeStock"
-                    class="px-3 py-1.5 rounded-xl text-[11px] font-bold text-white/50 hover:text-white/80 flex-shrink-0"
-                    style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12)"
+                    class="px-3 py-1.5 rounded-xl text-[11px] font-bold flex-shrink-0"
+                    :style="`color:var(--c-fg2);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12)`"
                     @click="emit('view-company', activeStock.ticker)">
               상세 →
             </button>
@@ -268,30 +290,30 @@
               <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ background: activeStock.color }"></div>
               <div class="flex-1">
                 <p class="text-[13px] font-black">현재 수익률</p>
-                <p class="text-[10px] text-white/35 mt-0.5">₩{{ activeStock.currentPrice?.toLocaleString() }}</p>
+                <p class="text-[10px] mt-0.5" style="color:var(--c-fg3)">₩{{ activeStock.currentPrice?.toLocaleString() }}</p>
               </div>
               <div class="text-right">
                 <p class="text-[20px] font-black leading-none"
                    :class="activeStock.change >= 0 ? 'text-green-400' : 'text-red-400'">
                   {{ activeStock.change >= 0 ? '+' : '' }}{{ activeStock.change }}%
                 </p>
-                <p class="text-[10px] text-white/30 mt-0.5">Quant {{ activeStock.quantScore ?? '—' }}</p>
+                <p class="text-[10px] mt-0.5" style="color:var(--c-fg3)">Quant {{ activeStock.quantScore ?? '—' }}</p>
               </div>
             </div>
 
             <!-- 주가 차트 썸네일 (클릭 → 전체 차트 모달) -->
             <div class="rounded-xl overflow-hidden cursor-pointer relative group"
-                 style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)"
+                 style="background:var(--c-card);border:1px solid var(--c-border)"
                  @click="chartModalOpen = true">
               <!-- 썸네일 헤더 -->
               <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                <p class="text-[10px] font-black uppercase tracking-widest text-white/35">주가 차트</p>
+                <p class="text-[10px] font-black uppercase tracking-widest" style="color:var(--c-fg3)">주가 차트</p>
                 <div class="flex items-center gap-2">
-                  <div class="flex items-center gap-2 text-[9px] text-white/30">
+                  <div class="flex items-center gap-2 text-[9px]" style="color:var(--c-fg3)">
                     <span class="flex items-center gap-1"><span class="inline-block w-4 h-px bg-white/40"></span>실제</span>
                     <span class="flex items-center gap-1"><span class="inline-block w-4 h-px" style="border-top:1px dashed #c9a227"></span>예측</span>
                   </div>
-                  <LucideMaximize2 class="w-3.5 h-3.5 text-white/25 group-hover:text-white/60 transition-colors" />
+                  <LucideMaximize2 class="w-3.5 h-3.5 transition-colors" style="color:var(--c-fg3)" />
                 </div>
               </div>
               <!-- 썸네일 SVG -->
@@ -312,7 +334,7 @@
                             stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 <div class="flex justify-between mt-0.5">
-                  <span v-for="l in ['3M','2M','1M','현재','예측']" :key="l" class="text-[8px] text-white/18">{{ l }}</span>
+                  <span v-for="l in ['3M','2M','1M','현재','예측']" :key="l" class="text-[8px]" style="color:var(--c-fg3)">{{ l }}</span>
                 </div>
               </div>
               <!-- 호버 오버레이 -->
@@ -327,19 +349,19 @@
 
             <!-- 종목 설정 -->
             <div class="rounded-xl overflow-hidden"
-                 style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
-              <p class="text-[10px] font-black uppercase tracking-widest text-white/35 px-4 pt-3.5 pb-2">종목 설정</p>
+                 style="background:var(--c-card);border:1px solid var(--c-border)">
+              <p class="text-[10px] font-black uppercase tracking-widest px-4 pt-3.5 pb-2" style="color:var(--c-fg3)">종목 설정</p>
               <button v-if="activeStock"
                       class="w-full flex items-center justify-between px-4 py-3 hover:bg-white/6 transition-colors border-t"
                       style="border-color:rgba(255,255,255,0.07)"
                       @click="emit('view-company', activeStock.ticker)">
-                <span class="text-[13px] text-white/65">상세 정보 보기</span>
-                <LucideChevronRight class="w-4 h-4 text-white/25" />
+                <span class="text-[13px]" style="color:var(--c-fg2)">상세 정보 보기</span>
+                <LucideChevronRight class="w-4 h-4" style="color:var(--c-fg3)" />
               </button>
-              <div class="px-4 py-3 border-t text-[11px] text-white/25 text-center"
-                   style="border-color:rgba(255,255,255,0.07)">
-                하단 팬 카드를 <strong class="text-white/40">길게 누른 후</strong> 드래그 →
-                <span class="text-red-300/60">삭제</span> / <span class="text-emerald-300/60">교체</span>
+              <div class="px-4 py-3 border-t text-[11px] text-center"
+                   style="border-color:rgba(255,255,255,0.07);color:var(--c-fg3)">
+                하단 팬 카드를 <strong style="color:var(--c-fg2)">길게 누른 후</strong> 드래그 →
+                <span class="text-red-400/80">삭제</span> / <span class="text-emerald-400/80">교체</span>
               </div>
             </div>
 
@@ -483,7 +505,7 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { LucideChevronLeft, LucideChevronRight, LucidePencil, LucideMaximize2, LucideX, LucidePlus } from 'lucide-vue-next'
+import { LucideChevronLeft, LucideChevronRight, LucidePencil, LucideMaximize2, LucideX, LucidePlus, LucideFolder } from 'lucide-vue-next'
 import { usePortfolioStore } from '@/stores/portfolio.js'
 import BacktestMonthlyChart from '@/components/portfolio/BacktestMonthlyChart.vue'
 import { portfolioApi } from '@/api/portfolio.js'
@@ -495,7 +517,7 @@ const props = defineProps({
   activeGroupId:   { type: Number, required: true },
   currentIndex:    { type: Number, default: 0 },
 })
-const emit = defineEmits(['update:currentIndex', 'view-company'])
+const emit = defineEmits(['update:currentIndex', 'view-company', 'switch-group', 'add-portfolio'])
 
 const store = usePortfolioStore()
 const aiOpen = ref(false)

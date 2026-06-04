@@ -108,43 +108,43 @@
         </transition>
       </div>
 
-      <!-- 뒤로가기 버튼 -->
-      <button class="absolute z-10 rounded-full flex flex-col items-center justify-center gap-0.5
-                     active:scale-90 transition-all duration-150 text-white"
+      <!-- 뒤로가기 버튼 (둥근 원형) -->
+      <button class="absolute z-10 flex flex-col items-center justify-center gap-1 rounded-full border
+                     active:scale-95 transition-all duration-200 shadow-lg"
+              style="width:52px; height:52px;"
               :style="{
-                width:'50px', height:'50px',
                 bottom:`${BTN_BOTTOM}px`, left:'50%', transform:'translateX(-50%)',
-                background:'linear-gradient(145deg,#243347 0%,#162030 100%)',
-                boxShadow:'0 0 0 1px rgba(255,255,255,0.12),0 6px 18px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.08)',
+                background: swipeMode ? 'rgba(201,162,39,0.14)' : 'rgba(20,14,6,0.75)',
+                borderColor: swipeMode ? 'rgba(201,162,39,0.45)' : 'rgba(255,255,255,0.1)',
+                color: swipeMode ? 'rgba(201,162,39,0.9)' : 'rgba(255,255,255,0.4)',
               }"
               @click="swipeMode ? cancelSwipe() : emit('back')">
-        <component :is="swipeMode ? LucideX : LucideChevronLeft"
-                   class="w-4 h-4"
-                   :class="swipeMode ? 'text-yellow-300' : 'text-white/50'" />
-        <span class="text-[6px] font-bold uppercase tracking-wide leading-none"
-              :class="swipeMode ? 'text-yellow-300/60' : 'text-white/28'">
+        <component :is="swipeMode ? LucideX : LucideChevronLeft" class="w-4 h-4" />
+        <span class="text-[10px] font-bold tracking-wide leading-none">
           {{ swipeMode ? '취소' : '메뉴' }}
         </span>
       </button>
 
-      <!-- 자동매매 버튼 -->
-      <button class="absolute z-10 flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl border transition-all text-white"
+      <!-- 자동매매 버튼 (게시판 버튼 스타일) -->
+      <button class="absolute z-10 flex flex-col items-center gap-1 px-3 py-2 rounded-2xl border
+                     active:scale-95 transition-all duration-200 shadow-lg"
               :style="{
-                bottom:`${BTN_BOTTOM+2}px`, right:'14px',
-                ...(autoTradeState!=='off'
-                  ? { background:'rgba(16,185,129,0.18)', borderColor:'rgba(16,185,129,0.35)' }
-                  : { background:'rgba(20,32,50,0.9)', borderColor:'rgba(255,255,255,0.14)' })
+                bottom:`${BTN_BOTTOM}px`, right:'14px',
+                background: autoTradeState!=='off' ? 'rgba(16,185,129,0.18)' : 'rgba(20,14,6,0.75)',
+                borderColor: autoTradeState!=='off' ? 'rgba(16,185,129,0.45)' : 'rgba(255,255,255,0.1)',
+                color: autoTradeState!=='off' ? 'rgba(52,211,153,0.9)' : 'rgba(255,255,255,0.4)',
               }"
               @click="emit('toggle-auto-trade')">
-        <p class="text-[7px] uppercase tracking-widest font-bold leading-none"
-           :class="autoTradeState!=='off'?'text-green-400':'text-white/35'">AUTO</p>
-        <div class="relative w-8 h-4 rounded-full mt-0.5"
-             :class="autoTradeState!=='off'?'bg-green-500/45':'bg-white/12'">
-          <div class="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all duration-200"
-               :class="autoTradeState!=='off'?'right-0.5':'left-0.5 opacity-35'"></div>
+        <div class="relative w-5 h-5 flex items-center justify-center">
+          <div class="w-4 h-2 rounded-full transition-all duration-200"
+               :class="autoTradeState!=='off' ? 'bg-green-400/60' : 'bg-white/20'">
+            <div class="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all duration-200 shadow"
+                 :class="autoTradeState!=='off' ? 'right-0' : 'left-0 opacity-40'"></div>
+          </div>
           <div v-if="autoTradeState==='analyzing'"
-               class="absolute inset-0 rounded-full bg-green-400/40 animate-ping pointer-events-none"></div>
+               class="absolute inset-0 rounded-full bg-green-400/30 animate-ping pointer-events-none"></div>
         </div>
+        <span class="text-[10px] font-bold tracking-wide leading-none">AUTO</span>
       </button>
 
     </div><!-- /카드+버튼 -->
@@ -332,7 +332,7 @@ onUnmounted(() => clearLP())
 <style scoped>
 /* 팬바 배경 제거 — 앱 배경이 그대로 보여 지갑바처럼 구분됨 */
 .fan-bar {
-  background: transparent;
+  background: #ede4d0;
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }

@@ -40,6 +40,7 @@
           @add-company="handleCompanyAdd"
           @back="handleCompanyBack"
           @sell-replace="handleSellReplace"
+          @cancel-replace="handleCancelReplace"
         />
         <PortfolioView v-else-if="activeCard === 'portfolio'" key="portfolio"
           class="absolute inset-0"
@@ -48,6 +49,8 @@
           :active-group-id="activeGroupId"
           v-model:current-index="portfolioCurrentIndex"
           @view-company="handleViewCompany"
+          @switch-group="activeGroupId = $event; portfolioCurrentIndex = 0"
+          @add-portfolio="addPortfolio"
         />
         <BoardView v-else-if="activeCard === 'board'" key="board"
           class="absolute inset-0" />
@@ -66,12 +69,12 @@
     <div v-show="activeCard !== 'portfolio'"
          class="fixed bottom-0 left-0 right-0 z-10"
          :style="{
-           transform: (menuBarLocked || walletVisible) ? 'translateY(0)' : 'translateY(100%)',
+           transform: (menuBarLocked || walletVisible) ? 'translateY(16px)' : 'translateY(calc(100% + 14px))',
            transition: 'transform 0.38s cubic-bezier(0.32, 0, 0.2, 1)'
          }"
          @mouseleave="!menuBarLocked && !portfolioDropOpen && (walletVisible = false)">
 
-      <!-- 게시판 버튼 — 맨 아래 우측 고정 -->
+      <!-- 게시판 버튼 — 우측 하단 -->
       <button
         class="absolute bottom-2 right-4 z-30 flex flex-col items-center gap-1 px-3 py-2 rounded-2xl border transition-all duration-200 shadow-lg"
         :class="activeCard === 'board'
@@ -672,6 +675,13 @@ const handleSellReplace = () => {
   activeCard.value   = 'portfolio';
 };
 
+const handleCancelReplace = () => {
+  replaceMode.value  = false;
+  replaceIndex.value = -1;
+  replaceStock.value = null;
+  activeCard.value   = 'portfolio';
+};
+
 const handleViewCompany = (ticker) => {
   viewTicker.value  = ticker;
   activeCard.value  = 'company';
@@ -754,7 +764,7 @@ const handleToggleAutoTrade = () => {
 
 .wallet-bar {
   background: linear-gradient(180deg, #1e1509 0%, #161008 55%, #191209 100%);
-  box-shadow: 0 -16px 48px rgba(0,0,0,0.7);
+  box-shadow: none;
   height: 100px;
 }
 

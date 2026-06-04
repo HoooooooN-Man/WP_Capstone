@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <!-- 카드 루트 -->
   <div class="w-full h-full overflow-hidden relative"
        :style="props.darkMode ? {
@@ -7,10 +7,10 @@
          '--c-border':'rgba(255,255,255,0.12)', '--c-card':'rgba(255,255,255,0.05)',
          '--c-header-border':'rgba(255,255,255,0.15)',
        } : {
-         background:'#f4f2ec', color:'#1a1a2e', fontFamily:'Inter,sans-serif',
-         '--c-fg':'#1a1a2e', '--c-fg2':'rgba(26,26,46,0.55)', '--c-fg3':'rgba(26,26,46,0.35)',
-         '--c-border':'rgba(26,26,46,0.12)', '--c-card':'rgba(0,0,0,0.04)',
-         '--c-header-border':'#1a1a2e',
+         background:'#244d8c', color:'#e8e4dc', fontFamily:'Inter,sans-serif',
+         '--c-fg':'#e8e4dc', '--c-fg2':'rgba(232,228,220,0.55)', '--c-fg3':'rgba(232,228,220,0.35)',
+         '--c-border':'rgba(255,255,255,0.12)', '--c-card':'rgba(255,255,255,0.05)',
+         '--c-header-border':'rgba(255,255,255,0.2)',
        }">
 
       <!-- ── 앞면 ── -->
@@ -31,13 +31,20 @@
         <h2 class="text-2xl font-black tracking-tighter uppercase" style="color:var(--c-fg);font-family:Georgia,serif;">
           {{ detailCompany ? detailCompany.name : 'STOCK ANALYSIS' }}
         </h2>
-        <div v-if="replaceMode && !detailCompany" class="px-2.5 py-1 rounded border" style="background:rgba(5,150,105,0.12);border-color:rgba(5,150,105,0.3);color:#065f46">
-          <span class="text-[12px] font-bold uppercase tracking-wider">교체 선택 중</span>
+        <div v-if="replaceMode && !detailCompany" class="flex items-stretch gap-2">
+          <div class="px-2.5 flex items-center rounded border" style="background:rgba(52,211,153,0.15);border-color:rgba(52,211,153,0.35);color:#34d399">
+            <span class="text-[12px] font-bold uppercase tracking-wider">교체 선택 중</span>
+          </div>
+          <button @click="emit('cancel-replace')"
+                  class="px-2.5 flex items-center rounded border text-[12px] font-bold uppercase tracking-wider transition-all"
+                  style="background:rgba(248,113,113,0.12);border-color:rgba(248,113,113,0.3);color:#f87171">
+            취소
+          </button>
         </div>
         <button v-if="detailCompany && !replaceMode"
                 @click="showFinancial = true"
                 class="ml-auto px-2.5 py-1.5 rounded-lg text-[12px] font-bold tracking-wide flex-shrink-0 flex items-center gap-1 transition-all"
-                style="background:rgba(26,26,46,0.07);border:1px solid rgba(26,26,46,0.18);color:rgba(26,26,46,0.6)">
+                style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);color:var(--c-fg2)">
           <LucideBarChart2 class="w-3 h-3" />
           재무제표
         </button>
@@ -46,13 +53,13 @@
                   class="w-8 h-8 flex items-center justify-center rounded-lg border transition-all flex-shrink-0"
                   :class="showCompare ? '' : ''"
                   :style="showCompare
-                    ? 'background:rgba(26,26,46,0.12);border-color:var(--c-fg2);color:var(--c-fg)'
-                    : 'background:rgba(26,26,46,0.06);border-color:rgba(26,26,46,0.18);color:var(--c-fg2)'">
+                    ? 'background:rgba(255,255,255,0.12);border-color:var(--c-fg2);color:var(--c-fg)'
+                    : 'background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.18);color:var(--c-fg2)'">
             <LucideArrowLeftRight class="w-3.5 h-3.5" />
           </button>
           <button @click="showSearch = true"
                   class="w-8 h-8 flex items-center justify-center rounded-lg transition-all flex-shrink-0"
-                  style="background:rgba(26,26,46,0.06);border:1px solid rgba(26,26,46,0.18);color:var(--c-fg2)">
+                  style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.18);color:var(--c-fg2)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
@@ -69,7 +76,7 @@
                 @click="switchTab(tab.key)"
                 class="px-4 py-2 text-[12px] font-bold transition-all duration-150"
                 :style="activeTab === tab.key
-                  ? 'color:var(--c-fg);border-bottom:2px solid #1a1a2e;margin-bottom:-1px'
+                  ? 'color:var(--c-fg);border-bottom:2px solid rgba(232,228,220,0.7);margin-bottom:-1px'
                   : 'color:var(--c-fg2)'">
           {{ tab.label }}
         </button>
@@ -142,7 +149,7 @@
             </span>
             <!-- 공정가치 배지 -->
             <div v-if="fairValue" class="mt-1.5 px-2 py-1 rounded text-[11px]"
-                 style="background:rgba(26,26,46,0.06);border:1px solid var(--c-border)">
+                 style="background:rgba(255,255,255,0.06);border:1px solid var(--c-border)">
               <span style="color:var(--c-fg2)">적정가치</span>
               <span class="font-bold ml-1" style="color:var(--c-fg)">₩{{ fairValue.fair_value?.toLocaleString() }}</span>
               <span class="ml-1 font-bold text-[10px]"
@@ -173,32 +180,32 @@
                 <!-- 배경 오각형들 -->
                 <polygon v-for="level in [0.25,0.5,0.75,1.0]" :key="level"
                          :points="hexPoints(60, 55, 45*level)"
-                         fill="none" stroke="rgba(26,26,46,0.12)" stroke-width="0.8"/>
+                         fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
                 <!-- 데이터 오각형 -->
                 <polygon :points="radarPoints"
                          fill="rgba(201,162,39,0.15)" stroke="#c9a227" stroke-width="1.5"/>
                 <!-- 축 라벨 -->
-                <text x="60" y="6" text-anchor="middle" font-size="7" fill="rgba(26,26,46,0.55)">성장성</text>
-                <text x="108" y="32" text-anchor="middle" font-size="7" fill="rgba(26,26,46,0.55)">수익성</text>
-                <text x="90" y="104" text-anchor="middle" font-size="7" fill="rgba(26,26,46,0.55)">안전성</text>
-                <text x="30" y="104" text-anchor="middle" font-size="7" fill="rgba(26,26,46,0.55)">해자</text>
-                <text x="12" y="32" text-anchor="middle" font-size="7" fill="rgba(26,26,46,0.55)">현금흐름</text>
+                <text x="60" y="6" text-anchor="middle" font-size="7" fill="rgba(232,228,220,0.55)">성장성</text>
+                <text x="108" y="32" text-anchor="middle" font-size="7" fill="rgba(232,228,220,0.55)">수익성</text>
+                <text x="90" y="104" text-anchor="middle" font-size="7" fill="rgba(232,228,220,0.55)">안전성</text>
+                <text x="30" y="104" text-anchor="middle" font-size="7" fill="rgba(232,228,220,0.55)">해자</text>
+                <text x="12" y="32" text-anchor="middle" font-size="7" fill="rgba(232,228,220,0.55)">현금흐름</text>
               </svg>
             </div>
           </div>
 
           <!-- 배당 정보 -->
           <div v-if="dividendData && dividendData.yield_pct" class="mt-2 pt-2"
-               style="border-top:1px solid rgba(26,26,46,0.1)">
+               style="border-top:1px solid var(--c-border)">
             <p class="text-[10px] font-bold uppercase tracking-widest mb-1.5"
                style="color:var(--c-fg2);font-family:sans-serif;">배당</p>
             <div class="flex flex-wrap gap-1.5">
               <span class="text-[10px] px-2 py-0.5 rounded-full"
-                    style="background:rgba(26,26,46,0.06);color:rgba(26,26,46,0.7)">
+                    style="background:rgba(255,255,255,0.08);color:var(--c-fg)">
                 수익률 {{ dividendData.yield_pct?.toFixed(1) }}%
               </span>
               <span v-if="dividendData.years_paid" class="text-[10px] px-2 py-0.5 rounded-full"
-                    style="background:rgba(26,26,46,0.06);color:rgba(26,26,46,0.7)">
+                    style="background:rgba(255,255,255,0.08);color:var(--c-fg)">
                 {{ dividendData.years_paid }}년 지급
               </span>
               <span v-if="dividendData.dps_growth_yoy > 0" class="text-[10px] px-2 py-0.5 rounded-full"
@@ -223,7 +230,7 @@
     </div><!-- /좌우 분할 -->
 
     <!-- 경쟁사/동종 섹터 종목 -->
-    <div v-if="peers.length" class="flex-shrink-0 px-4 py-3" style="border-top:1px solid rgba(26,26,46,0.12)">
+    <div v-if="peers.length" class="flex-shrink-0 px-4 py-3" style="border-top:1px solid var(--c-border)">
       <p class="text-[10px] font-bold uppercase tracking-widest mb-2"
          style="color:var(--c-fg2);font-family:sans-serif;">동종 섹터</p>
       <div class="flex flex-col gap-1">
@@ -266,7 +273,7 @@
           <div v-else
             v-for="company in recommendList" :key="company.id"
             class="flex items-center gap-3 p-3 transition-all duration-200 cursor-pointer"
-            style="border-bottom:1px solid rgba(26,26,46,0.1);"
+            style="border-bottom:1px solid var(--c-border);"
             :style="replaceMode ? 'background:rgba(5,150,105,0.03)' : ''"
             @click="replaceMode ? openCompare(company) : openDetail(company)"
           >
@@ -406,13 +413,24 @@
              @click="closeSearch"></div>
         <!-- 오른쪽 패널 -->
         <div class="flex-[3] flex flex-col overflow-hidden"
-             style="background:#f4f2ec;box-shadow:-12px 0 40px rgba(26,26,46,0.18)">
+             style="background:#244d8c;box-shadow:-12px 0 40px rgba(0,0,0,0.4)">
+
+        <!-- 교체 선택 중 배너 (검색창) -->
+        <div v-if="replaceMode" class="px-3 pt-2 pb-1 flex items-center justify-between flex-shrink-0"
+             style="background:rgba(52,211,153,0.1);border-bottom:1px solid rgba(52,211,153,0.2)">
+          <span class="text-[11px] font-bold" style="color:#34d399">교체 선택 중 — 교체할 종목을 검색하세요</span>
+          <button @click="emit('cancel-replace'); closeSearch()"
+                  class="text-[11px] font-bold px-2 py-0.5 rounded"
+                  style="background:rgba(248,113,113,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.3)">
+            취소
+          </button>
+        </div>
 
         <!-- 검색 바 -->
         <div class="px-3 pt-4 pb-2.5 flex items-center gap-2 flex-shrink-0 border-b border-black/10">
           <div class="flex-1 flex items-center gap-2 px-2.5 py-1.5 rounded-xl"
-               style="background:rgba(26,26,46,0.06);border:1px solid var(--c-border)">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(26,26,46,0.4)" stroke-width="2.5">
+               style="background:rgba(255,255,255,0.06);border:1px solid var(--c-border)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(232,228,220,0.4)" stroke-width="2.5">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
             <input ref="searchInputRef"
@@ -423,7 +441,7 @@
                    style="color:var(--c-fg)" />
             <button v-if="searchQuery" @click="searchQuery = ''"
                     class="text-[12px] flex-shrink-0 transition-colors"
-                    style="color:rgba(26,26,46,0.35)">✕</button>
+                    style="color:var(--c-fg3)">✕</button>
           </div>
           <button @click="closeSearch"
                   class="text-[12px] font-bold flex-shrink-0 px-1 transition-colors"
@@ -437,44 +455,44 @@
 
           <!-- ── 좌: 상세 설정 ── -->
           <div class="w-[150px] flex-shrink-0 flex flex-col overflow-y-auto border-r border-black/10"
-               style="background:rgba(26,26,46,0.04)">
+               style="background:rgba(255,255,255,0.04)"
 
-            <!-- ▸ 모델 버전 -->
+            <!-- 모델 버전 -->
             <div class="px-3 pt-3 pb-2 border-b border-black/10">
               <p class="text-[11px] uppercase tracking-widest mb-1.5" style="color:var(--c-fg2)">버전</p>
               <select :value="searchFilters.model_version"
                       @change="searchFilters.model_version = $event.target.value"
                       class="w-full text-[11px] rounded-md px-2 py-1 outline-none"
-                      style="background:rgba(26,26,46,0.06);border:1px solid var(--c-border);color:var(--c-fg)">
+                      style="background:rgba(255,255,255,0.06);border:1px solid var(--c-border);color:var(--c-fg)">
                 <option value="latest">최신</option>
                 <option v-for="v in searchVersions" :key="v" :value="v">{{ v }}</option>
               </select>
             </div>
 
-            <!-- ▸ 기준일 -->
+            <!-- 기준일 -->
             <div class="px-3 py-2 border-b border-black/10">
               <p class="text-[11px] uppercase tracking-widest mb-1.5" style="color:var(--c-fg2)">기준일</p>
               <select :value="searchFilters.date"
                       @change="searchFilters.date = $event.target.value"
                       class="w-full text-[11px] rounded-md px-2 py-1 outline-none"
-                      style="background:rgba(26,26,46,0.06);border:1px solid var(--c-border);color:var(--c-fg)">
+                      style="background:rgba(255,255,255,0.06);border:1px solid var(--c-border);color:var(--c-fg)">
                 <option v-for="d in searchDates" :key="d" :value="d">{{ d }}</option>
               </select>
             </div>
 
-            <!-- ▸ 섹터 -->
+            <!-- 섹터 -->
             <div class="px-3 py-2 border-b border-black/10">
               <p class="text-[11px] uppercase tracking-widest mb-1.5" style="color:var(--c-fg2)">섹터</p>
               <select :value="searchFilters.sector ?? ''"
                       @change="searchFilters.sector = $event.target.value || null"
                       class="w-full text-[11px] rounded-md px-2 py-1 outline-none"
-                      style="background:rgba(26,26,46,0.06);border:1px solid var(--c-border);color:var(--c-fg)">
+                      style="background:rgba(255,255,255,0.06);border:1px solid var(--c-border);color:var(--c-fg)">
                 <option value="">전체</option>
                 <option v-for="s in SECTOR_LIST" :key="s" :value="s">{{ s }}</option>
               </select>
             </div>
 
-            <!-- ▸ 최소 점수 슬라이더 -->
+            <!-- 최소 점수 슬라이더 -->
             <div class="px-3 py-2 border-b border-black/10">
               <div class="flex justify-between mb-1.5">
                 <p class="text-[11px] uppercase tracking-widest" style="color:var(--c-fg2)">최소 점수</p>
@@ -485,12 +503,12 @@
                      class="w-full h-1 rounded-full appearance-none cursor-pointer"
                      style="accent-color:var(--c-fg)" />
               <div class="flex justify-between mt-1">
-                <span class="text-[10px]" style="color:rgba(26,26,46,0.35)">0</span>
-                <span class="text-[10px]" style="color:rgba(26,26,46,0.35)">100</span>
+                <span class="text-[10px]" style="color:var(--c-fg3)">0</span>
+                <span class="text-[10px]" style="color:var(--c-fg3)">100</span>
               </div>
             </div>
 
-            <!-- ▸ Tier 빠른 선택 -->
+            <!-- Tier 빠른 선택 -->
             <div class="px-3 py-2 border-b border-black/10">
               <p class="text-[11px] uppercase tracking-widest mb-1.5" style="color:var(--c-fg2)">Tier</p>
               <div class="grid grid-cols-2 gap-1">
@@ -499,14 +517,14 @@
                         class="py-1 rounded-md text-[11px] font-bold text-center transition-all"
                         :style="searchFilters.tier === t.tier && searchFilters.min_score === t.min
                           ? tierActiveStyle(t.tier)
-                          : 'background:rgba(26,26,46,0.06);color:var(--c-fg2);border:1px solid var(--c-border)'">
+                          : 'background:rgba(255,255,255,0.06);color:var(--c-fg2);border:1px solid var(--c-border)'">
                   {{ t.label.split(' ')[0] }}
                 </button>
                 <button class="col-span-2 mt-0.5 py-1 rounded-md text-[11px] font-bold text-center transition-all"
                         @click="searchFilters.min_score = 0; searchFilters.tier = null"
                         :style="searchFilters.tier === null && searchFilters.min_score === 0
                           ? tierActiveStyle('all')
-                          : 'background:rgba(26,26,46,0.06);color:var(--c-fg2);border:1px solid var(--c-border)'">
+                          : 'background:rgba(255,255,255,0.06);color:var(--c-fg2);border:1px solid var(--c-border)'">
                   전체 ({{ searchAllItems.length }})
                 </button>
               </div>
@@ -516,7 +534,7 @@
             <div class="px-3 pt-2">
               <button @click="financialOpen = !financialOpen"
                       class="w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-widest mb-1.5 transition-colors"
-                      :style="financialOpen ? 'color:rgba(26,26,46,0.6)' : 'color:rgba(26,26,46,0.35)'">
+                      :style="financialOpen ? 'color:var(--c-fg2)' : 'color:var(--c-fg3)'">
                 <span>부가설정</span>
                 <span>{{ financialOpen ? '▲' : '▼' }}</span>
               </button>
@@ -528,17 +546,17 @@
                          :value="searchFilters[f.key]"
                          @change="searchFilters[f.key] = $event.target.value === '' ? null : +$event.target.value"
                          class="w-full px-2 py-1 rounded-md text-[11px] font-mono outline-none"
-                         style="background:rgba(26,26,46,0.06);border:1px solid var(--c-border);color:var(--c-fg)" />
+                         style="background:rgba(255,255,255,0.06);border:1px solid var(--c-border);color:var(--c-fg)" />
                 </div>
 
-                <div class="my-2" style="border-top:1px solid rgba(26,26,46,0.1)"></div>
+                <div class="my-2" style="border-top:1px solid var(--c-border)"></div>
 
                 <div class="mb-2">
                   <p class="text-[10px] mb-0.5" style="color:var(--c-fg2)">정렬</p>
                   <select :value="searchFilters.sort_by"
                           @change="searchFilters.sort_by = $event.target.value"
                           class="w-full text-[11px] rounded-md px-2 py-1 outline-none"
-                          style="background:rgba(26,26,46,0.06);border:1px solid var(--c-border);color:var(--c-fg)">
+                          style="background:rgba(255,255,255,0.06);border:1px solid var(--c-border);color:var(--c-fg)">
                     <option value="composite_score">복합점수</option>
                     <option value="score">ML점수</option>
                     <option value="roe">ROE</option>
@@ -552,7 +570,7 @@
                   <select :value="searchFilters.limit"
                           @change="searchFilters.limit = +$event.target.value"
                           class="w-full text-[11px] rounded-md px-2 py-1 outline-none"
-                          style="background:rgba(26,26,46,0.06);border:1px solid var(--c-border);color:var(--c-fg)">
+                          style="background:rgba(255,255,255,0.06);border:1px solid var(--c-border);color:var(--c-fg)">
                     <option :value="50">50개</option>
                     <option :value="100">100개</option>
                     <option :value="200">200개</option>
@@ -560,18 +578,18 @@
                   </select>
                 </div>
 
-                <div class="my-2" style="border-top:1px solid rgba(26,26,46,0.1)"></div>
+                <div class="my-2" style="border-top:1px solid var(--c-border)"></div>
 
                 <div class="mb-2">
                   <p class="text-[10px] mb-1" style="color:var(--c-fg2)">프리셋</p>
                   <div class="flex gap-1 mb-1">
                     <input v-model="presetName" type="text" placeholder="이름"
                            class="flex-1 px-1.5 py-1 rounded-md text-[11px] outline-none min-w-0"
-                           style="background:rgba(26,26,46,0.06);border:1px solid var(--c-border);color:var(--c-fg)"
+                           style="background:rgba(255,255,255,0.06);border:1px solid var(--c-border);color:var(--c-fg)"
                            @keydown.enter="savePreset" />
                     <button @click="savePreset"
                             class="px-2 py-1 rounded-md text-[11px] font-bold flex-shrink-0 transition-colors"
-                            style="background:rgba(26,26,46,0.1);color:var(--c-fg);border:1px solid rgba(26,26,46,0.2)">
+                            style="background:rgba(255,255,255,0.1);color:var(--c-fg);border:1px solid rgba(255,255,255,0.2)">
                       저장
                     </button>
                   </div>
@@ -622,7 +640,7 @@
             <!-- 리스트 -->
             <div v-else>
               <!-- 건수 + CSV -->
-              <div class="px-3 py-2 flex items-center justify-between" style="border-bottom:1px solid rgba(26,26,46,0.1)">
+              <div class="px-3 py-2 flex items-center justify-between" style="border-bottom:1px solid var(--c-border)">
                 <span class="text-[11px] font-medium" style="color:var(--c-fg2)">{{ searchDisplayList.length }}개 종목 · 가나다순</span>
                 <button @click="exportCsv"
                         class="text-[10px] px-2 py-0.5 rounded-md font-bold flex-shrink-0 transition-all"
@@ -632,7 +650,7 @@
               </div>
               <div v-for="s in searchDisplayList" :key="s.ticker"
                    class="flex items-center gap-2 px-3 py-2.5 transition-colors cursor-pointer"
-                   style="border-bottom:1px solid rgba(26,26,46,0.08)"
+                   style="border-bottom:1px solid var(--c-border)"
                    @mouseover="$event.currentTarget.style.background='rgba(0,0,0,0.04)'"
                    @mouseleave="$event.currentTarget.style.background=''"
                    @click="selectSearchResult(s)">
@@ -653,8 +671,8 @@
                 </div>
                 <!-- ML 점수 -->
                 <div class="text-right flex-shrink-0">
-                  <p class="text-[10px]" style="color:rgba(26,26,46,0.35)">ML</p>
-                  <p class="text-[12px] font-mono font-bold" style="color:rgba(26,26,46,0.6)">{{ s.mlScore }}</p>
+                  <p class="text-[10px]" style="color:var(--c-fg3)">ML</p>
+                  <p class="text-[12px] font-mono font-bold" style="color:var(--c-fg2)">{{ s.mlScore }}</p>
                 </div>
                 <!-- Tier 뱃지 -->
                 <span class="text-[12px] font-black px-1.5 py-0.5 rounded-md flex-shrink-0"
@@ -664,20 +682,20 @@
                       :class="s.quantScore >= 70 ? 'text-green-600' : s.quantScore >= 45 ? 'text-yellow-600' : 'text-red-500'">
                   {{ s.quantScore }}
                 </span>
-                <LucideChevronRight class="w-3.5 h-3.5 flex-shrink-0" style="color:rgba(26,26,46,0.2)" />
+                <LucideChevronRight class="w-3.5 h-3.5 flex-shrink-0" style="color:var(--c-fg3)" />
               </div>
             </div>
           </div>
 
           <!-- ── 우: 결과 요약 패널 ── -->
           <div class="w-[160px] flex-shrink-0 flex flex-col overflow-y-auto"
-               style="border-left:1px solid rgba(26,26,46,0.1);background:rgba(26,26,46,0.04)">
+               style="border-left:1px solid var(--c-border);background:rgba(255,255,255,0.04)">
 
             <!-- 결과 요약 -->
-            <div class="px-3 pt-3 pb-2.5" style="border-bottom:1px solid rgba(26,26,46,0.1)">
+            <div class="px-3 pt-3 pb-2.5" style="border-bottom:1px solid var(--c-border)">
               <p class="text-[11px] uppercase tracking-widest mb-2.5" style="color:var(--c-fg2)">결과 요약</p>
               <div class="space-y-2">
-                <div class="rounded-lg p-2" style="background:rgba(26,26,46,0.06);border:1px solid var(--c-border)">
+                <div class="rounded-lg p-2" style="background:rgba(255,255,255,0.06);border:1px solid var(--c-border)">
                   <p class="text-[10px] mb-0.5" style="color:var(--c-fg2)">검색 결과</p>
                   <p class="text-[16px] font-black leading-none" style="color:var(--c-fg)">{{ searchAllItems.length }}</p>
                   <p class="text-[10px] mt-0.5" style="color:var(--c-fg2)">종목</p>
@@ -705,13 +723,13 @@
             </div>
 
             <!-- Tier 분포 -->
-            <div class="px-3 py-2.5" style="border-bottom:1px solid rgba(26,26,46,0.1)">
+            <div class="px-3 py-2.5" style="border-bottom:1px solid var(--c-border)">
               <p class="text-[11px] uppercase tracking-widest mb-2.5" style="color:var(--c-fg2)">Tier 분포</p>
 
               <!-- SVG 도넛 차트 -->
               <div class="flex justify-center mb-3">
                 <svg viewBox="0 0 80 80" class="w-20 h-20">
-                  <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(26,26,46,0.08)" stroke-width="12" />
+                  <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12" />
                   <template v-for="(seg, i) in tierDonutSegments" :key="i">
                     <circle cx="40" cy="40" r="28"
                             fill="none"
@@ -723,11 +741,11 @@
                             transform="rotate(-90 40 40)"
                             opacity="0.88" />
                   </template>
-                  <text x="40" y="37" text-anchor="middle" fill="rgba(26,26,46,0.75)"
+                  <text x="40" y="37" text-anchor="middle" fill="rgba(232,228,220,0.9)"
                         font-size="13" font-weight="bold" font-family="sans-serif">
                     {{ searchAllItems.length }}
                   </text>
-                  <text x="40" y="49" text-anchor="middle" fill="rgba(26,26,46,0.4)"
+                  <text x="40" y="49" text-anchor="middle" fill="rgba(232,228,220,0.45)"
                         font-size="7" font-family="sans-serif">종목</text>
                 </svg>
               </div>
@@ -737,7 +755,7 @@
                 <div v-for="tk in ['A','B','C','D']" :key="tk" class="flex items-center gap-1.5">
                   <span class="text-[11px] font-black w-3.5 flex-shrink-0"
                         :style="{ color: {A:'#34d399',B:'#93c5fd',C:'#fbbf24',D:'#f87171'}[tk] }">{{ tk }}</span>
-                  <div class="flex-1 h-1.5 rounded-full" style="background:rgba(26,26,46,0.08)">
+                  <div class="flex-1 h-1.5 rounded-full" style="background:rgba(255,255,255,0.08)">
                     <div class="h-full rounded-full transition-all duration-500"
                          :style="{
                            width: searchAllItems.length
@@ -780,7 +798,7 @@
                      class="flex items-center gap-1">
                   <div class="w-1.5 h-1.5 rounded-sm flex-shrink-0"
                        :style="{ background: scoreBucketColors[i] }"></div>
-                  <span class="text-[7px] font-mono" style="color:rgba(26,26,46,0.35)">{{ i*10 }}-{{ i*10+10 }}</span>
+                  <span class="text-[7px] font-mono" style="color:var(--c-fg3)">{{ i*10 }}-{{ i*10+10 }}</span>
                   <span class="text-[7px] font-bold ml-auto" style="color:var(--c-fg2)">{{ count }}</span>
                 </div>
               </div>
@@ -804,7 +822,7 @@
              @click="closeCompareOverlay"></div>
         <!-- 오른쪽 패널 -->
         <div class="flex-[3] flex flex-col overflow-hidden"
-             style="background:#f4f2ec;box-shadow:-12px 0 40px rgba(26,26,46,0.18)">
+             style="background:#244d8c;box-shadow:-12px 0 40px rgba(0,0,0,0.4)">
 
         <!-- 헤더 -->
         <div class="px-4 pt-4 pb-3 flex items-center gap-2 flex-shrink-0 border-b border-black/10">
@@ -823,10 +841,10 @@
           <!-- 슬롯 A -->
           <div class="flex-1 rounded-xl p-3 cursor-pointer border transition-all duration-200"
                :style="compareSelectingSlot === 'A'
-                 ? 'border:2px solid #1a1a2e;background:rgba(26,26,46,0.06)'
+                 ? 'border:2px solid var(--c-fg);background:rgba(255,255,255,0.08)'
                  : compareStockA
-                   ? 'border:1px solid rgba(26,26,46,0.2);background:rgba(26,26,46,0.04)'
-                   : 'border:1px solid var(--c-border);background:rgba(26,26,46,0.02)'"
+                   ? 'border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.04)'
+                   : 'border:1px solid var(--c-border);background:rgba(255,255,255,0.02)'"
                @click="startSelectSlot('A')">
             <p class="text-[10px] font-bold uppercase tracking-widest mb-1"
                :style="compareSelectingSlot === 'A' ? 'color:var(--c-fg)' : 'color:var(--c-fg2)'">
@@ -848,7 +866,7 @@
 
           <!-- VS -->
           <div class="flex items-center justify-center px-1 flex-shrink-0">
-            <span class="text-[12px] font-black" style="color:rgba(26,26,46,0.2)">VS</span>
+            <span class="text-[12px] font-black" style="color:var(--c-fg3)">VS</span>
           </div>
 
           <!-- 슬롯 B -->
@@ -856,8 +874,8 @@
                :style="compareSelectingSlot === 'B'
                  ? 'border:2px solid #065f46;background:rgba(5,95,70,0.06)'
                  : compareStockB
-                   ? 'border:1px solid rgba(26,26,46,0.2);background:rgba(26,26,46,0.04)'
-                   : 'border:1px solid var(--c-border);background:rgba(26,26,46,0.02)'"
+                   ? 'border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.04)'
+                   : 'border:1px solid var(--c-border);background:rgba(255,255,255,0.02)'"
                @click="startSelectSlot('B')">
             <p class="text-[10px] font-bold uppercase tracking-widest mb-1"
                :style="compareSelectingSlot === 'B' ? 'color:#065f46' : 'color:var(--c-fg2)'">
@@ -883,10 +901,10 @@
           <!-- 안내 배너 -->
           <div class="px-3 py-2 flex items-center gap-2 flex-shrink-0"
                :style="compareSelectingSlot === 'A'
-                 ? 'border-bottom:1px solid rgba(26,26,46,0.1);background:rgba(26,26,46,0.05)'
+                 ? 'border-bottom:1px solid var(--c-border);background:rgba(255,255,255,0.05)'
                  : 'border-bottom:1px solid rgba(5,95,70,0.15);background:rgba(5,95,70,0.04)'">
             <div class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0"
-                 :style="compareSelectingSlot === 'A' ? 'background:#1a1a2e' : 'background:#065f46'"></div>
+                 :style="compareSelectingSlot === 'A' ? 'background:var(--c-fg)' : 'background:#065f46'"></div>
             <span class="text-[12px] font-bold"
                   :style="compareSelectingSlot === 'A' ? 'color:var(--c-fg)' : 'color:#065f46'">
               종목 비교 {{ compareSelectingSlot }} 선택 중 — 아래에서 종목을 클릭하세요
@@ -896,7 +914,7 @@
           <div class="flex-1 overflow-y-auto">
             <div v-for="s in comparePickList" :key="s.ticker"
                  class="flex items-center gap-2 px-3 py-2.5 transition-colors cursor-pointer"
-                 style="border-bottom:1px solid rgba(26,26,46,0.08)"
+                 style="border-bottom:1px solid var(--c-border)"
                  @mouseover="$event.currentTarget.style.background='rgba(0,0,0,0.04)'"
                  @mouseleave="$event.currentTarget.style.background=''"
                  @click="assignCompareSlot(s)">
@@ -925,7 +943,7 @@
 
             <!-- AI 점수 바 비교 -->
             <div class="rounded-xl p-3 space-y-3"
-                 style="border:1px solid var(--c-border);background:rgba(26,26,46,0.04)">
+                 style="border:1px solid var(--c-border);background:rgba(255,255,255,0.04)">
               <p class="text-[11px] uppercase tracking-widest" style="color:var(--c-fg2)">AI 점수 비교</p>
               <div class="space-y-2.5">
                 <div v-for="(stk, key) in { A: compareStockA, B: compareStockB }" :key="key">
@@ -937,14 +955,14 @@
                       {{ stk.quantScore }}점
                     </span>
                   </div>
-                  <div class="w-full h-2 rounded-full overflow-hidden" style="background:rgba(26,26,46,0.1)">
+                  <div class="w-full h-2 rounded-full overflow-hidden" style="background:rgba(255,255,255,0.1)">
                     <div class="h-full rounded-full transition-all duration-700"
                          :style="{ width: stk.quantScore + '%', background: stk.color }"></div>
                   </div>
                 </div>
               </div>
               <!-- 우위 표시 -->
-              <div class="pt-1 flex items-center gap-1.5" style="border-top:1px solid rgba(26,26,46,0.1)">
+              <div class="pt-1 flex items-center gap-1.5" style="border-top:1px solid var(--c-border)">
                 <span class="text-[11px]" style="color:var(--c-fg2)">AI 점수 우위</span>
                 <span class="text-[12px] font-black"
                       :style="{ color: compareStockA.quantScore >= compareStockB.quantScore ? compareStockA.color : compareStockB.color }">
@@ -959,7 +977,7 @@
 
             <!-- 지표 비교 테이블 -->
             <div class="rounded-xl overflow-hidden" style="border:1px solid var(--c-border)">
-              <div class="grid grid-cols-3" style="border-bottom:1px solid rgba(26,26,46,0.1);background:rgba(26,26,46,0.06)">
+              <div class="grid grid-cols-3" style="border-bottom:1px solid var(--c-border);background:rgba(255,255,255,0.06)">
                 <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-widest" style="color:var(--c-fg2)">지표</div>
                 <div class="px-3 py-2 text-[12px] font-black text-center" :style="{ color: compareStockA.color }">
                   A · {{ compareStockA.ticker }}
@@ -970,21 +988,21 @@
               </div>
               <div v-for="row in compareMetricRows" :key="row.label"
                    class="grid grid-cols-3"
-                   style="border-bottom:1px solid rgba(26,26,46,0.06);background:rgba(26,26,46,0.02)">
+                   style="border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)">
                 <div class="px-3 py-2.5 text-[11px]" style="color:var(--c-fg2)">{{ row.label }}</div>
                 <div class="px-3 py-2.5 text-center text-[13px] font-black"
-                     :style="row.betterA ? 'color:#065f46' : (row.valA === '—' ? 'color:var(--c-fg3)' : 'color:rgba(26,26,46,0.7)')">
+                     :style="row.betterA ? 'color:#065f46' : (row.valA === '—' ? 'color:var(--c-fg3)' : 'color:var(--c-fg2)')">
                   {{ row.valA }}
                 </div>
                 <div class="px-3 py-2.5 text-center text-[13px] font-black"
-                     :style="row.betterB ? 'color:#065f46' : (row.valB === '—' ? 'color:var(--c-fg3)' : 'color:rgba(26,26,46,0.7)')">
+                     :style="row.betterB ? 'color:#065f46' : (row.valB === '—' ? 'color:var(--c-fg3)' : 'color:var(--c-fg2)')">
                   {{ row.valB }}
                 </div>
               </div>
             </div>
 
             <!-- 점수 이력 스파크라인 -->
-            <div class="rounded-xl p-3" style="border:1px solid var(--c-border);background:rgba(26,26,46,0.04)">
+            <div class="rounded-xl p-3" style="border:1px solid var(--c-border);background:rgba(255,255,255,0.04)">
               <p class="text-[11px] uppercase tracking-widest mb-2" style="color:var(--c-fg2)">AI 점수 이력</p>
               <div v-if="compareHistoryLoading" class="flex items-center justify-center py-4 gap-2">
                 <div class="w-3.5 h-3.5 rounded-full border-2 animate-spin"
@@ -1012,7 +1030,7 @@
                         :stroke="compareStockB.color" stroke-width="1.8" stroke-linejoin="round"
                         stroke-dasharray="5,3" opacity="0.9"/>
                   <text v-if="!compareChartPaths.pathA && !compareChartPaths.pathB"
-                        x="150" y="38" text-anchor="middle" fill="rgba(26,26,46,0.25)"
+                        x="150" y="38" text-anchor="middle" fill="rgba(232,228,220,0.3)"
                         font-size="8" font-family="sans-serif">이력 데이터 없음</text>
                 </svg>
               </template>
@@ -1022,12 +1040,12 @@
             <div class="flex gap-2 pb-2">
               <button @click="compareStockA = null; compareSelectingSlot = 'A'"
                       class="flex-1 py-2 rounded-xl border text-[12px] font-bold transition-colors"
-                      :style="{ borderColor: compareStockA ? compareStockA.color + '50' : 'rgba(26,26,46,0.15)', color: 'rgba(26,26,46,0.5)' }">
+                      :style="{ borderColor: compareStockA ? compareStockA.color + '50' : 'var(--c-border)', color: 'var(--c-fg2)' }">
                 A 다시 선택
               </button>
               <button @click="compareStockB = null; compareSelectingSlot = 'B'"
                       class="flex-1 py-2 rounded-xl border text-[12px] font-bold transition-colors"
-                      :style="{ borderColor: compareStockB ? compareStockB.color + '50' : 'rgba(26,26,46,0.15)', color: 'rgba(26,26,46,0.5)' }">
+                      :style="{ borderColor: compareStockB ? compareStockB.color + '50' : 'var(--c-border)', color: 'var(--c-fg2)' }">
                 B 다시 선택
               </button>
             </div>
@@ -1359,7 +1377,7 @@ const props = defineProps({
   replaceStock: { type: Object,  default: null  },
   viewTicker:   { type: String,  default: null  },
 });
-const emit = defineEmits(['select-company', 'add-company', 'back']);
+const emit = defineEmits(['select-company', 'add-company', 'back', 'cancel-replace']);
 
 const stocksStore   = useStocksStore()
 const screenerStore = useScreenerStore()
@@ -1892,8 +1910,13 @@ watch([compareStockA, compareStockB], ([a, b]) => {
 })
 
 function selectSearchResult(s) {
-  closeSearch()
   const company = s.id ? s : { ...s, id: s.ticker }
+  if (props.replaceMode) {
+    closeSearch()
+    emit('select-company', buildPortfolioItem(company))
+    return
+  }
+  closeSearch()
   openDetail(company)
 }
 
@@ -2122,12 +2145,19 @@ const closeDetail = () => {
 };
 
 // ── 교체 모드 ──────────────────────────────────
-// selectCompany 사용 시 아래 주석 해제
-// const buildPortfolioItem = (company) => ({
-//   id: Date.now(), company: company.name, ticker: company.ticker,
-//   sector: company.sector, shares: 10, avgPrice: company.price,
-//   currentPrice: company.price, change: company.change, color: company.color, weight: 10,
-// })
+const buildPortfolioItem = (company) => ({
+  id: Date.now(),
+  company: company.name ?? company.company ?? company.ticker,
+  ticker: company.ticker,
+  sector: company.sector ?? '',
+  shares: 10,
+  avgPrice: company.price ?? 0,
+  currentPrice: company.price ?? 0,
+  change: company.change ?? 0,
+  color: company.color ?? '#888',
+  quantScore: company.quantScore ?? company.score ?? 50,
+  weight: 10,
+})
 
 // 포트폴리오 직접 추가용 (필요 시 템플릿에서 @click="selectCompany(company)" 로 연결)
 // const selectCompany = (company) => { emit('select-company', buildPortfolioItem(company)) }
