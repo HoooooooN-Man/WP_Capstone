@@ -51,6 +51,7 @@
           @view-company="handleViewCompany"
           @switch-group="activeGroupId = $event; portfolioCurrentIndex = 0"
           @add-portfolio="addPortfolio"
+          @rename-group="(e) => handleRenameGroup(e.id, e.name)"
         />
         <BoardView v-else-if="activeCard === 'board'" key="board"
           class="absolute inset-0" />
@@ -76,7 +77,7 @@
 
       <!-- 게시판 버튼 — 우측 하단 -->
       <button
-        class="absolute bottom-2 right-4 z-30 flex flex-col items-center gap-1 px-3 py-2 rounded-2xl border transition-all duration-200 shadow-lg"
+        class="absolute bottom-[22px] right-4 z-30 flex flex-col items-center gap-1 px-3 py-2 rounded-2xl border transition-all duration-200 shadow-lg"
         :class="activeCard === 'board'
           ? 'border-[rgba(201,162,39,0.45)] text-[rgba(201,162,39,0.9)]'
           : 'border-white/10 text-white/40 hover:text-white/65 hover:border-white/20'"
@@ -244,6 +245,7 @@
          class="fixed left-0 right-0 z-10"
          style="height:240px; bottom:-18px">
       <PortfolioFanStrip
+        :dark-mode="darkMode"
         :display-items="portfolioDisplayItems"
         :current-index="portfolioCurrentIndex"
         :total-value="portfolioTotalValue"

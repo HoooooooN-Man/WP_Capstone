@@ -5,7 +5,7 @@
 
   <!-- 팬 바 — 지갑 바와 동일한 슬라이드-업 구조 -->
   <div class="absolute bottom-0 left-0 right-0 z-20 fan-bar"
-       :style="{ transform: effectiveFanVisible ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.38s cubic-bezier(0.32,0,0.2,1)' }"
+       :style="{ transform: effectiveFanVisible ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.38s cubic-bezier(0.32,0,0.2,1)', background: props.darkMode ? '#100c07' : '#ede4d0' }"
        @mouseleave="!swipeMode && !props.walletLocked && (fanVisible = false)">
 
     <!-- 스와이프 힌트 -->
@@ -163,6 +163,7 @@ const props = defineProps({
   activeStocksCount:{ type: Number,  default: 0 },
   autoTradeState:   { type: String,  default: 'off' },
   walletLocked:     { type: Boolean, default: false },
+  darkMode:         { type: Boolean, default: false },
 })
 const emit = defineEmits([
   'update:currentIndex',
@@ -332,7 +333,7 @@ onUnmounted(() => clearLP())
 <style scoped>
 /* 팬바 배경 제거 — 앱 배경이 그대로 보여 지갑바처럼 구분됨 */
 .fan-bar {
-  background: #ede4d0;
+  /* background은 :style 바인딩으로 동적 처리 */
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }

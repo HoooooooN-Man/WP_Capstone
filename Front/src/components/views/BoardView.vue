@@ -1,5 +1,5 @@
-<template>
-  <div class="w-full h-full bg-gradient-to-br from-[#12100e] via-[#1a1510] to-[#0e0c0a] rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] overflow-hidden border border-white/8 text-white relative flex flex-col">
+﻿<template>
+  <div class="w-full h-full bg-gradient-to-br from-[#12100e] via-[#1a1510] to-[#0e0c0a] overflow-hidden text-white relative flex flex-col">
 
     <!-- 헤더 -->
     <div class="px-6 pt-5 pb-3 border-b border-white/10 flex-shrink-0">
@@ -124,7 +124,7 @@
     <!-- ── 게시글 상세 오버레이 ── -->
     <transition name="slide-up">
       <div v-if="activePost"
-           class="absolute inset-0 z-40 flex flex-col rounded-[2rem] overflow-hidden"
+           class="absolute inset-0 z-40 flex flex-col overflow-hidden"
            style="background:linear-gradient(160deg,#141210 0%,#0e0c0a 100%)">
 
         <!-- 헤더 -->
@@ -196,7 +196,7 @@
     <!-- ── 글쓰기 오버레이 ── -->
     <transition name="slide-up">
       <div v-if="showWrite"
-           class="absolute inset-0 z-40 flex flex-col rounded-[2rem] overflow-hidden"
+           class="absolute inset-0 z-40 flex flex-col overflow-hidden"
            style="background:linear-gradient(160deg,#141210 0%,#0e0c0a 100%)">
 
         <div class="px-5 pt-4 pb-3 border-b border-white/10 flex-shrink-0 flex items-center gap-2">

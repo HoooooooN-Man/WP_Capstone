@@ -517,7 +517,7 @@ const props = defineProps({
   activeGroupId:   { type: Number, required: true },
   currentIndex:    { type: Number, default: 0 },
 })
-const emit = defineEmits(['update:currentIndex', 'view-company', 'switch-group', 'add-portfolio'])
+const emit = defineEmits(['update:currentIndex', 'view-company', 'switch-group', 'add-portfolio', 'rename-group'])
 
 const store = usePortfolioStore()
 const aiOpen = ref(false)
@@ -553,8 +553,9 @@ const activeStocks = computed(() => activeGroup.value?.stocks || [])
 const activeStock  = computed(() => props.currentIndex === 0 ? null : activeStocks.value[props.currentIndex - 1] ?? null)
 
 // ── 포트폴리오 제목 ──
-const portfolioName      = ref('내 포트폴리오 1')
-const portfolioNameInput = ref('내 포트폴리오 1')
+// portfolioName은 activeGroup의 name과 연동
+const portfolioName      = computed(() => activeGroup.value?.name ?? '내 포트폴리오 1')
+const portfolioNameInput = ref('')
 const editingName        = ref(false)
 const nameInput          = ref(null)
 
@@ -567,7 +568,10 @@ function startNameEdit() {
   })
 }
 function confirmNameEdit() {
-  if (portfolioNameInput.value.trim()) portfolioName.value = portfolioNameInput.value.trim()
+  const newName = portfolioNameInput.value.trim()
+  if (newName && newName !== portfolioName.value) {
+    emit('rename-group', { id: props.activeGroupId, name: newName })
+  }
   editingName.value = false
 }
 
