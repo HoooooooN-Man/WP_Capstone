@@ -32,9 +32,15 @@ router   = APIRouter(prefix="/api/webnews", tags=["webnews"])
 KST      = timezone(timedelta(hours=9))
 
 REDIS_CONF: dict = {
-    "host":                   os.getenv("REDIS_HOST"),
+    # webnews 전용 → 없으면 일반 REDIS_HOST (배포 환경에 따라 다른 인스턴스 분리)
+    "host":                   os.getenv("WEBNEWS_REDIS_HOST") or os.getenv("REDIS_HOST"),
     "port":                   int(os.getenv("WEBNEWS_REDIS_PORT", 6380)),
-    "password":               os.getenv("WEBNEWS_REDIS_PASSWORD"),
+    # webnews 전용 비번 → 없으면 운영 큐 비번 → 그것도 없으면 일반 비번
+    "password": (
+        os.getenv("WEBNEWS_REDIS_PASSWORD")
+        or os.getenv("REDIS_QUEUE_PASSWORD")
+        or os.getenv("REDIS_PASSWORD")
+    ),
     "decode_responses":       True,
     "socket_timeout":         10,
     "socket_connect_timeout": 5,

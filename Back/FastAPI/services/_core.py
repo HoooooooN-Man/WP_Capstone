@@ -77,10 +77,21 @@ def cache_key(fn_name: str, **kwargs) -> str:
 _REDIS_BYPASS_EMPTY_LIST = frozenset({"recommendations", "sector_summary"})
 
 
+# ── process-local cache (Redis 부재 시 fallback, 동일 TTL) ──────────────────
+_MEM_CACHE: dict[str, tuple[float, Any]] = {}
+_MEM_CACHE_LOCK = threading.Lock()
+_MEM_CACHE_MAX = 1000  # LRU 한도 (간단 cap)
+
+
 def cached(fn_name: str, fetch_fn: Callable[[], Any], ttl: int = REDIS_CACHE_TTL, **kwargs):
-    """Redis 캐시 래퍼 — 직렬화는 JSON, 실패 시 캐시 없이 fetch_fn 직접 호출."""
+    """Redis 캐시 래퍼 — Redis 실패 시 process-local in-memory 로 fallback.
+
+    호출 후 첫 cold 호출만 fetch_fn 비용을 지불, 이후 TTL 동안 캐시 hit (서버 재시작시 휘발).
+    """
     r = get_redis()
     key = cache_key(fn_name, **kwargs)
+
+    # Redis 우선 (있을 때)
     if r:
         try:
             hit = r.get(key)
@@ -95,16 +106,36 @@ def cached(fn_name: str, fetch_fn: Callable[[], Any], ttl: int = REDIS_CACHE_TTL
                     return parsed
         except Exception:
             pass
+    else:
+        # Redis 없음 → process-local 확인
+        with _MEM_CACHE_LOCK:
+            entry = _MEM_CACHE.get(key)
+        if entry is not None:
+            expiry, value = entry
+            if _time.time() < expiry:
+                if value == [] and fn_name in _REDIS_BYPASS_EMPTY_LIST:
+                    pass  # 빈 결과는 재조회
+                else:
+                    return value
 
     result = fetch_fn()
 
     if r:
         try:
-            # 빈 리스트는 TTL 동안 버전/데이터가 바뀌어도 갱신되지 않는 문제를 막기 위해 저장하지 않음.
             if result != []:
                 r.setex(key, ttl, json.dumps(result, default=str))
         except Exception:
             pass
+    else:
+        # process-local 저장 (Redis 없을 때만)
+        if result != []:
+            with _MEM_CACHE_LOCK:
+                # 단순 cap — 사이즈 초과시 가장 오래된 1/4 제거
+                if len(_MEM_CACHE) >= _MEM_CACHE_MAX:
+                    sorted_keys = sorted(_MEM_CACHE.items(), key=lambda kv: kv[1][0])
+                    for k, _ in sorted_keys[: _MEM_CACHE_MAX // 4]:
+                        _MEM_CACHE.pop(k, None)
+                _MEM_CACHE[key] = (_time.time() + ttl, result)
     return result
 
 
@@ -128,6 +159,14 @@ def init_duckdb() -> None:
     con.execute("SELECT * FROM finance LIMIT 500").fetchdf()
     con.execute("SELECT * FROM scores  LIMIT 500").fetchdf()
     con.execute("SELECT * FROM prices  LIMIT 500").fetchdf()
+    # market_regime daily_change 쿼리 워밍업 (KOSPI 직전 2일)
+    try:
+        con.execute(
+            "SELECT kospi_close FROM market_indices "
+            "WHERE kospi_close IS NOT NULL ORDER BY date DESC LIMIT 2"
+        ).fetchall()
+    except Exception:
+        pass
 
     # 자주 쓰이는 집계 사전 실행 (HomeView 첫 진입 지연 해소)
     try:

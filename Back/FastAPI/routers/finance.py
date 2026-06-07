@@ -24,7 +24,10 @@ def get_finance_latest(ticker: str):
         raise HTTPException(status_code=503, detail=str(e))
 
     if not row:
-        raise HTTPException(status_code=404, detail=f"종목 {ticker} 재무 데이터를 찾을 수 없습니다.")
+        # 빈 응답 200 — frontend graceful 처리. 데이터 부재는 정상 케이스.
+        return FinanceLatest(ticker=ticker.zfill(6), name=None, base_date=None,
+                              per=None, pbr=None, eps=None, bps=None,
+                              market_cap=None, dividend_yield=None)
 
     return FinanceLatest(**row)
 
@@ -44,7 +47,8 @@ def get_finance(
         raise HTTPException(status_code=503, detail=str(e))
 
     if not rows:
-        raise HTTPException(status_code=404, detail=f"종목 {ticker} 재무 데이터를 찾을 수 없습니다.")
+        # 빈 응답 200 — frontend graceful 처리.
+        return FinanceResponse(ticker=ticker.zfill(6), name=name, total=0, items=[])
 
     items = [FinanceItem(**r) for r in rows]
     return FinanceResponse(ticker=ticker.zfill(6), name=name, total=len(items), items=items)

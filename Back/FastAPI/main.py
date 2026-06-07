@@ -61,6 +61,20 @@ async def lifespan(app: FastAPI):
         await asyncio.get_event_loop().run_in_executor(None, init_duckdb)
         print(f"[OK] DuckDB 연결 + 워밍업 완료: {DUCKDB_PATH}")
 
+        # 사용자 첫 페이지 진입 시 발생하는 cold 14초 회피 — 핵심 endpoint 미리 fetch.
+        # 이 호출은 _cached() 를 거치므로 process-local memory cache 에 결과 저장 → 첫 호출 즉시 hit.
+        def _warm_endpoints():
+            try:
+                from .services import data as svc
+                svc.get_market_regime(model_version="latest")
+                svc.get_recommendations(top_k=50)  # top_k=50 cohort 페이지용
+                svc.get_recommendations(top_k=0)   # 전체
+                svc.get_sector_summary(model_version="latest")
+                print("[OK] API endpoint 워밍업 완료 (market_regime · recommendations · sector_summary)")
+            except Exception as e:
+                print(f"[WARN] API 워밍업 실패 (graceful): {e}")
+        await asyncio.get_event_loop().run_in_executor(None, _warm_endpoints)
+
     yield
 
 
@@ -96,7 +110,8 @@ app.add_middleware(RequestIDMiddleware)
 register_exception_handlers(app)
 
 # 라우터 등록 (ML 분석 도메인만)
-app.include_router(stocks.router,    prefix=API_PREFIX)
+app.include_router(stocks.router,         prefix=API_PREFIX)
+app.include_router(stocks.winners_router, prefix=API_PREFIX)  # /winners stub
 app.include_router(portfolio.router, prefix=API_PREFIX)
 app.include_router(market.router,    prefix=API_PREFIX)
 app.include_router(chart.router,     prefix=API_PREFIX)

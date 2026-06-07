@@ -1,10 +1,19 @@
-# Front
+# Front (legacy Vue) — 유지 (이미 삭제 진행 중)
 Front/node_modules/
 Front/dist/
 Front/.env
 Front/.env.*
 Front/.env.local
 !Front/.env.example
+
+# Front_v2 (현행 React 19 + Vite)
+Front_v2/node_modules/
+Front_v2/dist/
+Front_v2/tsconfig.tsbuildinfo
+Front_v2/.env
+Front_v2/.env.*
+Front_v2/.env.local
+!Front_v2/.env.example
 
 # SQLite (게시판 OLTP)
 *.db
@@ -45,16 +54,6 @@ Learning/__pycache__/
 Learning/*.pyc
 Learning/.ipynb_checkpoints/
 
-configs/llm.env
-
-data/webnews/current/llm_resolved/
-data/webnews/current/llm_input/
-data/webnews/current/summaries/*.json
-data/webnews/current/*.json
-
-data/webnews/staging/
-data/webnews/archive/
-
 # General
 .vscode/
 .idea/
@@ -64,6 +63,32 @@ data/webnews/archive/
 *.venv
 __pycache__/**
 
-# local historical webnews datasets
-data/webnews/history/
-exports/webnews-history/
+# 대용량 데이터 (P0-14) — 실수로 raw CSV / parquet 이 들어오지 않도록 차단
+# (운영 데이터는 E:\Capstone Data\project_data 외부에서만 관리)
+**/data/raw/
+**/preprocessing/preprocessed_*.csv
+**/technical_indicators_all.csv
+**/integrated_stock_data.csv
+**/master_*.parquet
+**/wf_*.parquet
+**/v8_predictions_*.parquet
+**/v9_predictions_*.parquet
+**/v11*_predictions_*.parquet
+
+# 빌드·테스트 산출물
+dist/
+build/
+*.egg-info/
+.coverage
+htmlcov/
+.mypy_cache/
+.pytest_cache/
+playwright-report/
+test-results/
+e2e/.cache/
+
+# ML 추론 cache (50M+) — push 제외, 로컬만
+Back/MachineLearning/report/backtest/_signal_cache/
+
+# ML 연구 산출물 (백테 결과·parquet·csv·pyc, 107MB) — 코드 외 데이터는 push 제외, 로컬만
+Back/MachineLearning/report/

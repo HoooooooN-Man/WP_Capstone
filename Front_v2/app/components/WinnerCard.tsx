@@ -1,0 +1,222 @@
+import { getReturnColor } from '../utils/format';
+
+interface TrendMarker {
+  short: 'up' | 'neutral' | 'down';
+  medium: 'up' | 'neutral' | 'down';
+  long: 'up' | 'neutral' | 'down';
+}
+
+interface WinnerCardProps {
+  name: string;
+  ticker: string;
+  recommendPrice: number;
+  score: number;
+  targetPrice: number;
+  trend: TrendMarker;
+  cumulativeReturn: number | null;
+  daysSinceRec?: number;
+  splitEventSuspected?: boolean;
+  isLocked?: boolean;
+}
+
+export default function WinnerCard({
+  name,
+  ticker,
+  recommendPrice,
+  score,
+  targetPrice,
+  trend,
+  cumulativeReturn,
+  daysSinceRec = 0,
+  splitEventSuspected = false,
+  isLocked = false,
+}: WinnerCardProps) {
+  const getTrendIcon = (direction: 'up' | 'neutral' | 'down') => {
+    if (direction === 'up') return '▲';
+    if (direction === 'down') return '▼';
+    return '●';
+  };
+
+  const getTrendColor = (direction: 'up' | 'neutral' | 'down') => {
+    if (direction === 'up') return 'var(--color-up)';
+    if (direction === 'down') return 'var(--color-down)';
+    return 'var(--color-neutral)';
+  };
+
+  const returnColor = getReturnColor(cumulativeReturn);
+
+  return (
+    <div
+      className="rounded-xl p-5 transition-all relative"
+      style={{
+        width: '220px',
+        minHeight: '320px',
+        backgroundColor: 'var(--bg-elev-1)',
+        border: '1px solid var(--border-default)',
+        filter: isLocked ? 'blur(4px)' : 'none',
+        opacity: isLocked ? 0.6 : 1,
+      }}
+    >
+      <div className="space-y-4">
+        <div className="text-center pb-3" style={{ borderBottom: '1px solid var(--border-default)' }}>
+          <div
+            style={{
+              fontSize: '18px',
+              fontWeight: 700,
+              lineHeight: '24px',
+              color: 'var(--text-primary)',
+              marginBottom: '2px',
+            }}
+          >
+            {name}
+          </div>
+          <div style={{ fontSize: '12px', lineHeight: '16px', color: 'var(--text-tertiary)' }}>{ticker}</div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: '12px', lineHeight: '16px', color: 'var(--text-tertiary)', marginBottom: '4px' }}>
+            추천가
+          </div>
+          <div
+            className="tabular-nums"
+            style={{ fontSize: '20px', fontWeight: 700, lineHeight: '28px', color: 'var(--text-primary)' }}
+          >
+            {recommendPrice.toLocaleString('ko-KR')}
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: '12px', lineHeight: '16px', color: 'var(--text-tertiary)', marginBottom: '4px' }}>
+            스코어
+          </div>
+          <div
+            className="tabular-nums"
+            style={{ fontSize: '20px', fontWeight: 700, lineHeight: '28px', color: 'var(--color-up)' }}
+          >
+            {score.toFixed(1)}
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: '12px', lineHeight: '16px', color: 'var(--text-tertiary)', marginBottom: '4px' }}>
+            목표가 <span style={{ color: 'var(--text-tertiary)', fontSize: 11, marginLeft: 4 }}>(섹터 PER/PBR 적정)</span>
+          </div>
+          <div
+            className="tabular-nums"
+            style={{ fontSize: '20px', fontWeight: 700, lineHeight: '28px',
+                     color: targetPrice > recommendPrice ? 'var(--color-up)'
+                          : targetPrice > 0 && targetPrice < recommendPrice ? 'var(--color-down)'
+                          : 'var(--text-primary)' }}
+          >
+            {targetPrice > 0 ? targetPrice.toLocaleString('ko-KR') : '-'}
+            {targetPrice > 0 && recommendPrice > 0 && (
+              <span style={{ fontSize: 12, marginLeft: 6, color: 'var(--text-tertiary)', fontWeight: 600 }}>
+                ({((targetPrice / recommendPrice - 1) * 100 >= 0 ? '+' : '')}{((targetPrice / recommendPrice - 1) * 100).toFixed(1)}%)
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: '12px', lineHeight: '16px', color: 'var(--text-tertiary)', marginBottom: '4px' }}
+               title="추세: 추천일 이후 5/20/60거래일 수익률. 회색 = 아직 미경과">
+            추세 (5/20/60일)
+          </div>
+          {daysSinceRec < 5 ? (
+            <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
+              추천 후 {daysSinceRec}일 — 추세 미산출
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>단</span>
+              <span style={{ fontSize: '14px', color: getTrendColor(trend.short) }}>{getTrendIcon(trend.short)}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>중</span>
+              <span style={{ fontSize: '14px', color: getTrendColor(trend.medium) }}>{getTrendIcon(trend.medium)}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>장</span>
+              <span style={{ fontSize: '14px', color: getTrendColor(trend.long) }}>{getTrendIcon(trend.long)}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="pt-3" style={{ borderTop: '1px solid var(--border-default)' }}>
+          {/* C: 당일 추천은 "추천 당일" 안내, 그 외 누적 수익률 */}
+          {daysSinceRec === 0 ? (
+            <div
+              className="tabular-nums"
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                lineHeight: '20px',
+                color: 'var(--text-tertiary)',
+                textAlign: 'center',
+              }}
+            >
+              추천 당일 — 변동 없음
+            </div>
+          ) : splitEventSuspected || cumulativeReturn == null ? (
+            <div
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                lineHeight: '20px',
+                color: 'var(--text-tertiary)',
+                textAlign: 'center',
+              }}
+              title="액면분할/감자 의심 (|수익률| > 300%)으로 수익률을 표시하지 않음"
+            >
+              분할 의심 — 수익률 미표시
+            </div>
+          ) : (
+            <div
+              className="tabular-nums"
+              style={{
+                fontSize: '16px',
+                fontWeight: 700,
+                lineHeight: '24px',
+                color: returnColor,
+                textAlign: 'center',
+              }}
+            >
+              추천 후 {cumulativeReturn >= 0 ? '+' : ''}
+              {cumulativeReturn.toFixed(1)}%
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isLocked && (
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center rounded-xl"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔒</div>
+          <div
+            style={{
+              fontSize: '14px',
+              fontWeight: 700,
+              color: '#FFFFFF',
+              marginBottom: '12px',
+            }}
+          >
+            로그인하고 더 보기
+          </div>
+          <button
+            className="px-4 py-2 rounded-lg"
+            style={{
+              backgroundColor: 'var(--accent-blue)',
+              color: '#FFFFFF',
+              fontSize: '12px',
+              fontWeight: 700,
+            }}
+            onClick={() => (window.location.href = '/login')}
+          >
+            로그인
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

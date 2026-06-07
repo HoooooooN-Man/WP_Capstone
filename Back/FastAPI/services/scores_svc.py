@@ -188,13 +188,22 @@ def get_stock_history(
             conditions.append("CAST(s.date AS VARCHAR) <= ?")
             params.append(end_date)
 
+        # prices 의 OHLCV 합성 — 1일 범위/거래량/시가총액/외국인비중/상장주식수 필드를 latest 객체에 채움.
+        # prices.date 는 BIGINT (YYYYMMDD), scores.date 는 DATE → BIGINT 변환 후 매칭.
         sql = f"""
             SELECT
                 CAST(s.date AS VARCHAR)                AS date,
                 s.ticker,
                 COALESCE(s.name, st.name)              AS name,
                 COALESCE(s.sector, st.wics_large_name) AS sector,
-                s.close,
+                COALESCE(s.close, p.close)             AS close,
+                p.open,
+                p.high,
+                p.low,
+                p.volume,
+                p.market_cap,
+                p.shares_outstanding,
+                p.foreign_ratio,
                 ROUND(s.prob_ensemble, 6)              AS prob_ensemble,
                 ROUND(CAST(s.score AS DOUBLE), 1)      AS score,
                 s.tier,
@@ -203,6 +212,9 @@ def get_stock_history(
                 s.model_version
             FROM scores s
             LEFT JOIN stocks st ON s.ticker = st.ticker
+            LEFT JOIN prices p
+                ON s.ticker = p.ticker
+                AND p.date = CAST(strftime(s.date, '%Y%m%d') AS BIGINT)
             WHERE {' AND '.join(conditions)}
             ORDER BY s.date
         """
@@ -477,8 +489,100 @@ def compare_stocks(
     )
 
 
+# ── 마켓스코어 v2 (하이브리드) — Regime base + 3 컴포넌트 동적 보정 ──────────
+# 옛 v1 (Tier A 비율 × 4) 는 tier 가 백분위 cutoff 로 강제 부여되어
+# A 비율이 매일 약 15.6% 로 고정 → market_score 사실상 상수 (62.5).
+#
+# v2 설계:
+#   Phase 1: regime 판정 → base (30/50/70)
+#     - 강세: KOSPI > MA200 AND HV60 < 25% AND 1M mom > 0%
+#     - 약세: KOSPI < MA200 AND (HV60 > 30% OR 1M mom < -5%)
+#     - 횡보: 그 외
+#   Phase 2: 3 컴포넌트 ±15점 보정
+#     - c1 = clip(KOSPI 1M return × 100, -10, +10)         # 시장 모멘텀
+#     - c2 = clip((BUY 종목 수 - 100) / 10, -10, +10)        # 추천 풍부도
+#     - c3 = clip((avg prob_ensemble - 0.5) × 20, -10, +10)  # 모델 confidence
+#     - adjustment = (c1 + c2 + c3) / 2  → 최대 ±15
+#   market_score = clip(base + adjustment, 0, 100)
+#
+# 임계값은 사전 결정 (학술 표준 + regime_filter.py 와 동일).
+# Look-ahead 차단: t 시점 결정엔 t-1 까지 데이터만 사용.
+
+import numpy as np
+
+REGIME_TH = {
+    "ma_window":     200,   # 200d MA
+    "hv_window":     60,    # 60d HV
+    "mom_window":    20,    # 1M momentum (20거래일)
+    "hv_bull_max":   0.25,  # 강세 HV 상한 (VIX 20 대체)
+    "hv_bear_min":   0.30,  # 약세 HV 하한 (VIX 25 대체)
+    "mom_bull_min":  0.0,   # 강세 1M mom > 0
+    "mom_bear_max": -0.05,  # 약세 1M mom < -5%
+}
+
+REGIME_BASE = {"bull": 70, "sideways": 50, "bear": 30}
+
+
+def _classify_regime(con) -> dict:
+    """KOSPI 종가로 시장 국면 분류 + 1M return 계산. Look-ahead 차단."""
+    rows = con.execute(
+        """SELECT date, kospi_close FROM market_indices
+           WHERE kospi_close IS NOT NULL ORDER BY date"""
+    ).fetchall()
+    if len(rows) < REGIME_TH["ma_window"] + REGIME_TH["hv_window"]:
+        return {"regime": "sideways", "kospi_1m_return": 0.0, "reason": "data_insufficient"}
+
+    closes = np.array([float(r[1]) for r in rows])
+    # t (today) = 마지막. decision t-1 까지의 데이터로 분류 → closes[:-1] 의 마지막을 t-1 proxy 로 사용
+    sub = closes[:-1] if len(closes) > 1 else closes
+    today_proxy = sub[-1]
+    ma200 = float(np.mean(sub[-REGIME_TH["ma_window"]:]))
+    rets = np.diff(sub) / sub[:-1]
+    hv60 = float(np.std(rets[-REGIME_TH["hv_window"]:], ddof=1) * np.sqrt(252))
+    mom1m = float(today_proxy / sub[-REGIME_TH["mom_window"] - 1] - 1.0) \
+        if len(sub) > REGIME_TH["mom_window"] else 0.0
+
+    above_ma = today_proxy > ma200
+    if above_ma and hv60 < REGIME_TH["hv_bull_max"] and mom1m > REGIME_TH["mom_bull_min"]:
+        regime = "bull"
+    elif (not above_ma) and (hv60 > REGIME_TH["hv_bear_min"] or mom1m < REGIME_TH["mom_bear_max"]):
+        regime = "bear"
+    else:
+        regime = "sideways"
+
+    return {
+        "regime": regime,
+        "kospi_1m_return": mom1m,
+        "kospi": today_proxy,
+        "ma200": ma200,
+        "above_ma200": above_ma,
+        "hv_60d": hv60,
+    }
+
+
+def _classify_status_v2(score: float) -> tuple[str, str, str, str, str]:
+    """market_score 0~100 → 5단계 status + 메시지. v1 (Tier A 비율) 대신 score 기반."""
+    if score >= 75:
+        return ("greed", "탐욕", "맑음", "적극 매수",
+                "상승 모멘텀이 강합니다. 적극적인 투자가 유리한 국면입니다.")
+    if score >= 60:
+        return ("optimism", "낙관", "구름조금", "선별 매수",
+                "상승 흐름이 우세합니다. 선별적인 종목으로 비중을 확대해 볼 만한 시점입니다.")
+    if score >= 40:
+        return ("neutral", "중립", "흐림", "관망",
+                "방향성 탐색 구간입니다. 선별적인 종목 접근이 필요합니다.")
+    if score >= 25:
+        return ("pessimism", "비관", "비", "보수적",
+                "약세 압력이 우세합니다. 보수적 비중 관리가 필요합니다.")
+    return ("panic", "공포", "폭우", "현금 비중↑",
+            "시장 변동성이 커지고 있습니다. 현금 비중 확대를 권장합니다.")
+
+
 def get_market_regime(model_version: str = "latest") -> dict:
-    """Tier A 종목 비율로 현재 시장 국면(greed/neutral/fear)을 판단."""
+    """하이브리드 마켓스코어 v2 — regime base + KOSPI 1M / BUY count / avg prob 보정.
+
+    옛 v1 (Tier A 비율 × 4) 가 백분위 cutoff 로 인해 사실상 고정값 62.5 였던
+    한계 해결. regime 판정 임계 + 컴포넌트 클립 모두 사전 결정 (in-sample 튜닝 0)."""
     ver = _resolve_version(model_version)
 
     def fetch():
@@ -487,35 +591,76 @@ def get_market_regime(model_version: str = "latest") -> dict:
         if not latest:
             raise RuntimeError(f"scores 데이터 없음 (model_version={ver})")
 
+        # 1) Tier 분포 + 평균 prob_ensemble + BUY 종목 수 (Tier A & score ≥ 80 동치)
         row = con.execute(
             """
             SELECT COUNT(*) AS total,
-                   SUM(CASE WHEN tier='A' THEN 1 ELSE 0 END) AS tier_a
+                   SUM(CASE WHEN tier='A' THEN 1 ELSE 0 END)              AS tier_a,
+                   AVG(COALESCE(prob_ensemble, 0))                         AS avg_prob,
+                   SUM(CASE WHEN tier='A' AND score >= 80 THEN 1 ELSE 0 END) AS buy_count
             FROM scores
             WHERE model_version=? AND CAST(date AS VARCHAR)=?
             """,
             [ver, latest],
         ).fetchone()
-        total  = int(row[0] or 0)
-        tier_a = int(row[1] or 0)
-        ratio  = (tier_a / total * 100) if total else 0.0
+        total      = int(row[0] or 0)
+        tier_a     = int(row[1] or 0)
+        avg_prob   = float(row[2] or 0.0)
+        buy_count  = int(row[3] or 0)
+        tier_a_ratio = (tier_a / total * 100) if total else 0.0
 
-        if ratio >= 10:
-            status, weather, msg = "greed", "맑음", "상승 모멘텀이 강합니다. 적극적인 투자가 유리한 국면입니다."
-        elif ratio >= 5:
-            status, weather, msg = "neutral", "흐림", "방향성 탐색 구간입니다. 선별적인 종목 접근이 필요합니다."
-        else:
-            status, weather, msg = "fear", "비", "시장 변동성이 커지고 있습니다. 현금 비중 확대를 권장합니다."
+        # 2) Regime 판정 + KOSPI 1M return
+        reg = _classify_regime(con)
+        regime = reg["regime"]
+        kospi_1m = reg["kospi_1m_return"]
+        base = REGIME_BASE.get(regime, 50)
+
+        # 3) 3 컴포넌트 보정 (각 ±10 cap)
+        c1 = max(-10.0, min(10.0, kospi_1m * 100.0))            # 시장 모멘텀
+        c2 = max(-10.0, min(10.0, (buy_count - 100) / 10.0))    # BUY 풍부도
+        c3 = max(-10.0, min(10.0, (avg_prob - 0.5) * 20.0))     # 모델 confidence
+        adjustment = (c1 + c2 + c3) / 2.0                       # ±15 max
+
+        market_score = round(max(0.0, min(100.0, base + adjustment)), 1)
+
+        # 4) 5단계 status (score 기반)
+        status, status_ko, weather, mood, msg = _classify_status_v2(market_score)
+
+        # 5) daily_change
+        daily_change = None
+        try:
+            kr = con.execute(
+                """SELECT kospi_close FROM market_indices
+                   WHERE kospi_close IS NOT NULL ORDER BY date DESC LIMIT 2"""
+            ).fetchall()
+            if len(kr) == 2 and kr[1][0]:
+                daily_change = round((kr[0][0] - kr[1][0]) / kr[1][0] * 100, 2)
+        except Exception:
+            pass
 
         return {
             "date":          latest,
             "model_version": ver,
             "total_count":   total,
             "tier_a_count":  tier_a,
-            "tier_a_ratio":  round(ratio, 2),
+            "tier_a_ratio":  round(tier_a_ratio, 2),
             "status":        status,
+            "status_ko":     status_ko,
             "weather":       weather,
+            "mood":          mood,
+            "market_score":  market_score,
+            "score_range":   "0-100",
+            "daily_change":  daily_change,
             "message":       msg,
+            # v2 추가 진단 필드 (UI 미사용 OK)
+            "regime":        regime,
+            "regime_base":   base,
+            "kospi_1m":      round(kospi_1m * 100, 2),
+            "buy_count":     buy_count,
+            "avg_prob":      round(avg_prob, 4),
+            "components":    {"c1_kospi": round(c1, 2), "c2_buy": round(c2, 2), "c3_prob": round(c3, 2)},
+            "adjustment":    round(adjustment, 2),
+            "score_version": "v2_hybrid",
         }
 
     return _cached("market_regime", fetch, ttl=300, model_version=ver)

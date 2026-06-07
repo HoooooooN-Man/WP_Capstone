@@ -6,7 +6,7 @@ schemas/portfolio.py
 
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Any, Dict, Literal, Optional
 from pydantic import BaseModel
 
 
@@ -19,9 +19,24 @@ class MarketRegimeResponse(BaseModel):
     total_count:   int                              # 해당 날짜 전체 종목 수
     tier_a_count:  int                              # Tier A 종목 수
     tier_a_ratio:  float                            # Tier A 비율 (%)
-    status:        Literal["greed", "neutral", "fear"]
-    weather:       Literal["맑음", "흐림", "비"]
+    status:        str                              # panic|pessimism|neutral|optimism|greed (+legacy fear)
+    weather:       str
     message:       str
+    # ── Front_v2 호환 (Optional) ─────────────────────────────────────────────
+    status_ko:     Optional[str]   = None
+    mood:          Optional[str]   = None
+    market_score:  Optional[float] = None
+    score_range:   Optional[str]   = None
+    daily_change:  Optional[float] = None
+    # ── v2 하이브리드 진단 필드 (Optional) ─────────────────────────────────
+    regime:         Optional[str]            = None  # bull|sideways|bear
+    regime_base:    Optional[float]          = None  # 30 / 50 / 70
+    kospi_1m:       Optional[float]          = None  # KOSPI 1개월 변동률 (%)
+    buy_count:      Optional[int]            = None  # BUY 시그널 종목 수
+    avg_prob:       Optional[float]          = None  # 평균 prob_ensemble
+    components:     Optional[Dict[str, Any]] = None  # c1 / c2 / c3
+    adjustment:     Optional[float]          = None  # 합산 보정 (±15)
+    score_version:  Optional[str]            = None  # v2_hybrid
 
 
 # ── KOSPI 200 포트폴리오 ───────────────────────────────────────────────────────

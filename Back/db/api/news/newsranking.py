@@ -224,7 +224,51 @@ def get_news_detail(news_id: str):
 # ---------------------------------------------------------------------------
 # 뉴스 피드 (NewsView 호환)
 # ---------------------------------------------------------------------------
-@router.get("/feed", summary="뉴스 피드 (감성 라벨 + origin_url 포함)")
+def _read_webnews_feed(limit: int, offset: int, ticker: Optional[str] = None) -> dict:
+    """Redis webnews → NewsItem 형식 변환. 14일치 item 시간순. ticker 지정 시 title 매칭."""
+    import re as _re
+    from .webnews import _rd as _wn_rd
+    rd = _wn_rd()
+    items = []
+    for k in rd.scan_iter(match="webnews:*:item:*"):
+        try:
+            parts = k.split(":")
+            if len(parts) < 4: continue
+            h = rd.hgetall(k)
+            if not h: continue
+            it = {
+                "news_id":        h.get("id"),
+                "title":          h.get("title"),
+                "source":         h.get("publisher"),
+                "company_name":   None,
+                "published_at":   h.get("published_at"),
+                "image_url":      None,
+                "sentiment_label": None,
+                "related_tickers": [],
+                "category":       h.get("category_id"),
+                "category_label": h.get("category_label"),
+                "url":            h.get("google_news_url"),
+                "score":          float(h.get("score") or 0),
+                "rank":           int(h.get("latest_rank") or 0),
+            }
+            items.append(it)
+        except Exception:
+            continue
+    # ticker 필터 (title 정규식 경계 단어 매칭)
+    if ticker:
+        # ticker 가 종목 코드면 stocks.name 으로 변환 시도 (newsranking 컨텍스트엔 sqlite — 패스, frontend 가 종목명 전달)
+        name = ticker.strip()
+        if name:
+            pat = _re.compile(rf"(?<![\w가-힣]){_re.escape(name)}(?![\w가-힣])")
+            items = [it for it in items if it.get("title") and pat.search(it["title"])]
+    # 최신순
+    items.sort(key=lambda x: x.get("published_at") or "", reverse=True)
+    total = len(items)
+    items = items[offset:offset+limit]
+    return {"total": total, "items": items}
+
+
+@router.get("/feed", summary="뉴스 피드 (Redis webnews 기반, NewsView 호환)")
 def get_news_feed(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -232,9 +276,19 @@ def get_news_feed(
     ticker: Optional[str] = Query(None, description="종목 코드/회사명 LIKE"),
 ):
     """
-    `news_normalized` 테이블에서 최신순 뉴스 피드 반환.
+    Redis webnews(item hash) 우선 → fallback news_normalized 테이블.
     응답 형식: ``{"total": int, "items": [...]}`` (NewsView.vue 호환).
     """
+    # ① Redis webnews 우선 (운영 적재 14일치)
+    try:
+        wn = _read_webnews_feed(limit=limit, offset=offset, ticker=ticker)
+        if wn["total"] > 0:
+            return wn
+    except Exception as _e:
+        # Redis 접근 실패 → news_normalized fallback
+        pass
+
+    # ② news_normalized DuckDB fallback
     try:
         conn = get_conn()
 
@@ -315,3 +369,92 @@ def get_news_feed(
 def get_news_detail_by_id(news_id: str):
     """`/api/v1/news/rankings/{news_id}` 와 동일 응답을 반환하는 별칭 라우트."""
     return get_news_detail(news_id)
+
+
+# ---------------------------------------------------------------------------
+# 카테고리 요약 (LLM report) — webnews 6 카테고리 한 번에
+# ---------------------------------------------------------------------------
+@router.get("/categories", summary="카테고리별 LLM 요약 (6개 카테고리)")
+def get_news_categories(date: Optional[str] = Query(None, description="YYYY-MM-DD. 생략 시 최신")):
+    """Redis webnews report:{cat} (LLM 요약) 을 6 카테고리 한 번에 반환.
+
+    응답: {date, categories: [{category, category_label, one_line, executive_brief,
+                              main_themes, sector_signals, watch_points, item_count}]}
+    """
+    import json as _json
+    from .webnews import _rd as _wn_rd, CATEGORIES
+    rd = _wn_rd()
+    # 1) 가장 최근 일자 결정
+    if not date:
+        dates = set()
+        for k in rd.scan_iter(match="webnews:*:report:*"):
+            parts = k.split(":")
+            if len(parts) >= 3: dates.add(parts[1])
+        if not dates:
+            return {"date": None, "categories": []}
+        date = sorted(dates, reverse=True)[0]
+    # 2) 카테고리별 report + item 수 집계
+    cats = []
+    for cat in CATEGORIES:
+        raw = rd.get(f"webnews:{date}:report:{cat}")
+        item_count = rd.zcard(f"webnews:{date}:rank:{cat}") or 0
+        if not raw:
+            cats.append({"category": cat, "category_label": cat, "one_line": None,
+                         "executive_brief": None, "main_themes": [], "sector_signals": [],
+                         "watch_points": [], "item_count": item_count})
+            continue
+        try:
+            d = _json.loads(raw)
+            cats.append({
+                "category":        cat,
+                "category_label":  d.get("category_label") or cat,
+                "one_line":        d.get("one_line"),
+                "executive_brief": d.get("executive_brief"),
+                "main_themes":     d.get("main_themes") or [],
+                "sector_signals":  d.get("sector_signals") or [],
+                "watch_points":    d.get("watch_points") or [],
+                "item_count":      item_count,
+                "generated_at":    d.get("generated_at"),
+            })
+        except Exception:
+            cats.append({"category": cat, "category_label": cat,
+                         "one_line": None, "executive_brief": None,
+                         "main_themes": [], "sector_signals": [], "watch_points": [],
+                         "item_count": item_count})
+    return {"date": date, "categories": cats}
+
+
+@router.get("/category/{category}/items", summary="카테고리별 item 목록 (rank 정렬)")
+def get_category_items(category: str,
+                       date: Optional[str] = Query(None, description="YYYY-MM-DD. 생략 시 최신"),
+                       top_n: int = Query(20, ge=1, le=50)):
+    """Redis webnews rank:{cat} (zset 순위) 기반 item 목록."""
+    from .webnews import _rd as _wn_rd, CATEGORIES
+    if category not in CATEGORIES:
+        raise HTTPException(status_code=400, detail=f"invalid category. 허용: {CATEGORIES}")
+    rd = _wn_rd()
+    if not date:
+        dates = set()
+        for k in rd.scan_iter(match=f"webnews:*:rank:{category}"):
+            parts = k.split(":")
+            if len(parts) >= 3: dates.add(parts[1])
+        if not dates:
+            return {"date": None, "category": category, "items": []}
+        date = sorted(dates, reverse=True)[0]
+    ranked = rd.zrevrange(f"webnews:{date}:rank:{category}", 0, top_n - 1, withscores=True)
+    items = []
+    for item_id, score in ranked:
+        h = rd.hgetall(f"webnews:{date}:item:{item_id}")
+        if not h: continue
+        items.append({
+            "news_id":        h.get("id") or item_id,
+            "title":          h.get("title"),
+            "source":         h.get("publisher"),
+            "published_at":   h.get("published_at"),
+            "url":            h.get("google_news_url"),
+            "category":       category,
+            "category_label": h.get("category_label"),
+            "rank":           int(h.get("latest_rank") or 0),
+            "score":          float(score),
+        })
+    return {"date": date, "category": category, "items": items}

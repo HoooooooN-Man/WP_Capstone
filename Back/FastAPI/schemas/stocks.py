@@ -57,6 +57,18 @@ class StockScore(BaseModel):
     regime_label:   Optional[str]   = None  # "상승" | "하락(방어)"
     position_scale: Optional[float] = None  # 1.0 또는 0.5
 
+    # ── UI 메타 (Front_v2 와 호환, tier·score 기반 계산) ─────────────────────
+    signal_label:        Optional[str]   = None  # 'BUY'|'HOLD'|'WATCH'|'SELL'
+    signal_label_ko:     Optional[str]   = None  # 매수/보유/관망/매도
+    star_rating:         Optional[float] = None  # 1.0~5.0
+    change_pct:          Optional[float] = None  # 어제 종가 대비 % 변동
+    change_value:        Optional[float] = None  # 어제 종가 대비 절대 변동
+    cumulative_return_pct: Optional[float] = None  # 추천 이후 누적 (없으면 None)
+    first_recommended_date: Optional[str] = None
+    days_since_rec:      Optional[int]   = None
+    headline:            Optional[str]   = None
+    market_cap_label:    Optional[str]   = None
+
 
 class StockScoreList(BaseModel):
     """추천 목록 응답."""
@@ -76,6 +88,14 @@ class StockHistoryItem(BaseModel):
     name:           Optional[str]  = None
     sector:         Optional[str]  = None
     close:          Optional[float] = None
+    # prices OHLCV 합성 (Front_v2 종목 상세 헤더 메트릭)
+    open:               Optional[float] = None
+    high:               Optional[float] = None
+    low:                Optional[float] = None
+    volume:             Optional[float] = None
+    market_cap:         Optional[float] = None
+    shares_outstanding: Optional[float] = None
+    foreign_ratio:      Optional[float] = None
     prob_ensemble:  float
     score:          float
     tier:           str

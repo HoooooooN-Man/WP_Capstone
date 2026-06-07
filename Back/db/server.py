@@ -122,6 +122,37 @@ app.include_router(cohort_router)     # W2C — /users/me/cohort GET·PUT
 app.include_router(events_router)     # W1B — /events impressions·clicks·outcomes
 
 
+# ── Stub endpoints (Front_v2 미구현 endpoint 401/404 회피) ──────────────────
+# 비로그인 (인증 헤더 없음) → 401 대신 빈 응답 200 으로 frontend graceful 처리.
+# 로그인 후엔 별도 라우터가 우선 매칭됨 (FastAPI 첫 매칭 라우터 우선).
+from fastapi import APIRouter as _Stub
+_stub = _Stub(tags=["stub"])
+
+@_stub.get("/users/me", summary="내 프로필 — stub (미구현)")
+def _stub_me():
+    return {"nickname": None, "email": None, "cohort": None, "is_advice": False}
+
+@_stub.get("/users/me/notes", summary="투자노트 — stub")
+def _stub_notes():
+    return {"total": 0, "items": []}
+
+@_stub.get("/users/me/portfolio/holdings", summary="보유종목 — stub")
+def _stub_holdings():
+    return {"items": []}
+
+@_stub.get("/users/me/portfolio/cohort/{cohort}", summary="코호트 포트폴리오 — stub")
+def _stub_cohort_portfolio(cohort: str):
+    return {"cohort": cohort, "total": 0, "items": [],
+            "summary": {"n_picks": 0, "n_valid_returns": 0, "avg_return_pct": None,
+                        "best_pick": None, "worst_pick": None, "win_rate_pct": None}}
+
+@_stub.get("/users/me/portfolio/cohort/{cohort}/preview", summary="코호트 preview — stub")
+def _stub_cohort_preview(cohort: str):
+    return {"cohort": cohort, "n_picks": 0, "picks": [], "is_advice": False}
+
+app.include_router(_stub)
+
+
 @app.get("/")
 def root():
     return {"message": "Server is running"}
