@@ -382,6 +382,20 @@ def screen_stocks(
         sort_col = sort_by if sort_by in ALLOWED_SORT else "composite_score"
 
         sql = f"""
+            WITH lt_p AS (SELECT ticker, MAX(date) AS d FROM prices GROUP BY ticker),
+                 px AS (
+                    SELECT p.ticker, p.close AS p_close, p.date AS p_date
+                    FROM lt_p JOIN prices p ON p.ticker=lt_p.ticker AND p.date=lt_p.d
+                 ),
+                 px_prev AS (
+                    SELECT p.ticker, p.close AS prev_close
+                    FROM prices p
+                    JOIN (
+                        SELECT p2.ticker AS tk, MAX(p2.date) AS d
+                        FROM prices p2 JOIN lt_p ON p2.ticker=lt_p.ticker AND p2.date<lt_p.d
+                        GROUP BY p2.ticker
+                    ) lt2 ON p.ticker=lt2.tk AND p.date=lt2.d
+                 )
             SELECT
                 s.ticker,
                 COALESCE(s.name, fi.finance_name)   AS name,
@@ -389,6 +403,18 @@ def screen_stocks(
                 ROUND(CAST(s.score AS DOUBLE), 1)   AS score,
                 s.tier,
                 CAST(s.date AS VARCHAR)              AS latest_date,
+                COALESCE(px.p_close, s.close)        AS close,
+                CASE WHEN px.p_close IS NOT NULL AND px_prev.prev_close IS NOT NULL AND px_prev.prev_close > 0
+                     THEN ROUND((px.p_close - px_prev.prev_close) / px_prev.prev_close * 100, 2)
+                     ELSE NULL
+                END                                  AS change_pct,
+                CASE
+                    WHEN s.tier='A' AND s.score >= 80 THEN 'BUY'
+                    WHEN s.tier='A'                   THEN 'HOLD'
+                    WHEN s.tier='B'                   THEN 'HOLD'
+                    WHEN s.tier='C'                   THEN 'SELL'
+                    ELSE                                   'WATCH'
+                END                                  AS signal_label,
                 fi.per, fi.pbr, fi.roe, fi.debt_ratio,
                 fi.op_margin, fi.rev_growth_yoy,
                 ROUND(fi.finance_score, 1)           AS finance_score,
@@ -398,6 +424,8 @@ def screen_stocks(
                 1)                                   AS composite_score
             FROM scores s
             LEFT JOIN ({finance_sub}) fi ON s.ticker = fi.ticker
+            LEFT JOIN px      ON px.ticker      = s.ticker
+            LEFT JOIN px_prev ON px_prev.ticker = s.ticker
             WHERE {' AND '.join(ml_conditions)} {finance_where}
             ORDER BY {sort_col} DESC NULLS LAST
             LIMIT {int(limit)}

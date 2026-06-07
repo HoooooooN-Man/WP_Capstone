@@ -8,7 +8,7 @@ interface BottomNavProps {
 const TABS = [
   { icon: Home,     label: '추천', path: '/recommend', match: (p: string) => p.startsWith('/recommend') || p.startsWith('/winner') || p.startsWith('/signal') || p === '/' },
   { icon: Search,   label: '검색', path: '/search',    match: (p: string) => p.startsWith('/search') },
-  { icon: Activity, label: '발굴', path: '/scores',    match: (p: string) => p.startsWith('/scores') || p.startsWith('/sectors') || p.startsWith('/screener') || p.startsWith('/news') || p.startsWith('/compare') },
+  { icon: Activity, label: '탐색', path: '/sectors',   match: (p: string) => p.startsWith('/sectors') || p.startsWith('/screener') || p.startsWith('/news') || p.startsWith('/compare') },
   { icon: Heart,    label: '관심', path: '/watchlist', match: (p: string) => p.startsWith('/watchlist') },
   { icon: User,     label: '마이', path: '/my',        match: (p: string) => p.startsWith('/my') },
 ];

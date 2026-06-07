@@ -36,7 +36,7 @@ const NAV_TABS: NavTab[] = [
     subs: [],
   },
   {
-    label: '발굴', path: '/sectors',
+    label: '탐색', path: '/sectors',
     match: (p) =>
       p.startsWith('/sectors') || p.startsWith('/screener') ||
       p.startsWith('/news') || p.startsWith('/compare'),

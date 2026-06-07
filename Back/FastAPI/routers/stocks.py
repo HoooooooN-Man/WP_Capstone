@@ -858,10 +858,17 @@ from fastapi import APIRouter as _AR  # noqa: E402
 
 winners_router = _AR(tags=["winners"])
 
-@winners_router.get("/winners", summary="승부주 — A티어 일자별 TOP K + 7거래일 cooldown")
+@winners_router.get("/winners", summary="승부주 — 변동성 정렬 + ML 필터")
 def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge=1, le=10)):
-    """일자별 A티어 score TOP K. 같은 종목이 7거래일 내 재등장 시 cooldown.
-    각 종목에 추천가(추천일 close) + 현재가 누적수익률 + 적정가 부착.
+    """승부주 산식 (filter-then-rank):
+        필터  = A티어 (= ML prob_ensemble 상위 15.6%, 절대 임계)
+        정렬  = vol DESC   ※ vol = (high − low) / close   ─ Wilder TR 단순형
+        cooldown = 7거래일 (같은 종목 재추천 방지)
+
+    설계 의도:
+        ML 점수가 "노이즈 변동성 vs 진짜 알파" 를 구분하는 필터로 작동,
+        그 다음 일중 진폭 큰 순서로 정렬해 단기 매매 기회를 골라냄.
+        Renaissance/AQR factor-zoo 의 "factor 정렬 → ML 신호로 cut" 패턴.
     """
     from ..core.config import DUCKDB_PATH
     import duckdb, logging
@@ -870,19 +877,55 @@ def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge
     try:
         con = duckdb.connect(str(DUCKDB_PATH), read_only=True)
         try:
-            # 최근 days_back 거래일 × A티어 TOP (top_k*5: cooldown 처리 후 부족 방지)
+            # 일자별 A티어 + 변동성 결합 점수
+            # vol = max((high-low)/close, |chg|/100). chg = 전일대비 변동률 (prices.lag 사용)
             rows = con.execute("""
                 WITH dates AS (
                     SELECT DISTINCT date FROM scores ORDER BY date DESC LIMIT ?
                 ),
-                ranked AS (
-                    SELECT s.date, s.ticker, s.name, s.score, s.close,
-                           ROW_NUMBER() OVER (PARTITION BY s.date ORDER BY s.score DESC) AS rk
-                    FROM scores s JOIN dates d ON s.date = d.date
-                    WHERE s.tier = 'A'
+                px AS (
+                    SELECT
+                        ticker,
+                        date,
+                        close,
+                        high,
+                        low,
+                        LAG(close) OVER (PARTITION BY ticker ORDER BY date) AS prev_close
+                    FROM prices
+                    WHERE close IS NOT NULL AND high IS NOT NULL AND low IS NOT NULL
+                ),
+                px_vol AS (
+                    SELECT
+                        ticker,
+                        date,
+                        close,
+                        COALESCE((CAST(high AS DOUBLE) - low) / NULLIF(close, 0), 0) AS vol
+                    FROM px
+                ),
+                joined AS (
+                    SELECT
+                        s.date,
+                        s.ticker,
+                        s.name,
+                        s.score,
+                        s.close AS s_close,
+                        v.vol,
+                        v.close AS p_close
+                    FROM scores s
+                    JOIN dates d ON s.date = d.date
+                    LEFT JOIN px_vol v ON v.ticker = s.ticker
+                        AND v.date = CAST(strftime(CAST(s.date AS DATE), '%Y%m%d') AS BIGINT)
+                    WHERE s.tier = 'A'      -- ML 필터 (A티어 = 절대 임계 상위 15.6%)
+                ),
+                scored AS (
+                    SELECT
+                        date, ticker, name, score, s_close, p_close, vol,
+                        ROW_NUMBER() OVER (PARTITION BY date
+                            ORDER BY COALESCE(vol, 0) DESC) AS rk    -- vol 정렬
+                    FROM joined
                 )
-                SELECT date, ticker, name, score, close FROM ranked
-                WHERE rk <= ?
+                SELECT date, ticker, name, score, COALESCE(p_close, s_close) AS close, vol, NULL::DOUBLE AS combined
+                FROM scored WHERE rk <= ?
                 ORDER BY date DESC, rk
             """, [days_back, max(50, top_k * 20)]).fetchall()
 
@@ -938,16 +981,13 @@ def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge
             # 7거래일 cooldown
             last_picked = {}  # ticker -> date
             groups: dict = {}
-            for date_v, ticker, name, score, close in rows:
+            for date_v, ticker, name, score, close, vol, combined in rows:
                 if ticker in last_picked:
                     if (date_v - last_picked[ticker]).days < 7:
                         continue
                 bucket = groups.setdefault(date_v, [])
                 if len(bucket) >= top_k:
                     continue
-                # ★ last_picked 갱신은 bucket 채운 종목만 — 위에서 갱신하면
-                #   bucket 가득찬 일자의 후순위 종목까지 cooldown 풀에 들어가
-                #   다음 일자 후보가 사라진다(carry-forward로 ranking 동일할 때 치명적).
                 last_picked[ticker] = date_v
                 rec_price = float(close) if close is not None else None
                 cur = cp.get(ticker)
@@ -962,6 +1002,9 @@ def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge
                     "cumulative_return_pct": cum,
                     "target_price": target,
                     "split_event_suspected": (cum is not None and cum < -50),
+                    # 새 산식 디버그/표시 필드 (frontend 가 무시해도 OK)
+                    "daily_vol_pct": round(float(vol) * 100, 2) if vol is not None else None,
+                    "combined_score": round(float(combined) * 100, 1) if combined is not None else None,
                 })
 
             items = [{"date": d.isoformat(), "winners": ws}

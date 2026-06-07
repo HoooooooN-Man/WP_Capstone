@@ -23,6 +23,9 @@ class ScreenerItem(BaseModel):
     score:          Optional[float] = None
     tier:           Optional[str]   = None
     latest_date:    Optional[str]   = None
+    close:          Optional[float] = None
+    change_pct:     Optional[float] = None
+    signal_label:   Optional[str]   = None
     per:            Optional[float] = None
     pbr:            Optional[float] = None
     roe:            Optional[float] = None
