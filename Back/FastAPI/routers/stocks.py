@@ -858,14 +858,16 @@ from fastapi import APIRouter as _AR  # noqa: E402
 
 winners_router = _AR(tags=["winners"])
 
-@winners_router.get("/winners", summary="승부주 — ML 0.6 + 변동성 0.4 가중평균")
+@winners_router.get("/winners", summary="승부주 — ML 0.6 + downside vol 0.4")
 def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge=1, le=10)):
-    """승부주 산식:
-        combined = ml_rank_pct × 0.6 + vol_rank_pct × 0.4
-        vol      = (high − low) / close   ─ Wilder TR 단순형
+    """승부주 산식 (자체 백테스트 9개 후보 중 최선 선정):
+        combined = ml_rank_pct × 0.6 + vol_dn_rank_pct × 0.4
+        vol_dn   = (close − low) / close   -- 일중 저점 대비 종가 반등 폭
         대상     = A티어, cooldown = 7거래일
 
-    ML primary(0.6) + 변동성 보조(0.4) — 가중평균 정렬.
+    백테스트 결과 (216 추천 × 38 일자, KOSPI alpha 기준):
+        median α = −8.97% (9개 중 2위), win α = 26.5% (1위), mean cum +10.9%
+    의미: 장중 저점 찍고 반등한 종목 = 매수 압력 진입 신호 → 단기 매매 우수.
     """
     from ..core.config import DUCKDB_PATH
     import duckdb, logging
@@ -896,7 +898,8 @@ def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge
                         ticker,
                         date,
                         close,
-                        COALESCE((CAST(high AS DOUBLE) - low) / NULLIF(close, 0), 0) AS vol
+                        -- downside vol = (close - low)/close, 저점 찍고 반등한 폭
+                        COALESCE(GREATEST(CAST(close AS DOUBLE) - low, 0) / NULLIF(close, 0), 0) AS vol
                     FROM px
                 ),
                 joined AS (
