@@ -858,16 +858,17 @@ from fastapi import APIRouter as _AR  # noqa: E402
 
 winners_router = _AR(tags=["winners"])
 
-@winners_router.get("/winners", summary="승부주 — ML 0.6 + downside vol 0.4")
+@winners_router.get("/winners", summary="승부주 — ML 0.6 + HV-normalized vol 0.4")
 def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge=1, le=10)):
-    """승부주 산식 (자체 백테스트 9개 후보 중 최선 선정):
-        combined = ml_rank_pct × 0.6 + vol_dn_rank_pct × 0.4
-        vol_dn   = (close − low) / close   -- 일중 저점 대비 종가 반등 폭
+    """승부주 산식 (최근 1주일 9개 후보 백테스트 1위):
+        combined = ml_rank_pct × 0.6 + vol_norm_rank_pct × 0.4
+        vol_norm = ((high − low) / close) / HV60
+        HV60     = 60거래일 일간수익률 표준편차 × √252
         대상     = A티어, cooldown = 7거래일
 
-    백테스트 결과 (216 추천 × 38 일자, KOSPI alpha 기준):
-        median α = −8.97% (9개 중 2위), win α = 26.5% (1위), mean cum +10.9%
-    의미: 장중 저점 찍고 반등한 종목 = 매수 압력 진입 신호 → 단기 매매 우수.
+    백테스트 결과 (25 추천, 최근 5거래일 5/29~6/5):
+        median = −0.71% (1위), mean = −2.16% (2위), win = 20.0% (1위)
+    의미: 일중 진폭이 자기 종목의 평소 변동성 대비 큰 종목 = 단기 이벤트성 진입 신호.
     """
     from ..core.config import DUCKDB_PATH
     import duckdb, logging
@@ -893,14 +894,34 @@ def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge
                     FROM prices
                     WHERE close IS NOT NULL AND high IS NOT NULL AND low IS NOT NULL
                 ),
+                px_ret AS (
+                    SELECT *,
+                        CASE WHEN prev_close IS NOT NULL AND prev_close > 0
+                             THEN (CAST(close AS DOUBLE) - prev_close) / prev_close
+                             ELSE NULL END AS ret_1d
+                    FROM px
+                ),
+                px_hv AS (
+                    SELECT *,
+                        STDDEV(ret_1d) OVER (
+                            PARTITION BY ticker ORDER BY date
+                            ROWS BETWEEN 59 PRECEDING AND CURRENT ROW
+                        ) * SQRT(252) AS hv60
+                    FROM px_ret
+                ),
                 px_vol AS (
                     SELECT
                         ticker,
                         date,
                         close,
-                        -- downside vol = (close - low)/close, 저점 찍고 반등한 폭
-                        COALESCE(GREATEST(CAST(close AS DOUBLE) - low, 0) / NULLIF(close, 0), 0) AS vol
-                    FROM px
+                        -- HV-normalized 일중 진폭 = ((H-L)/C) / HV60
+                        -- 일중 진폭이 자기 종목 평소 변동성 대비 큰 종목 = 단기 이벤트 신호
+                        CASE
+                            WHEN hv60 IS NOT NULL AND hv60 > 0 AND close > 0
+                            THEN ((CAST(high AS DOUBLE) - low) / close) / hv60
+                            ELSE 0
+                        END AS vol
+                    FROM px_hv
                 ),
                 joined AS (
                     SELECT
