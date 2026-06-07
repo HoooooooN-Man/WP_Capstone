@@ -858,17 +858,14 @@ from fastapi import APIRouter as _AR  # noqa: E402
 
 winners_router = _AR(tags=["winners"])
 
-@winners_router.get("/winners", summary="승부주 — 변동성 정렬 + ML 필터")
+@winners_router.get("/winners", summary="승부주 — ML 0.6 + 변동성 0.4 가중평균")
 def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge=1, le=10)):
-    """승부주 산식 (filter-then-rank):
-        필터  = A티어 (= ML prob_ensemble 상위 15.6%, 절대 임계)
-        정렬  = vol DESC   ※ vol = (high − low) / close   ─ Wilder TR 단순형
-        cooldown = 7거래일 (같은 종목 재추천 방지)
+    """승부주 산식:
+        combined = ml_rank_pct × 0.6 + vol_rank_pct × 0.4
+        vol      = (high − low) / close   ─ Wilder TR 단순형
+        대상     = A티어, cooldown = 7거래일
 
-    설계 의도:
-        ML 점수가 "노이즈 변동성 vs 진짜 알파" 를 구분하는 필터로 작동,
-        그 다음 일중 진폭 큰 순서로 정렬해 단기 매매 기회를 골라냄.
-        Renaissance/AQR factor-zoo 의 "factor 정렬 → ML 신호로 cut" 패턴.
+    ML primary(0.6) + 변동성 보조(0.4) — 가중평균 정렬.
     """
     from ..core.config import DUCKDB_PATH
     import duckdb, logging
@@ -915,16 +912,24 @@ def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge
                     JOIN dates d ON s.date = d.date
                     LEFT JOIN px_vol v ON v.ticker = s.ticker
                         AND v.date = CAST(strftime(CAST(s.date AS DATE), '%Y%m%d') AS BIGINT)
-                    WHERE s.tier = 'A'      -- ML 필터 (A티어 = 절대 임계 상위 15.6%)
+                    WHERE s.tier = 'A'
+                ),
+                ranked AS (
+                    SELECT
+                        date, ticker, name, score, s_close, p_close, vol,
+                        PERCENT_RANK() OVER (PARTITION BY date ORDER BY score ASC) AS ml_pct,
+                        PERCENT_RANK() OVER (PARTITION BY date ORDER BY COALESCE(vol, 0) ASC) AS vol_pct
+                    FROM joined
                 ),
                 scored AS (
                     SELECT
                         date, ticker, name, score, s_close, p_close, vol,
+                        (ml_pct * 0.6 + vol_pct * 0.4) AS combined,
                         ROW_NUMBER() OVER (PARTITION BY date
-                            ORDER BY COALESCE(vol, 0) DESC) AS rk    -- vol 정렬
-                    FROM joined
+                            ORDER BY (ml_pct * 0.6 + vol_pct * 0.4) DESC) AS rk
+                    FROM ranked
                 )
-                SELECT date, ticker, name, score, COALESCE(p_close, s_close) AS close, vol, NULL::DOUBLE AS combined
+                SELECT date, ticker, name, score, COALESCE(p_close, s_close) AS close, vol, combined
                 FROM scored WHERE rk <= ?
                 ORDER BY date DESC, rk
             """, [days_back, max(50, top_k * 20)]).fetchall()
