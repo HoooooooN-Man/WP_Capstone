@@ -36,6 +36,24 @@ rd = redis.Redis(
     db=REDIS_AUTH_DB,
 )
 
+# Redis 접근 불가 시 fakeredis(in-memory) 로 graceful fallback.
+# 운영 Redis(Tailscale 100.67.30.5)가 닿지 않는 데모/오프라인 환경에서 인증·세션·인증코드 동작 유지.
+# in-memory 라 서버 재시작 시 모두 휘발 — 데모 한정.
+try:
+    rd.ping()
+except Exception as _e:
+    try:
+        import fakeredis  # type: ignore
+        rd = fakeredis.FakeRedis(decode_responses=True)
+        import logging
+        logging.getLogger(__name__).warning(
+            f"[Redis] {REDIS_HOST}:{REDIS_PORT} 접근 실패({_e!s}) — fakeredis in-memory fallback. "
+            f"세션·인증코드는 서버 재시작 시 휘발됩니다."
+        )
+    except ImportError:
+        # fakeredis 미설치면 그대로 원본 client 유지 (redis_get 등이 RedisError 잡음)
+        pass
+
 # ── 상수 ────────────────────────────────────────────────────────────────────
 MAX_LOGIN_ATTEMPTS   = 5    # 로그인 실패 잠금 기준
 LOGIN_LOCKOUT_SEC    = 900  # 15분 잠금
@@ -117,6 +135,28 @@ def get_current_user(session_token: str = Header(None)) -> str:
     return email
 
 # ── 엔드포인트 ─────────────────────────────────────────────────────────────
+
+@router.get("/session")
+def get_session(session_token: str = Header(None), db: Session = Depends(get_db)):
+    """현재 세션 상태 반환 — Front_v2 부트스트랩용.
+
+    토큰 없거나 만료 시: 200 + {nickname: None, is_logged_in: False} (404 가 아님).
+    유효 토큰: 200 + {nickname, email, is_logged_in: True}.
+    """
+    if not session_token:
+        return {"nickname": None, "email": None, "is_logged_in": False}
+    email = redis_get(f"session:{session_token}")
+    if not email:
+        return {"nickname": None, "email": None, "is_logged_in": False}
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        return {"nickname": None, "email": None, "is_logged_in": False}
+    return {
+        "nickname": user.nickname,
+        "email": user.email,
+        "is_logged_in": True,
+    }
+
 
 @router.post("/check-email")
 def check_email_duplicate(

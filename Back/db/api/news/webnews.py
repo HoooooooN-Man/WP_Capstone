@@ -44,8 +44,27 @@ TOP_N      = int(os.getenv("WEBNEWS_TOP_N_DEFAULT", 10))
 
 
 # ── 내부 유틸 ─────────────────────────────────────────────────────────────────
+# webnews 전용 Redis (port 6380). Tailscale 미연결시 fakeredis 로 fallback (모듈 1회 측정).
+_RD_SINGLETON: Optional[redis.Redis] = None
+
 def _rd() -> redis.Redis:
-    return redis.Redis(**REDIS_CONF)
+    global _RD_SINGLETON
+    if _RD_SINGLETON is not None:
+        return _RD_SINGLETON
+    candidate = redis.Redis(**REDIS_CONF)
+    try:
+        candidate.ping()
+        _RD_SINGLETON = candidate
+    except Exception as e:
+        try:
+            import fakeredis  # type: ignore
+            _RD_SINGLETON = fakeredis.FakeRedis(decode_responses=True)
+            logger.warning(
+                f"[webnews Redis] {REDIS_CONF.get('host')}:{REDIS_CONF.get('port')} 접근 실패({e}) — fakeredis fallback. 데이터 없음."
+            )
+        except ImportError:
+            _RD_SINGLETON = candidate  # 패키지 없으면 원본 (각 endpoint 에서 except)
+    return _RD_SINGLETON
 
 def _today() -> str:
     return datetime.now(KST).strftime("%Y-%m-%d")
