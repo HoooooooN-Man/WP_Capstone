@@ -858,17 +858,24 @@ from fastapi import APIRouter as _AR  # noqa: E402
 
 winners_router = _AR(tags=["winners"])
 
-@winners_router.get("/winners", summary="승부주 — ML 0.6 + HV-normalized vol 0.4")
+@winners_router.get("/winners", summary="승부주 — 전일대비 상승 모멘텀 TOP K")
 def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge=1, le=10)):
-    """승부주 산식 (최근 1주일 9개 후보 백테스트 1위):
-        combined = ml_rank_pct × 0.6 + vol_norm_rank_pct × 0.4
-        vol_norm = ((high − low) / close) / HV60
-        HV60     = 60거래일 일간수익률 표준편차 × √252
-        대상     = A티어, cooldown = 7거래일
+    """승부주 산식 (ML 미적용·순수 변동성):
+        vol_mom  = max(0, (close − prev_close) / prev_close)
+        대상     = 전 종목 prices universe (ML 필터 X)
+        정렬     = vol_mom DESC
+        cooldown = 7거래일
 
-    백테스트 결과 (25 추천, 최근 5거래일 5/29~6/5):
-        median = −0.71% (1위), mean = −2.16% (2위), win = 20.0% (1위)
-    의미: 일중 진폭이 자기 종목의 평소 변동성 대비 큰 종목 = 단기 이벤트성 진입 신호.
+    백테스트 결과 (25 추천, 5/29~6/5, ML 미포함 산식 7개 중):
+        VOL_mom    ⭐ mean +1.43%, win 44.0% (1위)
+        VOL_up        mean +1.36%, win 32.0%
+        VOL_HL_min$   mean +0.23%, win 32.0%
+        VOL_HL        mean -0.68%, win 32.0%
+        VOL_norm      mean -0.64%, win 28.0%
+        VOL_dn        mean -6.13%, win 16.0%
+        ML+vol_norm   mean -2.16%, win 20.0%   (이전 채택)
+
+    ML 점수 carry-forward 노이즈를 빼고 순수 모멘텀 추격 — 최근 시장에서 최선.
     """
     from ..core.config import DUCKDB_PATH
     import duckdb, logging
@@ -877,83 +884,58 @@ def get_winners(days_back: int = Query(8, ge=1, le=60), top_k: int = Query(5, ge
     try:
         con = duckdb.connect(str(DUCKDB_PATH), read_only=True)
         try:
-            # 일자별 A티어 + 변동성 결합 점수
-            # vol = max((high-low)/close, |chg|/100). chg = 전일대비 변동률 (prices.lag 사용)
+            # 일자별 전 종목 prices universe → 전일대비 상승률(vol_mom) DESC TOP K
+            # ML 점수는 LEFT JOIN 으로 표시용만 (선정 기준 X)
             rows = con.execute("""
-                WITH dates AS (
-                    SELECT DISTINCT date FROM scores ORDER BY date DESC LIMIT ?
-                ),
-                px AS (
+                WITH px AS (
                     SELECT
-                        ticker,
-                        date,
-                        close,
-                        high,
-                        low,
+                        ticker, date, close,
                         LAG(close) OVER (PARTITION BY ticker ORDER BY date) AS prev_close
                     FROM prices
-                    WHERE close IS NOT NULL AND high IS NOT NULL AND low IS NOT NULL
-                ),
-                px_ret AS (
-                    SELECT *,
-                        CASE WHEN prev_close IS NOT NULL AND prev_close > 0
-                             THEN (CAST(close AS DOUBLE) - prev_close) / prev_close
-                             ELSE NULL END AS ret_1d
-                    FROM px
-                ),
-                px_hv AS (
-                    SELECT *,
-                        STDDEV(ret_1d) OVER (
-                            PARTITION BY ticker ORDER BY date
-                            ROWS BETWEEN 59 PRECEDING AND CURRENT ROW
-                        ) * SQRT(252) AS hv60
-                    FROM px_ret
+                    WHERE close IS NOT NULL
                 ),
                 px_vol AS (
                     SELECT
-                        ticker,
-                        date,
-                        close,
-                        -- HV-normalized 일중 진폭 = ((H-L)/C) / HV60
-                        -- 일중 진폭이 자기 종목 평소 변동성 대비 큰 종목 = 단기 이벤트 신호
-                        CASE
-                            WHEN hv60 IS NOT NULL AND hv60 > 0 AND close > 0
-                            THEN ((CAST(high AS DOUBLE) - low) / close) / hv60
-                            ELSE 0
-                        END AS vol
-                    FROM px_hv
+                        ticker, date, close,
+                        CASE WHEN prev_close IS NOT NULL AND prev_close > 0
+                             THEN GREATEST((CAST(close AS DOUBLE) - prev_close) / prev_close, 0)
+                             ELSE 0 END AS vol
+                    FROM px
+                    WHERE close > 1000   -- penny stock 제외 (1000원 이상만)
+                ),
+                dates AS (
+                    -- prices 의 최근 days_back 거래일
+                    SELECT DISTINCT date FROM prices
+                    ORDER BY date DESC LIMIT ?
                 ),
                 joined AS (
                     SELECT
-                        s.date,
-                        s.ticker,
-                        s.name,
-                        s.score,
-                        s.close AS s_close,
-                        v.vol,
-                        v.close AS p_close
-                    FROM scores s
-                    JOIN dates d ON s.date = d.date
-                    LEFT JOIN px_vol v ON v.ticker = s.ticker
-                        AND v.date = CAST(strftime(CAST(s.date AS DATE), '%Y%m%d') AS BIGINT)
-                    WHERE s.tier = 'A'
-                ),
-                ranked AS (
-                    SELECT
-                        date, ticker, name, score, s_close, p_close, vol,
-                        PERCENT_RANK() OVER (PARTITION BY date ORDER BY score ASC) AS ml_pct,
-                        PERCENT_RANK() OVER (PARTITION BY date ORDER BY COALESCE(vol, 0) ASC) AS vol_pct
-                    FROM joined
+                        v.date AS date_int,
+                        MAKE_DATE(CAST(v.date/10000 AS INT),
+                                  CAST((v.date/100)%100 AS INT),
+                                  CAST(v.date%100 AS INT)) AS date,
+                        v.ticker,
+                        COALESCE(st.name, v.ticker) AS name,
+                        COALESCE(s.score, 0)        AS score,
+                        v.close                     AS p_close,
+                        v.vol
+                    FROM px_vol v
+                    JOIN dates d ON v.date = d.date
+                    LEFT JOIN stocks st ON st.ticker = v.ticker
+                    LEFT JOIN scores s ON s.ticker = v.ticker
+                        AND s.date = MAKE_DATE(CAST(v.date/10000 AS INT),
+                                                CAST((v.date/100)%100 AS INT),
+                                                CAST(v.date%100 AS INT))
+                    WHERE v.vol > 0    -- 상승 종목만
                 ),
                 scored AS (
                     SELECT
-                        date, ticker, name, score, s_close, p_close, vol,
-                        (ml_pct * 0.6 + vol_pct * 0.4) AS combined,
+                        date, ticker, name, score, p_close, vol,
                         ROW_NUMBER() OVER (PARTITION BY date
-                            ORDER BY (ml_pct * 0.6 + vol_pct * 0.4) DESC) AS rk
-                    FROM ranked
+                            ORDER BY vol DESC) AS rk
+                    FROM joined
                 )
-                SELECT date, ticker, name, score, COALESCE(p_close, s_close) AS close, vol, combined
+                SELECT date, ticker, name, score, p_close AS close, vol, NULL::DOUBLE AS combined
                 FROM scored WHERE rk <= ?
                 ORDER BY date DESC, rk
             """, [days_back, max(50, top_k * 20)]).fetchall()
